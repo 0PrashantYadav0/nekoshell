@@ -39,6 +39,8 @@ If you cannot avoid running from iTerm2, run the installer anyway and expect the
 
 Re-running this command is safe; it updates an existing checkout instead of failing on it, and the installer is idempotent. On a machine without Spotify, add `--skip-spotify`.
 
+Do not add `--aerospace` unless the human explicitly asked for AeroSpace, the tiling window manager. It is opt-in for a reason: it taps a second Homebrew tap and needs the Accessibility permission, which only the human can grant, so passing the flag on your own initiative changes what gets installed on their machine without their say-so.
+
 ## 4. Verify
 
 ```bash
@@ -50,6 +52,7 @@ Success is exit code 0. Only `fail` rows block that; `warn` rows do not. On a fr
 - `spotify`: the human still needs to log in.
 - `iterm2 prefs`: iTerm2 needs to be quit for this to apply.
 - `greet time`: the greeting took longer than its 150 ms budget, or could not be measured. Report the number; do not block on it.
+- `aerospace`: expected on every machine unless the human asked for `--aerospace`. Do not treat it as a problem.
 
 The `theme` row is not one of them: a finished install reports `ok` with the flavour in force. If it warns, the theme was never rendered; `nekoshell-theme mocha` fixes it.
 
@@ -67,6 +70,7 @@ Give the human these steps verbatim, then stop:
 3. Run `spotify_player authenticate` (opens a browser; requires Spotify Premium).
 4. Press ⌥M to open the panel.
 5. Run `tmux` and press `C-a I` once. This installs the tmux plugins, including the Catppuccin status bar. Only a human can do it: the binding runs inside a tmux session. Do not start a tmux session yourself to do it for them.
+6. If you ran `install.sh --aerospace`: open System Settings, Privacy & Security, Accessibility, and turn AeroSpace on. Only a human can grant this permission.
 
 ## 6. What changed, and how to undo it
 
@@ -92,10 +96,11 @@ It does not undo everything. It deliberately leaves behind:
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
 - your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
 - `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugins in `~/.config/tmux/plugins/`
+- `~/.config/aerospace/`, if `install.sh --aerospace` ran; yours the same way once it has been copied there
 - `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`
 - the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`
-- Homebrew packages
+- Homebrew packages, including AeroSpace if `install.sh --aerospace` ran
 
 It prints the commands for the last two so you can finish by hand if you want to.
 
@@ -109,3 +114,4 @@ It prints the commands for the last two so you can finish by hand if you want to
 - Do not run `defaults write` for iTerm2 while iTerm2 is running; it will be overwritten when iTerm2 quits.
 - Do not install pokemon-colorscripts with sudo.
 - Do not commit to this repo on the user's behalf.
+- `--aerospace` is opt-in. Do not pass it unless the human explicitly asked for AeroSpace; it taps a second Homebrew tap and needs an Accessibility grant only the human can make.

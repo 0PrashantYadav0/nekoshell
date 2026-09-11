@@ -17,7 +17,7 @@ source "$NEKOSHELL_ROOT/lib/theme.sh"
 # shellcheck source=lib/zsh_migrate.sh
 source "$NEKOSHELL_ROOT/lib/zsh_migrate.sh"
 
-CHECK=0; YES=0; SKIP_BREW=0; SKIP_SPOTIFY=0; ONLY_PREFS=0
+CHECK=0; YES=0; SKIP_BREW=0; SKIP_SPOTIFY=0; ONLY_PREFS=0; AEROSPACE=0
 for arg in "$@"; do
   case "$arg" in
     --check) CHECK=1 ;;
@@ -26,9 +26,10 @@ for arg in "$@"; do
     --skip-brew) SKIP_BREW=1 ;;
     --skip-spotify) SKIP_SPOTIFY=1 ;;
     --iterm-prefs) ONLY_PREFS=1 ;;
+    --aerospace) AEROSPACE=1 ;;
     -h|--help)
       sed -n '2p' "$0"
-      echo "usage: install.sh [--check] [--dry-run] [--yes] [--skip-brew] [--skip-spotify] [--iterm-prefs]"
+      echo "usage: install.sh [--check] [--dry-run] [--yes] [--skip-brew] [--skip-spotify] [--iterm-prefs] [--aerospace]"
       exit 0 ;;
     *) log_fail "unknown flag: $arg"; exit 2 ;;
   esac
@@ -43,6 +44,8 @@ TPM_DIR="$HOME/.config/tmux/plugins/tpm"
 NVIM_DIR="$HOME/.config/nvim"
 TMUX_DIR="$HOME/.config/tmux"
 ITERM_SHELL_INTEGRATION="$HOME/.iterm2_shell_integration.zsh"
+AEROSPACE_CONFIG_REL=".config/aerospace/aerospace.toml"
+AEROSPACE_CONFIG="$HOME/$AEROSPACE_CONFIG_REL"
 
 # RENDERED_PATHS: files the installer renders from templates/ rather than stows,
 # so stowed_paths cannot see them. The first install still replaces whatever is
@@ -231,6 +234,31 @@ install_user_configs() {
   fi
 }
 
+# backup_aerospace_config: --aerospace only. A config that is already at
+# ~/.config/aerospace/aerospace.toml when nekoshell first touches it is
+# someone else's (their own AeroSpace setup, from before nekoshell), so it is
+# moved aside like any other file nekoshell is about to replace. The header
+# comment templates/aerospace/aerospace.toml carries is the marker: once a
+# file has it, it is nekoshell's own and a later run never backs it up again,
+# the same idea backup_rendered_paths uses for starship.toml.
+backup_aerospace_config() {
+  [[ "$AEROSPACE" == 1 ]] || return 0
+  [[ -e "$AEROSPACE_CONFIG" ]] || return 0
+  if grep -qF 'nekoshell AeroSpace config' "$AEROSPACE_CONFIG" 2>/dev/null; then return 0; fi
+  backup_path "$AEROSPACE_CONFIG_REL"
+}
+
+# install_aerospace_config: copy the template in once backup_aerospace_config
+# has cleared the way. Never overwrites an existing file after that: like
+# greet.conf, it is the user's to edit once it lands.
+install_aerospace_config() {
+  [[ "$AEROSPACE" == 1 ]] || return 0
+  if [[ ! -e "$AEROSPACE_CONFIG" ]]; then
+    run mkdir -p "$(dirname "$AEROSPACE_CONFIG")"
+    run cp "$NEKOSHELL_ROOT/templates/aerospace/aerospace.toml" "$AEROSPACE_CONFIG"
+  fi
+}
+
 # install_shell_integration: iTerm2's own zsh hooks. They report the working
 # directory and the last command's status, which is what the status bar's
 # working directory and git components read. Downloaded rather than vendored
@@ -273,6 +301,11 @@ main() {
     log_warn "skipped (--skip-brew)"
   else
     run brew bundle --file "$NEKOSHELL_ROOT/Brewfile" --no-upgrade
+    # Brewfile.aerospace is separate on purpose: it taps nikitabobko/tap, and
+    # that tap must never reach a default install.
+    if [[ "$AEROSPACE" == 1 ]]; then
+      run brew bundle --file "$NEKOSHELL_ROOT/Brewfile.aerospace" --no-upgrade
+    fi
   fi
 
   log_step 3 $TOTAL "Back up files nekoshell replaces"
@@ -299,6 +332,7 @@ main() {
     backup_path "$rel"
   done < <(stowed_paths)
   backup_rendered_paths
+  backup_aerospace_config
   if [[ -d "$NEKOSHELL_BACKUP_DIR" ]]; then log_ok "backup at $NEKOSHELL_BACKUP_DIR"; else log_ok "nothing to back up"; fi
 
   # Your files are saved from here on, so say where they are if a later step
@@ -309,6 +343,7 @@ main() {
   log_step 4 $TOTAL "Theme, your configs and your aliases"
   run mkdir -p "$NEKOSHELL_CONFIG/zsh"
   install_user_configs
+  install_aerospace_config
   # starship.toml and the fastfetch config are rendered once and then yours, the
   # same deal as greet.conf; theme.zsh is nekoshell's and is always rewritten.
   # Switching flavour later is `nekoshell-theme <flavour>`, which rewrites all of
@@ -361,6 +396,9 @@ main() {
   [[ "$SKIP_SPOTIFY" == 1 ]] || echo "  2. Run: spotify_player authenticate   (opens a browser; needs Spotify Premium)"
   echo "  3. Press ⌥M anywhere for the Spotify panel."
   echo "  4. Start tmux and press C-a I once to install its plugins. Run nekoshell-doctor to verify."
+  if [[ "$AEROSPACE" == 1 ]]; then
+    echo "  5. Grant AeroSpace Accessibility access: System Settings, Privacy & Security, Accessibility, turn on AeroSpace. It tiles windows through that permission and cannot ask for it itself."
+  fi
 }
 
 main

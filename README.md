@@ -79,6 +79,34 @@ npx skills add 0PrashantYadav0/nekoshell
 - Already have a Neovim or tmux config? The installer leaves it completely alone and says so: if `~/.config/nvim/init.lua` or `init.vim` is there it copies no Neovim files at all, and if `~/.tmux.conf` or `~/.config/tmux/tmux.conf` is there it copies no tmux config. Nekoshell's stay in `templates/nvim/` and `templates/tmux/` for you to take what you want from.
 - Change the status bar: edit `STATUS_BAR_COMPONENTS` in `iterm2/build-profiles.py` and re-run `./install.sh`. To remove the bar, set `primary["Show Status Bar"] = False` in that file's `main()`, which is where the main profile is given its bar.
 
+## Optional: tiling windows with AeroSpace
+
+nekoshell can also tile whole macOS windows, i3-style, with [AeroSpace](https://github.com/nikitabobko/AeroSpace). It sits beside tmux rather than replacing it: tmux tiles panes inside one terminal window, and AeroSpace tiles windows across the whole screen. It needs the Accessibility permission and its own Homebrew tap, so it is entirely opt-in; the default install never touches it.
+
+```bash
+./install.sh --aerospace
+```
+
+This taps `nikitabobko/tap`, installs the `aerospace` cask from `Brewfile.aerospace`, and copies `templates/aerospace/aerospace.toml` to `~/.config/aerospace/aerospace.toml` the first time it runs. After that the file is yours: a re-install leaves your edits alone, the same deal as the Neovim and tmux configs. An AeroSpace config already there before the first `--aerospace` run is backed up rather than replaced.
+
+After installing, grant AeroSpace Accessibility access by hand: System Settings, Privacy & Security, Accessibility, turn AeroSpace on. Only a human can do this; AeroSpace tiles windows through that permission and cannot request it itself.
+
+The shipped keybinds:
+
+| Key | Action |
+| --- | --- |
+| `⌥ Enter` | open a new iTerm2 window |
+| `⌥ H` / `J` / `K` / `L` | focus left / down / up / right |
+| `⌥ Shift H` / `J` / `K` / `L` | move the focused window left / down / up / right |
+| `⌥ -` / `⌥ =` | shrink / grow the focused window |
+| `⌥ F` | fullscreen |
+| `⌥ 1`-`5` | switch to workspace 1-5 |
+| `⌥ Shift 1`-`5` | move the focused window to workspace 1-5 |
+| `⌥ Tab` | back to the last workspace |
+| `⌥ ;` | enter service mode (`Esc` back to main, `r` reset the layout, `f` toggle floating, `Backspace` close every window but the focused one) |
+
+`⌥M` is never bound in AeroSpace. It stays with the nekoshell Spotify panel, which is an iTerm2 global hotkey, not an AeroSpace binding. The panel's own window floats instead of tiling, through an `on-window-detected` rule in `templates/aerospace/aerospace.toml`.
+
 ## Uninstall
 
 ```bash
@@ -93,11 +121,12 @@ It does not undo everything. It deliberately leaves behind:
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
 - your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
 - `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugins in `~/.config/tmux/plugins/`
+- `~/.config/aerospace/`, if you ran `./install.sh --aerospace`; yours the same way once it has been copied there
 - `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`
 - `~/.iterm2_shell_integration.zsh`, which is iTerm2's own file
 - the other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`, `DimInactiveSplitPanes`, `SplitPaneDimmingAmount`
-- Homebrew packages
+- Homebrew packages, including AeroSpace if you installed it
 
 It prints the commands for the last two so you can finish by hand if you want to.
 

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Fake AeroSpace: enough for the doctor's row and for `command -v aerospace`.
+# `list-workspaces --all` is the doctor's liveness probe; print something and
+# exit 0, the same as a real, working AeroSpace would for a signed-in session.
+if [[ "${1:-}" == "list-workspaces" ]]; then
+  echo "1"
+  exit 0
+fi
+echo "aerospace $*"
