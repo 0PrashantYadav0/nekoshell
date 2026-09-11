@@ -56,9 +56,12 @@ if iterm_prefs_pending; then
 if have pokemon-colorscripts && pokemon-colorscripts -r >/dev/null 2>&1; then
   report ok "pokemon-colorscripts" "$(command -v pokemon-colorscripts)"; else report fail "pokemon-colorscripts" "missing or broken"; fi
 if have fastfetch; then
+  # Real art ends on an unterminated colour reset, so the timing line arrives
+  # with an escape sequence glued to its front. Match the tail of the line, not
+  # the whole of it.
   ms="$(NEKOSHELL_SEED=1 NEKOSHELL_GREET_TIME=1 NEKOSHELL_NO_GREET='' CLAUDECODE='' TMUX='' \
     script -q /dev/null "$NEKOSHELL_ROOT/bin/nekoshell-greet" </dev/null 2>/dev/null \
-    | tr -d '\r' | sed -n 's/^greet: \([0-9]*\) ms$/\1/p')"
+    | tr -d '\r' | sed -n 's/^.*greet: \([0-9][0-9]*\) ms$/\1/p')"
   if [[ -z "$ms" ]]; then report warn "greet time" "could not measure"
   elif (( ms <= 150 )); then report ok "greet time" "${ms} ms"
   else report warn "greet time" "${ms} ms (budget 150)"; fi

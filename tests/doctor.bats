@@ -29,3 +29,21 @@ teardown() { teardown_tmp_home; }
   run bash -c "'$REPO_ROOT/bin/nekoshell-doctor' --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(type(d).__name__, all(k in d[0] for k in (\"check\",\"status\",\"detail\")))'"
   [ "$output" = "list True" ]
 }
+
+# Real pokemon art ends on a colour reset with no trailing newline, so the
+# timing line reaches the doctor as "<ESC>[mgreet: 108 ms". The parse has to
+# survive that or every real machine reports "could not measure".
+@test "greet time is measured even when the art leaves an escape on the line" {
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  mkdir -p "$HOME/bin"
+  cat > "$HOME/bin/fastfetch" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null 2>&1 || true
+printf 'art\n\033[m'
+EOF
+  chmod +x "$HOME/bin/fastfetch"
+  PATH="$HOME/bin:$PATH" run "$REPO_ROOT/bin/nekoshell-doctor"
+  [[ "$output" == *"greet time"* ]]
+  [[ "$output" != *"could not measure"* ]]
+  [[ "$output" =~ greet\ time[[:space:]]+[0-9]+\ ms ]]
+}

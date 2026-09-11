@@ -9,26 +9,35 @@ stow_it() {
   stow --no-folding -d "$REPO_ROOT/stow" -t "$HOME" zsh config
 }
 
+# Every test gets a fresh HOME, so antidote's plugin cache is always cold and
+# `antidote load` prints "# antidote cloning ..." lines before anything the
+# test echoes. Read values back by marker instead of by line number; the line
+# index is not ours to predict.
+marker() { printf '%s\n' "$output" | sed -n "s/^$1=//p"; }
+
 @test "zshrc parses and sets NEKOSHELL_ROOT and PATH from its stowed location" {
   stow_it
-  run zsh -c 'source "$HOME/.zshrc"; echo "$NEKOSHELL_ROOT"; echo "$PATH"'
+  run zsh -c 'source "$HOME/.zshrc"; echo "NEKO_ROOT=$NEKOSHELL_ROOT"; echo "NEKO_PATH=$PATH"'
   [ "$status" -eq 0 ]
-  [ "${lines[0]}" = "$REPO_ROOT" ]
-  [[ "${lines[1]}" == "$REPO_ROOT/bin:$HOME/.local/bin:"* ]]
+  [ "$(marker NEKO_ROOT)" = "$REPO_ROOT" ]
+  [[ "$(marker NEKO_PATH)" == "$REPO_ROOT/bin:$HOME/.local/bin:"* ]]
 }
 
 @test "zshrc sources local.zsh when present" {
   stow_it
   mkdir -p "$HOME/.config/nekoshell/zsh"
   echo 'export NEKO_LOCAL_MARK=yes' > "$HOME/.config/nekoshell/zsh/local.zsh"
-  run zsh -c 'source "$HOME/.zshrc"; echo "$NEKO_LOCAL_MARK"'
-  [ "$output" = "yes" ]
+  run zsh -c 'source "$HOME/.zshrc"; echo "NEKO_MARK=$NEKO_LOCAL_MARK"'
+  [ "$(marker NEKO_MARK)" = "yes" ]
 }
 
 @test "non-interactive zsh does not greet" {
   stow_it
-  run zsh -c 'source "$HOME/.zshrc"; echo done'
-  [ "$output" = "done" ]
+  run zsh -c 'source "$HOME/.zshrc"; echo NEKO_DONE'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"NEKO_DONE"* ]]
+  # The greeting writes this cache file whenever it draws anything.
+  [ ! -e "$HOME/.cache/nekoshell/art-name" ]
 }
 
 @test "starship config is valid TOML with the mocha palette" {
