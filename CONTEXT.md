@@ -36,6 +36,10 @@ _Avoid_: Shortcut, keybinding (keybindings are in-terminal keys, hotkeys work sy
 One named colour palette applied consistently to every part of the rig.
 _Avoid_: Colorscheme, skin, look
 
+**Flavour**:
+One of the four Catppuccin themes the rig can wear: latte, frappe, macchiato or mocha. The flavour in force is recorded in `~/.config/nekoshell/theme`.
+_Avoid_: Variant, mode, dark/light
+
 **Profile**:
 An iTerm2 profile shipped as a dynamic profile JSON file. The rig has two: the main profile and the panel profile.
 _Avoid_: Preset, settings

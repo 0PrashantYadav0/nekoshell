@@ -1,2 +1,3 @@
---theme="Catppuccin Mocha"
+# The theme is not set here: BAT_THEME in ~/.config/nekoshell/theme.zsh carries
+# the flavour, so `nekoshell-theme <flavour>` moves bat with everything else.
 --style=numbers,changes,header

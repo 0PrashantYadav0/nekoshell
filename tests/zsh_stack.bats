@@ -16,6 +16,16 @@ stow_it() {
 # own lines and the index is not ours to predict.
 marker() { printf '%s\n' "$output" | sed -n "s/^$1=//p"; }
 
+# render_starship FLAVOUR: render templates/starship.toml into $HOME the same
+# way the installer does, so starship itself judges what a user actually gets.
+render_starship() {
+  bash -c "source '$REPO_ROOT/lib/log.sh'
+           source '$REPO_ROOT/lib/paths.sh'
+           NEKOSHELL_ROOT='$REPO_ROOT'
+           source '$REPO_ROOT/lib/theme.sh'
+           theme_render_template '$REPO_ROOT/templates/starship.toml' '$HOME/starship.toml' '$1'"
+}
+
 @test "zshrc parses and sets NEKOSHELL_ROOT and PATH from its stowed location" {
   stow_it
   run zsh -c 'source "$HOME/.zshrc"; echo "NEKO_ROOT=$NEKOSHELL_ROOT"; echo "NEKO_PATH=$PATH"'
@@ -41,19 +51,24 @@ marker() { printf '%s\n' "$output" | sed -n "s/^$1=//p"; }
   [ ! -e "$HOME/.cache/nekoshell/art-name" ]
 }
 
-@test "starship config is valid TOML with the mocha palette" {
+# The starship config is rendered from templates/starship.toml, so the template
+# carries all four palettes and a @@FLAVOR@@ placeholder on the palette line.
+@test "starship template is valid TOML carrying all four Catppuccin palettes" {
   run python3 -c "
 import tomllib,sys
-d=tomllib.load(open('$REPO_ROOT/stow/config/.config/starship.toml','rb'))
-print(d['palette']); print(d['palettes']['catppuccin_mocha']['mauve'])"
-  [ "${lines[0]}" = "catppuccin_mocha" ]
-  [ "${lines[1]}" = "#cba6f7" ]
+d=tomllib.load(open('$REPO_ROOT/templates/starship.toml','rb'))
+print(d['palette'])
+print(' '.join(sorted(d['palettes'])))
+print(d['palettes']['catppuccin_mocha']['mauve'], d['palettes']['catppuccin_latte']['base'])"
+  [ "${lines[0]}" = "catppuccin_@@FLAVOR@@" ]
+  [ "${lines[1]}" = "catppuccin_frappe catppuccin_latte catppuccin_macchiato catppuccin_mocha" ]
+  [ "${lines[2]}" = "#cba6f7 #eff1f5" ]
 }
 
 @test "starship prompt is two lines with a full-path directory and a right-aligned clock" {
   run python3 -c "
 import tomllib
-d=tomllib.load(open('$REPO_ROOT/stow/config/.config/starship.toml','rb'))
+d=tomllib.load(open('$REPO_ROOT/templates/starship.toml','rb'))
 print(d['directory']['truncation_length'], d['directory']['truncate_to_repo'])
 print('\$fill' in d['format'], '\$time' in d['format'], '\$status' in d['format'], '\$line_break' in d['format'], d['format'].rstrip().endswith('\$character'))
 print(d['time']['disabled'], d['status']['disabled'])
@@ -69,15 +84,20 @@ print(d['format'].count(chr(10)))"
 
 @test "starship prompt renders as exactly two lines after the add_newline blank line" {
   command -v starship >/dev/null || skip "starship not installed"
-  run bash -c "STARSHIP_CONFIG='$REPO_ROOT/stow/config/.config/starship.toml' starship prompt --status=1 --cmd-duration=3500 --jobs=1 2>/dev/null | tail -n +2 | grep -c ''"
+  render_starship mocha
+  run bash -c "STARSHIP_CONFIG='$HOME/starship.toml' starship prompt --status=1 --cmd-duration=3500 --jobs=1 2>/dev/null | tail -n +2 | grep -c ''"
   [ "$status" -eq 0 ]
   [ "$output" = "2" ]
 }
 
-@test "starship validates its own config" {
+@test "starship validates every rendered flavour" {
   command -v starship >/dev/null || skip "starship not installed"
-  run env STARSHIP_CONFIG="$REPO_ROOT/stow/config/.config/starship.toml" starship print-config
-  [ "$status" -eq 0 ]
+  for flavour in frappe latte macchiato mocha; do
+    render_starship "$flavour"
+    grep -q "^palette = \"catppuccin_$flavour\"" "$HOME/starship.toml"
+    run env STARSHIP_CONFIG="$HOME/starship.toml" starship print-config
+    [ "$status" -eq 0 ]
+  done
 }
 
 @test "zsh_migrate_aliases copies plain aliases and exports only" {

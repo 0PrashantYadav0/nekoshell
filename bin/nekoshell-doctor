@@ -9,6 +9,9 @@ export NEKOSHELL_ROOT
 source "$NEKOSHELL_ROOT/lib/paths.sh"
 # shellcheck source=lib/iterm.sh
 source "$NEKOSHELL_ROOT/lib/iterm.sh"
+# Only for theme_is_flavor, which needs nothing but lib/paths.sh.
+# shellcheck source=lib/theme.sh
+source "$NEKOSHELL_ROOT/lib/theme.sh"
 
 JSON=0
 case "${1:-}" in
@@ -65,6 +68,14 @@ else
 fi
 if iterm_prefs_pending; then
   report warn "iterm2 prefs" "pending: quit iTerm2, run install.sh --iterm-prefs"; else report ok "iterm2 prefs" "default profile is nekoshell"; fi
+# theme.zsh is what a shell actually reads, so a recorded flavour without it is
+# still a broken theme.
+flavour="$(cat "$NEKOSHELL_CONFIG/theme" 2>/dev/null || true)"
+if theme_is_flavor "$flavour" && [[ -r "$NEKOSHELL_CONFIG/theme.zsh" ]]; then
+  report ok "theme" "catppuccin $flavour"
+else
+  report warn "theme" "run nekoshell-theme mocha"
+fi
 if have pokemon-colorscripts && pokemon-colorscripts -r >/dev/null 2>&1; then
   report ok "pokemon-colorscripts" "$(command -v pokemon-colorscripts)"; else report fail "pokemon-colorscripts" "missing or broken"; fi
 if have fastfetch; then

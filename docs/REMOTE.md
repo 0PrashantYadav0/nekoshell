@@ -33,9 +33,15 @@ Once installed, these work the same as local:
 
 ```bash
 mkdir -p ~/.config/nekoshell-zsh
-cp ~/.nekoshell/stow/config/.config/starship.toml ~/.config/starship.toml
+sed 's/@@FLAVOR@@/mocha/' ~/.nekoshell/templates/starship.toml > ~/.config/starship.toml
 cp ~/.nekoshell/stow/config/.config/nekoshell/zsh/*.zsh ~/.config/nekoshell-zsh/
+cp ~/.config/nekoshell/theme.zsh ~/.config/nekoshell-zsh/
 ```
+
+The Starship config is a template on this side: `@@FLAVOR@@` picks the Catppuccin
+flavour, so swap `mocha` for `latte`, `frappe` or `macchiato` if that is what you
+run locally. `theme.zsh` carries `BAT_THEME` and `FZF_DEFAULT_OPTS`; copying it
+from the Mac keeps the remote shell on the same flavour.
 
 Then add to your `.zshrc`:
 

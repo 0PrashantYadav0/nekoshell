@@ -12,6 +12,8 @@ source "$NEKOSHELL_ROOT/lib/paths.sh"
 source "$NEKOSHELL_ROOT/lib/backup.sh"
 # shellcheck source=lib/iterm.sh
 source "$NEKOSHELL_ROOT/lib/iterm.sh"
+# shellcheck source=lib/theme.sh
+source "$NEKOSHELL_ROOT/lib/theme.sh"
 # shellcheck source=lib/zsh_migrate.sh
 source "$NEKOSHELL_ROOT/lib/zsh_migrate.sh"
 
@@ -38,6 +40,11 @@ GIT_INCLUDE="$NEKOSHELL_CONFIG/git/delta.gitconfig"
 POKEMON_DIR="$HOME/.local/share/pokemon-colorscripts"
 POKEMON_BIN="$HOME/.local/bin/pokemon-colorscripts"
 
+# RENDERED_PATHS: files the installer renders from templates/ rather than stows,
+# so stowed_paths cannot see them. The first install still replaces whatever is
+# already there, so they are backed up by hand. See backup_rendered_paths.
+RENDERED_PATHS=".config/starship.toml .config/fastfetch/config.jsonc"
+
 # stowed_paths: every path stow will claim in $HOME, one per line, relative to
 # $HOME. Read from the packages themselves so the backup can never drift from
 # what stow --no-folding actually links (leaf files only: --no-folding creates
@@ -46,6 +53,18 @@ stowed_paths() {
   local pkg
   for pkg in zsh config; do
     ( cd "$NEKOSHELL_ROOT/stow/$pkg" && find . -type f -print | sed 's|^\./||' )
+  done
+}
+
+# backup_rendered_paths: back up the rendered files, but only on the install that
+# first replaces them. After that they are nekoshell's own output, and moving
+# them aside every run would pile up a backup directory per install. The theme
+# state file is written by that first install and marks every one after it.
+backup_rendered_paths() {
+  local rel
+  [[ -e "$NEKOSHELL_CONFIG/theme" ]] && return 0
+  for rel in $RENDERED_PATHS; do
+    backup_path "$rel"
   done
 }
 
@@ -81,6 +100,7 @@ check_only() {
   zshrc_linked || { log_info "would stow ~/.zshrc"; todo=1; }
   [[ "$(cat "$NEKOSHELL_CONFIG/root" 2>/dev/null)" == "$NEKOSHELL_ROOT" ]] || { log_info "would record root"; todo=1; }
   [[ -f "$ITERM_DYNAMIC_DIR/nekoshell.json" ]] || { log_info "would write iTerm2 profiles"; todo=1; }
+  [[ -f "$NEKOSHELL_CONFIG/theme.zsh" ]] || { log_info "would render the theme"; todo=1; }
   [[ -L "$POKEMON_BIN" ]] || { log_info "would install pokemon-colorscripts"; todo=1; }
   if iterm_prefs_pending; then log_info "iTerm2 global prefs pending (run: ./install.sh --iterm-prefs with iTerm2 closed)"; fi
   if [[ "$todo" == 0 ]]; then log_ok "nothing to do"; fi
@@ -149,7 +169,7 @@ main() {
     exit 1
   fi
   backup_begin
-  local rel old_zshrc="" zshrc_target=""
+  local rel old_zshrc="" zshrc_target="" FLAVOR=""
   # A symlinked .zshrc (a dotfiles repo, usually) holds the aliases at the other
   # end of the link. Resolve it now: backup_path is about to move the link.
   if [[ -L "$HOME/.zshrc" ]]; then
@@ -166,6 +186,7 @@ main() {
     [[ -n "$rel" ]] || continue
     backup_path "$rel"
   done < <(stowed_paths)
+  backup_rendered_paths
   if [[ -d "$NEKOSHELL_BACKUP_DIR" ]]; then log_ok "backup at $NEKOSHELL_BACKUP_DIR"; else log_ok "nothing to back up"; fi
 
   # Your files are saved from here on, so say where they are if a later step
@@ -173,12 +194,19 @@ main() {
   set -E
   trap 'log_fail "install failed after backup; restore with: $NEKOSHELL_ROOT/uninstall.sh --yes"' ERR
 
-  log_step 4 $TOTAL "Migrate your aliases"
+  log_step 4 $TOTAL "Theme and your aliases"
   run mkdir -p "$NEKOSHELL_CONFIG/zsh"
   # greet.conf is yours to edit, so it is copied once, never linked or replaced.
   if [[ ! -e "$NEKOSHELL_CONFIG/greet.conf" ]]; then
     run cp "$NEKOSHELL_ROOT/templates/greet.conf" "$NEKOSHELL_CONFIG/greet.conf"
   fi
+  # starship.toml and the fastfetch config are rendered once and then yours, the
+  # same deal as greet.conf; theme.zsh is nekoshell's and is always rewritten.
+  # Switching flavour later is `nekoshell-theme <flavour>`, which rewrites all of
+  # them. An earlier choice wins over the default, so a re-install keeps it.
+  FLAVOR="$(theme_current)"
+  theme_write_files "$FLAVOR" keep
+  log_ok "theme: $FLAVOR"
   if [[ -n "$zshrc_target" ]]; then
     log_info "your ~/.zshrc was a symlink to $zshrc_target; migrating from there"
   fi
@@ -202,7 +230,7 @@ main() {
   add_gitconfig_include
 
   log_step 9 $TOTAL "iTerm2 profiles"
-  iterm_write_profiles
+  iterm_write_profiles "$FLAVOR"
   log_ok "profiles: nekoshell, nekoshell panel (hotkey ⌥M)"
 
   log_step 10 $TOTAL "iTerm2 global preferences"

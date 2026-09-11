@@ -6,7 +6,8 @@
 [delta]
 	navigate = true
 	line-numbers = true
-	syntax-theme = Catppuccin Mocha
+	# No syntax-theme here: delta falls back to BAT_THEME, which
+	# ~/.config/nekoshell/theme.zsh sets to the flavour in force.
 	side-by-side = false
 [merge]
 	conflictstyle = zdiff3

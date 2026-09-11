@@ -51,6 +51,8 @@ Success is exit code 0. Only `fail` rows block that; `warn` rows do not. On a fr
 - `iterm2 prefs`: iTerm2 needs to be quit for this to apply.
 - `greet time`: the greeting took longer than its 150 ms budget, or could not be measured. Report the number; do not block on it.
 
+The `theme` row is not one of them: a finished install reports `ok` with the flavour in force. If it warns, the theme was never rendered; `nekoshell-theme mocha` fixes it.
+
 Any `fail` row means the install is not done. Read that row's detail, fix the underlying problem, and re-run the doctor. Do not proceed to step 5 with a `fail` row present.
 
 ## 5. Hand off to the human
@@ -87,7 +89,8 @@ It does not undo everything. It deliberately leaves behind:
 
 - the `[include]` line it added to `~/.gitconfig`
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
-- your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf` and `art/`
+- your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
+- `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`
 - the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`
 - Homebrew packages
@@ -96,7 +99,9 @@ It prints the commands for the last two so you can finish by hand if you want to
 
 ## 7. Rules
 
-- Under `~/.config/nekoshell/`, only `zsh/local.zsh`, `greet.conf` and `art/` belong to the user; the installer copies them once and never touches them again. Everything else there is a symlink into the checkout and must not be edited.
+- These files belong to the user. The installer writes each one once and then leaves it alone: `~/.config/nekoshell/zsh/local.zsh`, `~/.config/nekoshell/greet.conf`, `~/.config/nekoshell/art/`, `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc`. Everything else under `~/.config/nekoshell/` is a symlink into the checkout and must not be edited.
+- `~/.config/nekoshell/theme` and `~/.config/nekoshell/theme.zsh` are nekoshell's own: the installer rewrites them every run. Change them with `nekoshell-theme <flavour>`, never by hand.
+- `nekoshell-theme <flavour>` is the one command that does overwrite `~/.config/starship.toml`, `~/.config/fastfetch/config.jsonc` and `~/.config/nekoshell/theme.zsh`. Only run it when the human asked for a different flavour; say so first if they have edited those files.
 - Do not run `defaults write` for iTerm2 while iTerm2 is running; it will be overwritten when iTerm2 quits.
 - Do not install pokemon-colorscripts with sudo.
 - Do not commit to this repo on the user's behalf.
