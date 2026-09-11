@@ -5,7 +5,8 @@ setup() { setup_tmp_home; }
 teardown() { teardown_tmp_home; }
 
 stow_it() {
-  stow -d "$REPO_ROOT/stow" -t "$HOME" zsh config
+  mkdir -p "$HOME/.config/nekoshell/zsh"
+  stow --no-folding -d "$REPO_ROOT/stow" -t "$HOME" zsh config
 }
 
 @test "zshrc parses and sets NEKOSHELL_ROOT and PATH from its stowed location" {

@@ -3,3 +3,4 @@
 *.log
 .cache/
 tests/tmp/
+stow/config/.config/nekoshell/zsh/local.zsh
