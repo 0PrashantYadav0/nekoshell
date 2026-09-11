@@ -110,6 +110,8 @@ teardown() { teardown_tmp_home; }
   grep -q '^cask "font-jetbrains-mono-nerd-font"' "$REPO_ROOT/Brewfile"
   grep -q '^brew "spotify_player"' "$REPO_ROOT/Brewfile"
   grep -q '^brew "atuin"' "$REPO_ROOT/Brewfile"
+  grep -q '^brew "neovim"' "$REPO_ROOT/Brewfile"
+  grep -q '^brew "tmux"' "$REPO_ROOT/Brewfile"
 }
 
 # Backups must never live inside the checkout: re-cloning or cleaning the repo

@@ -1,4 +1,7 @@
 # Environment shared by every nekoshell shell.
+# nvim first, vim as the fallback every Mac already has. An EDITOR you set
+# yourself wins over both, so neither line overrides your own choice.
+(( $+commands[nvim] )) && export EDITOR="${EDITOR:-nvim}"
 export EDITOR="${EDITOR:-vim}"
 # Colours (BAT_THEME, FZF_DEFAULT_OPTS) live in theme.zsh, which the installer
 # and `nekoshell-theme <flavour>` render from data/palettes.json.

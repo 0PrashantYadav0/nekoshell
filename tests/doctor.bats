@@ -81,3 +81,14 @@ EOF
   [ "$status" -ne 0 ]
   assert_matches "$output" 'fail[[:space:]]+root'
 }
+
+# neovim and tmux join the rig's tool list, so a machine missing either one
+# hears about it from the doctor rather than from a broken alias.
+@test "the doctor reports nvim and tmux as tools" {
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  run "$REPO_ROOT/bin/nekoshell-doctor"
+  assert_contains "$output" "tool: nvim"
+  assert_contains "$output" "tool: tmux"
+  assert_not_contains "$output" "fail tool: nvim"
+  assert_not_contains "$output" "fail tool: tmux"
+}

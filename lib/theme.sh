@@ -159,6 +159,17 @@ theme_write_btop() {
   fi
 }
 
+# theme_write_tmux FLAVOR: the one line catppuccin/tmux reads for its flavour.
+# It is a file of its own rather than a line in the user's tmux.conf, so a
+# flavour switch never has to edit a config that belongs to them: their
+# tmux.conf sources this, and `tmux source-file ~/.config/tmux/tmux.conf`
+# (C-a r) picks up the new colours.
+theme_write_tmux() {
+  local flavor="$1"
+  mkdir -p "$HOME/.config/tmux" || return 1
+  printf 'set -g @catppuccin_flavor "%s"\n' "$flavor" > "$HOME/.config/tmux/nekoshell-theme.conf"
+}
+
 # theme_apply FLAVOR MODE PROFILE: the whole render.
 #   MODE     "keep" leaves an existing starship.toml or fastfetch config alone,
 #            because those are the user's files once they exist. "overwrite"
@@ -174,7 +185,7 @@ theme_apply() {
   local fastfetch="$HOME/.config/fastfetch/config.jsonc"
   theme_is_flavor "$flavor" || { log_fail "unknown flavour: $flavor"; return 1; }
   if [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]]; then
-    log_info "would render the $flavor theme: starship.toml, fastfetch config, btop.conf, theme.zsh"
+    log_info "would render the $flavor theme: starship.toml, fastfetch config, btop.conf, theme.zsh, tmux flavour"
     return 0
   fi
   mkdir -p "$NEKOSHELL_CONFIG" "$HOME/.config/fastfetch" || return 1
@@ -191,6 +202,7 @@ theme_apply() {
   fi
   theme_write_zsh "$flavor" || return 1
   theme_write_btop "$flavor" || return 1
+  theme_write_tmux "$flavor" || return 1
   theme_build_bat_cache
   printf '%s\n' "$flavor" > "$NEKOSHELL_CONFIG/theme"
 }

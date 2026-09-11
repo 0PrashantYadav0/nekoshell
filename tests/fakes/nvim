@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Fake Neovim: enough for the doctor's tool row and for `command -v nvim`.
+echo "NVIM v0.0.0-nekoshell-fake"

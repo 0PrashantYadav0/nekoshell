@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Fake tmux: enough for the doctor's tool row and for `command -v tmux`.
+# It never starts a server, so a test can never attach to the real terminal.
+echo "tmux 0.0-nekoshell-fake"

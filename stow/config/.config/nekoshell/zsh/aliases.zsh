@@ -8,6 +8,13 @@ fi
 (( $+commands[bat] )) && alias cat='bat --paging=never'
 (( $+commands[lazygit] )) && alias lg='lazygit'
 (( $+commands[btop] )) && alias top='btop'
+if (( $+commands[nvim] )); then
+  alias vim='nvim'
+  alias vi='nvim'
+fi
+# One session called main: `t` attaches to it when it is there and starts it
+# when it is not, so there is never a second one to pick between.
+(( $+commands[tmux] )) && alias t='tmux new-session -A -s main'
 alias greet='nekoshell-greet'
 alias music='nekoshell-music'
 alias doctor='nekoshell-doctor'

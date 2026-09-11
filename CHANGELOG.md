@@ -15,6 +15,9 @@
 - An iTerm2 status bar on the main profile: working directory and git branch on the left, CPU, memory, battery and the clock on the right, coloured from the flavour. The installer downloads iTerm2's shell integration, which the first two components read, and the uninstaller leaves that file in place.
 - The cursor guide is on, and inactive split panes are dimmed.
 - The installer and `nekoshell-theme` run `bat cache --build`. bat reads themes out of its own cache rather than out of `~/.config/bat/themes`, so the vendored Catppuccin themes were invisible until now. `nekoshell-doctor` has a `bat theme` row that warns when the cache is stale.
+- Neovim, themed with the rest of the rig: a config in `~/.config/nvim/` with lazy.nvim, catppuccin following `$NEKOSHELL_THEME`, treesitter, telescope, oil, lualine, gitsigns, which-key, indent guides, autopairs and comments, on a Space leader. `vim` and `vi` reach it and `EDITOR` prefers it, both only when it is installed.
+- tmux, themed with the rest of the rig: `C-a` as the prefix, `|` and `-` for splits, `hjkl` to move and resize panes, a mouse, and a Catppuccin status bar on top. `t` starts or attaches to a session called main. The installer clones the tmux plugin manager at a pinned commit; the plugins themselves arrive when you press `C-a I` once inside tmux. `nekoshell-theme` writes the flavour into `~/.config/tmux/nekoshell-theme.conf`, which the config sources, so a switch never edits a file that is yours.
+- Both configs are yours the moment they land: copied once on the first install, never stowed, never overwritten. An `init.lua` or `tmux.conf` already in place is moved into the backup first.
 - Idempotent installer with automatic backups, a `nekoshell-doctor` check, and a matching uninstaller.
 - Agent install contract (`AGENTS.md`) and a skill for installing nekoshell unattended.
 
@@ -26,10 +29,16 @@ its 150 ms budget. The `theme` row was added after that run, so a current instal
 more ok. The two warnings are the expected ones: iTerm2 global preferences are
 pending (iTerm2 was running) and Spotify is not authenticated yet.
 
-Three rows were added after that run: `theme`, `tool: atuin` and `bat theme`. On a machine
-installed before atuin joined the Brewfile, `tool: atuin` reports fail until
-`brew bundle --file Brewfile` installs it, after which it moves to ok. `bat theme` reports ok
-once the installer or `nekoshell-theme` has run `bat cache --build`, and warns otherwise.
+Five rows were added after that run: `theme`, `tool: atuin`, `bat theme`, `tool: nvim` and
+`tool: tmux`. On a machine installed before those packages joined the Brewfile, each reports
+fail until `brew bundle --file Brewfile` installs them, after which it moves to ok. `bat theme`
+reports ok once the installer or `nekoshell-theme` has run `bat cache --build`, and warns
+otherwise.
+
+The Neovim and tmux configs are not verified on real hardware yet. Neither tool was installed
+on the machine that ran the test suite, so the tests that ask `luac` or `tmux` to parse the
+shipped files skipped rather than ran. Everything else about them is covered: the copy, the
+backup, the flavour file, the plugin manager clone, the aliases and `EDITOR`.
 
 Fixed while verifying:
 
