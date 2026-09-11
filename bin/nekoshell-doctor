@@ -46,7 +46,7 @@ glob_exists() {
 }
 
 if have brew; then report ok "homebrew" "$(brew --version | head -1)"; else report fail "homebrew" "not on PATH"; fi
-for tool in starship fastfetch fzf eza bat zoxide stow; do
+for tool in starship fastfetch fzf eza bat zoxide stow atuin; do
   if have "$tool"; then report ok "tool: $tool" "$(command -v "$tool")"; else report fail "tool: $tool" "missing (brew bundle)"; fi
 done
 if glob_exists "$HOME"/Library/Fonts/JetBrainsMonoNerdFont* /Library/Fonts/JetBrainsMonoNerdFont*; then
@@ -75,6 +75,17 @@ if theme_is_flavor "$flavour" && [[ -r "$NEKOSHELL_CONFIG/theme.zsh" ]]; then
   report ok "theme" "catppuccin $flavour"
 else
   report warn "theme" "run nekoshell-theme mocha"
+fi
+# bat reads its themes out of its own cache, not out of ~/.config/bat/themes, so
+# the vendored Catppuccin files are invisible until `bat cache --build` has run.
+# Skipped without bat: the tool row above already says bat is missing.
+if have bat; then
+  bat_theme="Catppuccin $(theme_title "$(theme_current)")"
+  if bat --list-themes 2>/dev/null | grep -qF "$bat_theme"; then
+    report ok "bat theme" "$bat_theme"
+  else
+    report warn "bat theme" "run: bat cache --build"
+  fi
 fi
 if have pokemon-colorscripts && pokemon-colorscripts -r >/dev/null 2>&1; then
   report ok "pokemon-colorscripts" "$(command -v pokemon-colorscripts)"; else report fail "pokemon-colorscripts" "missing or broken"; fi

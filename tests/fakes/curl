@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Fake curl for the installer tests: writes a stub wherever -o points instead
+# of reaching the network.
+dest=""
+prev=""
+for arg in "$@"; do
+  [[ "$prev" == "-o" ]] && dest="$arg"
+  prev="$arg"
+done
+[[ -n "$dest" ]] && printf '# fake iTerm2 shell integration\n' > "$dest"
+exit 0

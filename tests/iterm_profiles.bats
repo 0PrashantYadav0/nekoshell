@@ -19,11 +19,11 @@ teardown() { teardown_tmp_home; }
 import json,sys
 p=json.load(open(sys.argv[1]))['Profiles'][0]
 bg=p['Background Color']
-print(p['Name'], p['Normal Font'], p['ASCII Ligatures'], p['Window Type'], p['Transparency'], p['Blur'], p['Blur Radius'])
+print(p['Name'], p['Normal Font'], p['ASCII Ligatures'], p['Window Type'], p['Transparency'], p['Blur'], p['Blur Radius'], p['Use Cursor Guide'], p['Show Status Bar'])
 print(round(bg['Red Component']*255), round(bg['Green Component']*255), round(bg['Blue Component']*255), bg['Color Space'])
 print(round(p['Ansi 5 Color']['Red Component']*255), round(p['Ansi 5 Color']['Green Component']*255), round(p['Ansi 5 Color']['Blue Component']*255))
 PY
-  [ "${lines[0]}" = "nekoshell JetBrainsMonoNF-Regular 15 True 0 0.1 True 24" ]
+  [ "${lines[0]}" = "nekoshell JetBrainsMonoNF-Regular 15 True 0 0.1 True 24 True True" ]
   [ "${lines[1]}" = "30 30 46 sRGB" ]
   [ "${lines[2]}" = "245 194 231" ]
 }

@@ -73,7 +73,7 @@ To change a colour rather than a flavour, edit the hex in `data/palettes.json` a
 nekoshell-doctor
 ```
 
-This prints one line per check: font, tools, zshrc, iTerm2 profiles and preferences, theme, pokemon-colorscripts, greeting time, and Spotify. It exits 1 if any check fails. Add `--json` for machine-readable output.
+This prints one line per check: font, tools, zshrc, iTerm2 profiles and preferences, theme, bat theme, pokemon-colorscripts, greeting time, and Spotify. It exits 1 if any check fails. Add `--json` for machine-readable output.
 
 ## Troubleshooting
 
@@ -82,6 +82,22 @@ This prints one line per check: font, tools, zshrc, iTerm2 profiles and preferen
 **No greeting appears.** Run `nekoshell-greet` directly to see any error, and `nekoshell-doctor` to check that fastfetch and pokemon-colorscripts are installed. The greeting is also suppressed on purpose inside tmux, over SSH (unless `NEKOSHELL_GREET_SSH=1`), and inside Claude Code.
 
 **Wi-Fi shows `<redacted>` or is missing.** Give iTerm2 Location Services access in System Settings, Privacy and Security, Location Services.
+
+**The status bar along the bottom is missing.** iTerm2 reads the status bar out of the profile when a session starts, so a window that was already open never gets one. Open a new window, or quit and reopen iTerm2. If it is still missing, check that the nekoshell profile is the one in use (iTerm2 Settings, Profiles) and that Settings, Profiles, Session, Status bar enabled is ticked for it.
+
+**The status bar shows no working directory or git branch.** Those two components read iTerm2's shell integration. The installer downloads it to `~/.iterm2_shell_integration.zsh` and `.zshrc` sources it, so open a new terminal after installing. If the file is missing, re-run `./install.sh`, or fetch it by hand:
+
+```bash
+curl -fsSL https://iterm2.com/shell_integration/zsh -o ~/.iterm2_shell_integration.zsh
+```
+
+**bat and the previews are not in the Catppuccin colours.** bat reads its themes out of its own cache, not out of `~/.config/bat/themes`. The installer and `nekoshell-theme` rebuild it; `nekoshell-doctor` reports the `bat theme` row as a warning when it is stale. Rebuild it by hand with:
+
+```bash
+bat cache --build
+```
+
+**Ctrl-R opens the old fzf history instead of atuin.** atuin is installed by `brew bundle`, so a run with `--skip-brew` leaves it out. Check `nekoshell-doctor` for the `tool: atuin` row, install it with `brew install atuin`, and open a new terminal.
 
 **The panel does not open.** Check iTerm2 Settings, Keys, Hotkey Window. It should show ⌥M bound to the nekoshell panel profile. If the binding is missing, re-run `./install.sh` to rewrite the profiles. `nekoshell-doctor` reports the `iterm2 profiles` row as stale when the profile still points at an old checkout location.
 
@@ -98,6 +114,7 @@ It does not undo everything. It deliberately leaves behind:
 - the `[include]` line it added to `~/.gitconfig`
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
 - your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
+- `~/.iterm2_shell_integration.zsh`, which is iTerm2's own file
 - `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`
 - the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`

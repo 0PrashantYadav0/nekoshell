@@ -42,7 +42,17 @@ unset _nk_prefix _nk_prefixes
 # Tools
 (( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
 (( $+commands[fzf] )) && source <(fzf --zsh)
+# Previews for the fzf bindings, after fzf has installed them.
+[[ -r "$NEKOSHELL_CONFIG/zsh/fzf.zsh" ]] && source "$NEKOSHELL_CONFIG/zsh/fzf.zsh"
+# atuin after fzf, so Ctrl-R lands on atuin's searchable history. The up arrow
+# is left on plain zsh history, which is what it looks like it should do.
+(( $+commands[atuin] )) && eval "$(atuin init zsh --disable-up-arrow)"
 (( $+commands[starship] )) && eval "$(starship init zsh)"
+
+# iTerm2 shell integration. It tells iTerm2 the working directory and the state
+# of the last command, which is what the status bar's first two components read.
+# install.sh downloads it; without it those components stay blank.
+[[ -r "$HOME/.iterm2_shell_integration.zsh" ]] && source "$HOME/.iterm2_shell_integration.zsh"
 
 # Greeting: only for interactive shells that own a terminal.
 if [[ -o interactive ]] && (( $+commands[nekoshell-greet] )); then

@@ -44,6 +44,14 @@ _Avoid_: Variant, mode, dark/light
 An iTerm2 profile shipped as a dynamic profile JSON file. The rig has two: the main profile and the panel profile.
 _Avoid_: Preset, settings
 
+**Status bar**:
+The row iTerm2 draws along the bottom of a main-profile window: working directory and git branch on the left, machine and clock components on the right. Configured as a `Status Bar Layout` dictionary inside the profile.
+_Avoid_: Statusline, footer, tab bar (the tab bar is hidden)
+
+**Shell integration**:
+iTerm2's own zsh hooks at `~/.iterm2_shell_integration.zsh`, downloaded by the installer. They report the working directory and the last command's status to iTerm2, which is what the status bar's first two components read.
+_Avoid_: Hooks, iTerm hooks, integration script
+
 **Installer**:
 The idempotent script that turns a fresh machine into the rig, and can be re-run safely.
 _Avoid_: Bootstrap, setup script

@@ -30,6 +30,8 @@ fi
 run stow --no-folding --dir "$NEKOSHELL_ROOT/stow" --target "$HOME" --delete zsh config
 backup_restore_latest
 run rm -f "$ITERM_DYNAMIC_DIR/nekoshell.json" "$NEKOSHELL_CONFIG/root"
-log_ok "nekoshell removed. Homebrew packages were left in place; to remove them:"
+log_ok "nekoshell removed. Left in place: Homebrew packages, ~/.iterm2_shell_integration.zsh"
+echo "  (the shell integration is iTerm2's own file; remove it with: rm ~/.iterm2_shell_integration.zsh)"
+echo "  To remove the Homebrew packages:"
 echo "  brew bundle cleanup --file $NEKOSHELL_ROOT/Brewfile --force"
 echo "  (and: defaults delete com.googlecode.iterm2 'Default Bookmark Guid')"

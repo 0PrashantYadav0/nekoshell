@@ -9,6 +9,12 @@
 - Two-line Starship prompt: full working directory, git and language status on top, with duration, exit status and the clock right-aligned; the character prompt on its own line below.
 - Pokémon facts line in the greeting: national dex number, type and generation next to the name, from a generated PokéAPI data table.
 - Spotify panel: a hotkey-toggled iTerm2 window running spotify_player, with a shpotify remote fallback for non-Premium accounts.
+- fzf previews on every binding: Ctrl-T through bat, Alt-C as an eza tree, Ctrl-R wrapped so a long history line is readable, and an eza listing beside `cd` completions. `fd` supplies the file list when it is installed.
+- Command line syntax highlighting in the flavour's colours, and autosuggestions in its dimmest readable grey. The theme files are vendored from catppuccin/zsh-syntax-highlighting at a pinned commit and loaded from `theme.zsh`, above the antidote block, because the plugin reads its styles at load time.
+- atuin on Ctrl-R: shell history in a searchable local database, with sync and the update check off and the up arrow left on plain zsh history. `nekoshell-doctor` reports it as a tool.
+- An iTerm2 status bar on the main profile: working directory and git branch on the left, CPU, memory, battery and the clock on the right, coloured from the flavour. The installer downloads iTerm2's shell integration, which the first two components read, and the uninstaller leaves that file in place.
+- The cursor guide is on, and inactive split panes are dimmed.
+- The installer and `nekoshell-theme` run `bat cache --build`. bat reads themes out of its own cache rather than out of `~/.config/bat/themes`, so the vendored Catppuccin themes were invisible until now. `nekoshell-doctor` has a `bat theme` row that warns when the cache is stale.
 - Idempotent installer with automatic backups, a `nekoshell-doctor` check, and a matching uninstaller.
 - Agent install contract (`AGENTS.md`) and a skill for installing nekoshell unattended.
 

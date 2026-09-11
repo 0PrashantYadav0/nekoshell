@@ -1,5 +1,6 @@
 cask "font-jetbrains-mono-nerd-font"
 brew "antidote"
+brew "atuin"
 brew "bat"
 brew "bats-core"
 brew "btop"
