@@ -26,6 +26,11 @@ its 150 ms budget. The `theme` row was added after that run, so a current instal
 more ok. The two warnings are the expected ones: iTerm2 global preferences are
 pending (iTerm2 was running) and Spotify is not authenticated yet.
 
+Three rows were added after that run: `theme`, `tool: atuin` and `bat theme`. On a machine
+installed before atuin joined the Brewfile, `tool: atuin` reports fail until
+`brew bundle --file Brewfile` installs it, after which it moves to ok. `bat theme` reports ok
+once the installer or `nekoshell-theme` has run `bat cache --build`, and warns otherwise.
+
 Fixed while verifying:
 
 - `Brewfile` no longer taps `homebrew/bundle`. That tap is deprecated and tapping it now

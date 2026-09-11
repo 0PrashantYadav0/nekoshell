@@ -19,14 +19,6 @@ stow_it() {
 
 marker() { printf '%s\n' "$output" | sed -n "s/^$1=//p"; }
 
-# has NEEDLE: the captured output contains NEEDLE. A bare `[[ ]]` in the middle
-# of a test does not fail the test under bats, so substring assertions go
-# through a real command, whose non-zero status does stop the test.
-has() { printf '%s\n' "$output" | grep -qF -- "$1"; }
-hasnt() { ! printf '%s\n' "$output" | grep -qF -- "$1"; }
-# marker_has KEY NEEDLE: the value printed as KEY=... contains NEEDLE.
-marker_has() { marker "$1" | grep -qF -- "$2"; }
-
 # --- 1. fzf previews ---------------------------------------------------------
 
 @test "fzf.zsh parses as zsh" {
@@ -41,10 +33,10 @@ marker_has() { marker "$1" | grep -qF -- "$2"; }
     echo "ALT_C=$FZF_ALT_C_OPTS"
     echo "CTRL_R=$FZF_CTRL_R_OPTS"'
   [ "$status" -eq 0 ]
-  marker_has CTRL_T 'bat --color=always'
-  marker_has CTRL_T '--preview-window=right:60%'
-  marker_has ALT_C 'eza --tree --level=2'
-  marker_has CTRL_R '--preview-window=down:3:wrap'
+  assert_contains "$(marker CTRL_T)" 'bat --color=always'
+  assert_contains "$(marker CTRL_T)" '--preview-window=right:60%'
+  assert_contains "$(marker ALT_C)" 'eza --tree --level=2'
+  assert_contains "$(marker CTRL_R)" '--preview-window=down:3:wrap'
 }
 
 # fd is the only one of these that changes what fzf lists rather than how it
@@ -65,7 +57,7 @@ marker_has() { marker "$1" | grep -qF -- "$2"; }
   run zsh -c 'source "$HOME/.config/nekoshell/zsh/fzf.zsh"
     zstyle -s ":fzf-tab:complete:cd:*" fzf-preview v; echo "PREVIEW=$v"
     zstyle -s ":fzf-tab:*" use-fzf-default-opts w; echo "DEFAULTS=$w"'
-  marker_has PREVIEW 'eza --icons --color=always -1 '
+  assert_contains "$(marker PREVIEW)" 'eza --icons --color=always -1 '
   [ "$(marker DEFAULTS)" = "yes" ]
 }
 
@@ -73,8 +65,8 @@ marker_has() { marker "$1" | grep -qF -- "$2"; }
   stow_it
   run zsh -c 'source "$HOME/.zshrc"; echo "CTRL_T=$FZF_CTRL_T_OPTS"; echo NEKO_DONE'
   [ "$status" -eq 0 ]
-  has NEKO_DONE
-  marker_has CTRL_T 'bat --color=always'
+  assert_contains "$output" NEKO_DONE
+  assert_contains "$(marker CTRL_T)" 'bat --color=always'
 }
 
 # --- 2. themed syntax highlighting -------------------------------------------
@@ -162,8 +154,8 @@ print(d['style'], d['inline_height'], d['search_mode'], d['filter_mode_shell_up_
   export NEKOSHELL_SKIP_PREFLIGHT=1
   "$REPO_ROOT/install.sh" --yes >/dev/null
   run "$REPO_ROOT/bin/nekoshell-doctor"
-  has "tool: atuin"
-  hasnt "fail tool: atuin"
+  assert_contains "$output" "tool: atuin"
+  assert_not_contains "$output" "fail tool: atuin"
 }
 
 # --- 4. iTerm2 status bar and profile extras ---------------------------------
@@ -233,8 +225,8 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
     source '$REPO_ROOT/lib/log.sh'; source '$REPO_ROOT/lib/paths.sh'; source '$REPO_ROOT/lib/iterm.sh'
     iterm_apply_prefs"
   [ "$status" -eq 0 ]
-  has "DimInactiveSplitPanes -bool true"
-  has "SplitPaneDimmingAmount -float 0.3"
+  assert_contains "$output" "DimInactiveSplitPanes -bool true"
+  assert_contains "$output" "SplitPaneDimmingAmount -float 0.3"
 }
 
 # The working directory and git components only ever have something to show
@@ -248,11 +240,27 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
   echo 'mine' > "$HOME/.iterm2_shell_integration.zsh"
   run "$REPO_ROOT/install.sh" --yes --skip-brew
   [ "$status" -eq 0 ]
-  has "curl -fsSL https://iterm2.com/shell_integration/zsh"
+  assert_contains "$output" "curl -fsSL https://iterm2.com/shell_integration/zsh"
   [ -f "$HOME/.iterm2_shell_integration.zsh" ]
   # The file the user already had is saved, like every other file replaced.
   backup="$(ls -d "$HOME"/.local/share/nekoshell/backup/*/ | head -1)"
   [ "$(cat "$backup/.iterm2_shell_integration.zsh")" = "mine" ]
+}
+
+# Everything else about the rig works without the shell integration, so a
+# download that fails must not take the install down with it.
+@test "a failed shell integration download warns and the install carries on" {
+  mkdir -p "$HOME/failbin"
+  printf '#!/bin/sh\nexit 1\n' > "$HOME/failbin/curl"
+  chmod +x "$HOME/failbin/curl"
+  export PATH="$HOME/failbin:$REPO_ROOT/tests/fakes:$PATH"
+  export NEKOSHELL_SKIP_PREFLIGHT=1
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "shell integration download failed"
+  [ ! -e "$HOME/.iterm2_shell_integration.zsh" ]
+  # The steps after it still ran.
+  [ -f "$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json" ]
 }
 
 @test "--check does not download the shell integration" {
@@ -260,7 +268,7 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
   export NEKOSHELL_SKIP_PREFLIGHT=1
   run "$REPO_ROOT/install.sh" --check
   [ "$status" -eq 0 ]
-  hasnt "curl"
+  assert_not_contains "$output" "curl"
   [ ! -e "$HOME/.iterm2_shell_integration.zsh" ]
 }
 
@@ -269,7 +277,7 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
   export NEKOSHELL_SKIP_PREFLIGHT=1
   run "$REPO_ROOT/install.sh" --dry-run --yes
   [ "$status" -eq 0 ]
-  has "curl -fsSL https://iterm2.com/shell_integration/zsh"
+  assert_contains "$output" "curl -fsSL https://iterm2.com/shell_integration/zsh"
   [ ! -e "$HOME/.iterm2_shell_integration.zsh" ]
 }
 
@@ -280,7 +288,7 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
   export NEKOSHELL_SKIP_PREFLIGHT=1
   run "$REPO_ROOT/install.sh" --yes
   [ "$status" -eq 0 ]
-  has "bat cache --build"
+  assert_contains "$output" "bat cache --build"
 }
 
 # nekoshell-theme sends the render's own output to /dev/null, so the cache
@@ -295,7 +303,7 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
     source '$REPO_ROOT/lib/theme.sh'
     theme_apply latte overwrite no-profile"
   [ "$status" -eq 0 ]
-  has "bat cache --build"
+  assert_contains "$output" "bat cache --build"
   [ "$(cat "$HOME/.config/nekoshell/theme")" = "latte" ]
   # And the switch really did move the flavour's highlighting theme with it.
   grep -qF 'catppuccin_latte-zsh-syntax-highlighting.zsh' "$HOME/.config/nekoshell/theme.zsh"
@@ -309,7 +317,7 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
     source '$REPO_ROOT/lib/theme.sh'
     theme_apply mocha overwrite no-profile"
   [ "$status" -eq 0 ]
-  hasnt "bat cache"
+  assert_not_contains "$output" "bat cache"
 }
 
 @test "the doctor reports the bat theme row" {
@@ -317,7 +325,22 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
   export NEKOSHELL_SKIP_PREFLIGHT=1
   "$REPO_ROOT/install.sh" --yes >/dev/null
   run "$REPO_ROOT/bin/nekoshell-doctor"
-  has "ok   bat theme"
+  assert_matches "$output" 'ok[[:space:]]+bat theme'
+}
+
+# The other half of the bat theme row: the cache still holds mocha while the
+# rig has moved to latte, which is exactly what a stale cache looks like.
+@test "the doctor warns when bat's cache does not have the current flavour" {
+  export PATH="$REPO_ROOT/tests/fakes:$PATH"
+  export NEKOSHELL_SKIP_PREFLIGHT=1
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  # The fake bat only ever lists Catppuccin Mocha.
+  echo latte > "$HOME/.config/nekoshell/theme"
+  run "$REPO_ROOT/bin/nekoshell-doctor"
+  assert_matches "$output" 'warn[[:space:]]+bat theme'
+  assert_contains "$output" "run: bat cache --build"
+  # A stale cache is a warning, not a failure, so it must not sink the exit code.
+  assert_not_contains "$output" "fail bat theme"
 }
 
 # bat is optional as far as the doctor is concerned: it has its own tool row,
@@ -331,5 +354,5 @@ print(p['Show Status Bar'], 'Status Bar Layout' in p)"
     case "$(basename "$t")" in bat) ;; *) ln -sf "$t" "$HOME/nobat/" ;; esac
   done
   run env PATH="$HOME/nobat:/usr/bin:/bin" "$REPO_ROOT/bin/nekoshell-doctor"
-  hasnt "bat theme"
+  assert_not_contains "$output" "bat theme"
 }

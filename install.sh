@@ -138,9 +138,12 @@ install_pokemon_colorscripts() {
 # directory and the last command's status, which is what the status bar's
 # working directory and git components read. Downloaded rather than vendored
 # because it is iTerm2's file and has to match the running iTerm2. Not tied to
-# --skip-brew: it is not a Homebrew package.
+# --skip-brew: it is not a Homebrew package. A failed download is not a failed
+# install either, because everything else about the rig works without it, so
+# this warns and carries on rather than tripping the ERR trap.
 install_shell_integration() {
-  run curl -fsSL https://iterm2.com/shell_integration/zsh -o "$ITERM_SHELL_INTEGRATION"
+  run curl -fsSL https://iterm2.com/shell_integration/zsh -o "$ITERM_SHELL_INTEGRATION" \
+    || log_warn "iTerm2 shell integration download failed; the status bar's working directory and git components will stay blank"
 }
 
 # The include path is its own marker: it appears once, so a re-run is a no-op.

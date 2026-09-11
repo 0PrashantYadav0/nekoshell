@@ -31,7 +31,10 @@ render_starship() {
   run zsh -c 'source "$HOME/.zshrc"; echo "NEKO_ROOT=$NEKOSHELL_ROOT"; echo "NEKO_PATH=$PATH"'
   [ "$status" -eq 0 ]
   [ "$(marker NEKO_ROOT)" = "$REPO_ROOT" ]
-  [[ "$(marker NEKO_PATH)" == "$REPO_ROOT/bin:$HOME/.local/bin:"* ]]
+  case "$(marker NEKO_PATH)" in
+    "$REPO_ROOT/bin:$HOME/.local/bin:"*) : ;;
+    *) echo "PATH does not start with the nekoshell bin: $(marker NEKO_PATH)" >&2; false ;;
+  esac
 }
 
 @test "zshrc sources local.zsh when present" {
@@ -46,7 +49,7 @@ render_starship() {
   stow_it
   run zsh -c 'source "$HOME/.zshrc"; echo NEKO_DONE'
   [ "$status" -eq 0 ]
-  [[ "$output" == *"NEKO_DONE"* ]]
+  assert_contains "$output" "NEKO_DONE"
   # The greeting writes this cache file whenever it draws anything.
   [ ! -e "$HOME/.cache/nekoshell/art-name" ]
 }
@@ -113,9 +116,9 @@ EOF
   [ "$status" -eq 0 ]
   [ "$output" = "2" ]
   run cat "$HOME/local.zsh"
-  [[ "$output" == *"alias gs='git status'"* ]]
-  [[ "$output" == *"export EDITOR=vim"* ]]
-  [[ "$output" != *"oh-my-zsh"* ]]
+  assert_contains "$output" "alias gs='git status'"
+  assert_contains "$output" "export EDITOR=vim"
+  assert_not_contains "$output" "oh-my-zsh"
 }
 
 @test "zsh_migrate_aliases does not overwrite an existing destination" {

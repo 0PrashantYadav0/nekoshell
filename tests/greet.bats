@@ -39,7 +39,7 @@ greet() {
 @test "silent over ssh unless opted in" {
   SSH_CONNECTION="1 2 3 4" run greet; [ -z "$output" ]
   SSH_CONNECTION="1 2 3 4" NEKOSHELL_GREET_SSH=1 NEKOSHELL_SEED=1 run greet
-  [[ "$output" == *"fastfetch"* ]]
+  assert_contains "$output" "fastfetch"
 }
 
 @test "silent when stdout is not a tty" {
@@ -51,7 +51,7 @@ greet() {
 @test "pokemon path pipes the sprite into fastfetch and caches the name" {
   NEKOSHELL_SEED=1 run greet
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--file-raw - stdin=3"* ]]
+  assert_contains "$output" "--file-raw - stdin=3"
   [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Pikachu · #025 · Electric · Gen 1" ]
 }
 
@@ -59,21 +59,21 @@ greet() {
   cp "$REPO_ROOT/art/neko.png" "$HOME/.config/nekoshell/art/"
   echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   NEKOSHELL_SEED=1 run greet
-  [[ "$output" == *"--iterm $HOME/.config/nekoshell/art/neko.png --logo-width 28 --logo-height 14"* ]]
+  assert_contains "$output" "--iterm $HOME/.config/nekoshell/art/neko.png --logo-width 28 --logo-height 14"
   [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "neko.png" ]
 }
 
 @test "falls back to pokemon when the art pack is empty" {
   echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   NEKOSHELL_SEED=1 run greet
-  [[ "$output" == *"--file-raw -"* ]]
+  assert_contains "$output" "--file-raw -"
 }
 
 @test "falls back to pokemon outside iTerm2" {
   cp "$REPO_ROOT/art/neko.png" "$HOME/.config/nekoshell/art/"
   echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   TERM_PROGRAM=Apple_Terminal NEKOSHELL_SEED=1 run greet
-  [[ "$output" == *"--file-raw -"* ]]
+  assert_contains "$output" "--file-raw -"
 }
 
 @test "shiny odds of 1 always passes -s" {
@@ -92,7 +92,7 @@ greet() {
   NEKOSHELL_GREET_TIME=1 NEKOSHELL_SEED=1 run greet
   last="${lines[${#lines[@]}-1]}"
   last="${last%$'\r'}"
-  [[ "$last" =~ ^greet:\ [0-9]+\ ms$ ]]
+  assert_matches "$last" '^greet: [0-9]+ ms$'
 }
 
 @test "nekoshell-art list and add" {

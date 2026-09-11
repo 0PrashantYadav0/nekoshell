@@ -65,7 +65,7 @@ bg=p['Background Color']; print(round(bg['Red Component']*255), round(bg['Green 
   [ ! -L "$HOME/.config/starship.toml" ]
   [ ! -L "$HOME/.config/fastfetch/config.jsonc" ]
   grep -q '@@FLAVOR@@' "$REPO_ROOT/templates/starship.toml"
-  ! grep -q '@@FLAVOR@@' "$HOME/.config/starship.toml"
+  assert_not_contains "$(cat "$HOME/.config/starship.toml")" '@@FLAVOR@@'
 }
 
 # stow writes RELATIVE links, and this version deleted the directory the
@@ -119,5 +119,5 @@ bg=p['Background Color']; print(round(bg['Red Component']*255), round(bg['Green 
   "$REPO_ROOT/install.sh" --yes >/dev/null
   grep -q '# mine' "$HOME/.config/starship.toml"
   "$REPO_ROOT/bin/nekoshell-theme" mocha >/dev/null
-  ! grep -q '# mine' "$HOME/.config/starship.toml"
+  assert_not_contains "$(cat "$HOME/.config/starship.toml")" '# mine'
 }

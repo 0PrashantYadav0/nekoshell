@@ -12,7 +12,7 @@ teardown() { teardown_tmp_home; }
 @test "doctor fails before install" {
   run "$REPO_ROOT/bin/nekoshell-doctor"
   [ "$status" -ne 0 ]
-  [[ "$output" == *"fail"* ]]
+  assert_contains "$output" "fail"
 }
 
 @test "doctor passes with only warns after a fake install" {
@@ -20,8 +20,8 @@ teardown() { teardown_tmp_home; }
   mkdir -p "$HOME/Library/Fonts"; touch "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
   run "$REPO_ROOT/bin/nekoshell-doctor"
   [ "$status" -eq 0 ]
-  [[ "$output" != *"fail"* ]]
-  [[ "$output" == *"warn"*"spotify"* ]]
+  assert_not_contains "$output" "fail"
+  assert_matches "$output" 'warn[[:space:]]+spotify'
 }
 
 @test "doctor --json emits an array of checks" {
@@ -43,9 +43,9 @@ printf 'art\n\033[m'
 EOF
   chmod +x "$HOME/bin/fastfetch"
   PATH="$HOME/bin:$PATH" run "$REPO_ROOT/bin/nekoshell-doctor"
-  [[ "$output" == *"greet time"* ]]
-  [[ "$output" != *"could not measure"* ]]
-  [[ "$output" =~ greet\ time[[:space:]]+[0-9]+\ ms ]]
+  assert_contains "$output" "greet time"
+  assert_not_contains "$output" "could not measure"
+  assert_matches "$output" 'greet time[[:space:]]+[0-9]+ ms'
 }
 
 # The theme row names the flavour in force. It warns rather than fails, because
@@ -57,16 +57,16 @@ EOF
   # status at the end answers for the theme row alone.
   mkdir -p "$HOME/Library/Fonts"; touch "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
   run "$REPO_ROOT/bin/nekoshell-doctor"
-  [[ "$output" =~ ok[[:space:]]+theme[[:space:]]+catppuccin\ mocha ]]
+  assert_matches "$output" 'ok[[:space:]]+theme[[:space:]]+catppuccin mocha'
 
   "$REPO_ROOT/bin/nekoshell-theme" latte >/dev/null
   run "$REPO_ROOT/bin/nekoshell-doctor"
-  [[ "$output" =~ ok[[:space:]]+theme[[:space:]]+catppuccin\ latte ]]
+  assert_matches "$output" 'ok[[:space:]]+theme[[:space:]]+catppuccin latte'
 
   rm -f "$HOME/.config/nekoshell/theme"
   run "$REPO_ROOT/bin/nekoshell-doctor"
-  [[ "$output" =~ warn[[:space:]]+theme ]]
-  [[ "$output" == *"nekoshell-theme mocha"* ]]
+  assert_matches "$output" 'warn[[:space:]]+theme'
+  assert_contains "$output" "nekoshell-theme mocha"
   # A missing flavour is a warning, not a failure: the doctor still exits 0.
   [ "$status" -eq 0 ]
 }
@@ -79,5 +79,5 @@ EOF
   echo '/nowhere/old' > "$HOME/.config/nekoshell/root"
   run "$REPO_ROOT/bin/nekoshell-doctor"
   [ "$status" -ne 0 ]
-  [[ "$output" =~ fail[[:space:]]+root ]]
+  assert_matches "$output" 'fail[[:space:]]+root'
 }

@@ -33,7 +33,10 @@ ANSI = ["surface1", "red", "green", "yellow", "blue", "pink", "teal", "subtext1"
 STATUS_BAR_COMPONENTS = [
     ("iTermStatusBarWorkingDirectoryComponent", {"base: priority": 5}),
     ("iTermStatusBarGitComponent", {"base: priority": 5}),
-    ("iTermStatusBarSpringComponent", {"iTermStatusBarSpringComponentSpringConstantKey": 1}),
+    # The spring reads a different knob per layout algorithm: the spring constant
+    # under "tightly packed", the size multiple under "stable", which is the one
+    # the advanced configuration below selects.
+    ("iTermStatusBarSpringComponent", {"iTermStatusBarSpringComponentSizeMultipleKey": 1}),
     ("iTermStatusBarCPUUtilizationComponent", {"base: priority": 4}),
     ("iTermStatusBarMemoryUtilizationComponent", {"base: priority": 3}),
     ("iTermStatusBarBatteryComponent", {"base: priority": 2}),
