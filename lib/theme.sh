@@ -69,15 +69,30 @@ with open(dst, "w", encoding="utf-8") as f:
 ' "$NEKOSHELL_ROOT/data/palettes.json" "$1" "$2" "$3"
 }
 
-# theme_clear_stale_link PATH: drop PATH when it is a symlink into the checkout.
+# theme_clear_stale_link PATH: drop PATH when it is a leftover stow link.
 # starship.toml and the fastfetch config used to be stowed. `stow --restow` only
 # unlinks what the package still holds, so an upgraded machine keeps the old link
 # and a render would write straight into the repo.
+#
+# Two shapes count as stale, because stow writes relative links and this version
+# deleted the directory one of them pointed through:
+#
+#   1. It resolves to somewhere inside the checkout.
+#   2. It is broken. backup_link_target cannot resolve a relative link whose
+#      target directory is gone, so shape 1 misses exactly the link an upgrade
+#      leaves at ~/.config/fastfetch/config.jsonc. A broken link here can never
+#      be a working config of the user's, so removing it loses nothing and the
+#      render puts a real file in its place.
+#
+# A relative link to a real file outside the checkout is the user's own dotfiles
+# setup. It is neither shape and is left alone.
 theme_clear_stale_link() {
   local p="$1" target
   [[ -L "$p" ]] || return 0
   target="$(backup_link_target "$p" 2>/dev/null || true)"
-  [[ -n "$target" && "$target" == "$NEKOSHELL_ROOT"/* ]] && rm -f "$p"
+  if [[ -n "$target" && "$target" == "$NEKOSHELL_ROOT"/* ]] || [[ ! -e "$p" ]]; then
+    rm -f "$p"
+  fi
   return 0
 }
 
@@ -119,34 +134,48 @@ theme_write_btop() {
   fi
 }
 
-# theme_write_files FLAVOR [MODE]: render everything but the iTerm2 profile.
-# MODE "keep" leaves an existing starship.toml or fastfetch config alone, because
-# those are the user's files once they exist; the default overwrites them, which
-# is what switching flavour means.
-theme_write_files() {
-  local flavor="$1" mode="${2:-overwrite}" starship="$HOME/.config/starship.toml"
+# theme_apply FLAVOR MODE PROFILE: the whole render.
+#   MODE     "keep" leaves an existing starship.toml or fastfetch config alone,
+#            because those are the user's files once they exist. "overwrite"
+#            rewrites them, which is what switching flavour means.
+#   PROFILE  "profile" rewrites the iTerm2 profile too, "no-profile" does not.
+#
+# Order matters. Everything that can fail runs first: a missing template, an
+# unreadable palette or a path that cannot be written must not leave the rig with
+# a latte prompt and a mocha terminal. The recorded flavour is written last, so a
+# failure anywhere above leaves the previous flavour in force and a non-zero exit.
+theme_apply() {
+  local flavor="$1" mode="$2" profile="$3" starship="$HOME/.config/starship.toml"
   local fastfetch="$HOME/.config/fastfetch/config.jsonc"
   theme_is_flavor "$flavor" || { log_fail "unknown flavour: $flavor"; return 1; }
   if [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]]; then
     log_info "would render the $flavor theme: starship.toml, fastfetch config, btop.conf, theme.zsh"
     return 0
   fi
-  mkdir -p "$NEKOSHELL_CONFIG" "$HOME/.config/fastfetch"
+  mkdir -p "$NEKOSHELL_CONFIG" "$HOME/.config/fastfetch" || return 1
   theme_clear_stale_link "$starship"
   theme_clear_stale_link "$fastfetch"
-  printf '%s\n' "$flavor" > "$NEKOSHELL_CONFIG/theme"
-  theme_write_zsh "$flavor"
-  theme_write_btop "$flavor"
   if [[ "$mode" != "keep" || ! -e "$starship" ]]; then
-    theme_render_template "$NEKOSHELL_ROOT/templates/starship.toml" "$starship" "$flavor"
+    theme_render_template "$NEKOSHELL_ROOT/templates/starship.toml" "$starship" "$flavor" || return 1
   fi
   if [[ "$mode" != "keep" || ! -e "$fastfetch" ]]; then
-    theme_render_template "$NEKOSHELL_ROOT/templates/fastfetch.jsonc" "$fastfetch" "$flavor"
+    theme_render_template "$NEKOSHELL_ROOT/templates/fastfetch.jsonc" "$fastfetch" "$flavor" || return 1
   fi
+  if [[ "$profile" == "profile" ]]; then
+    iterm_write_profiles "$flavor" || return 1
+  fi
+  theme_write_zsh "$flavor" || return 1
+  theme_write_btop "$flavor" || return 1
+  printf '%s\n' "$flavor" > "$NEKOSHELL_CONFIG/theme"
+}
+
+# theme_write_files FLAVOR [MODE]: render everything but the iTerm2 profile.
+# The installer's entry point; it writes the profile itself, in its own step.
+theme_write_files() {
+  theme_apply "$1" "${2:-overwrite}" no-profile
 }
 
 # theme_render FLAVOR: switch to FLAVOR outright, iTerm2 profile included.
 theme_render() {
-  theme_write_files "$1" overwrite || return 1
-  iterm_write_profiles "$1"
+  theme_apply "$1" overwrite profile
 }
