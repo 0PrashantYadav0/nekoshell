@@ -19,6 +19,12 @@ If Homebrew is missing, stop. Hand the human this command; do not run it yoursel
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
+If iTerm2 is missing, stop. The installer checks for it too and refuses to run without it. Hand the human this command:
+
+```bash
+brew install --cask iterm2
+```
+
 ## 2. Where to run from
 
 Run the installer from a terminal that is not iTerm2: Terminal.app, or the Claude Code desktop app. The installer's last step needs iTerm2 quit so it can write global preferences; running from inside iTerm2 means that step cannot complete.
@@ -28,10 +34,10 @@ If you cannot avoid running from iTerm2, run the installer anyway and expect the
 ## 3. Install
 
 ```bash
-git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.local/share/nekoshell && cd ~/.local/share/nekoshell && ./install.sh --yes
+[ -d ~/.nekoshell ] || git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell; cd ~/.nekoshell && git pull --ff-only && ./install.sh --yes
 ```
 
-Re-running this command is safe; the installer is idempotent. On a machine without Spotify, add `--skip-spotify`.
+Re-running this command is safe; it updates an existing checkout instead of failing on it, and the installer is idempotent. On a machine without Spotify, add `--skip-spotify`.
 
 ## 4. Verify
 
@@ -54,7 +60,7 @@ Give the human these steps verbatim, then stop:
 1. Quit and reopen iTerm2.
 2. If the doctor reported `iterm2 prefs` as pending, quit iTerm2 and, from Terminal.app, run:
    ```bash
-   ~/.local/share/nekoshell/install.sh --iterm-prefs
+   ~/.nekoshell/install.sh --iterm-prefs
    ```
 3. Run `spotify_player authenticate` (opens a browser; requires Spotify Premium).
 4. Press ⌥M to open the panel.
@@ -69,17 +75,28 @@ The installer backs up every file it replaces before touching anything. Backups 
 
 Each backup directory has a `manifest.txt` listing every path it holds, relative to `$HOME`. Never delete this directory.
 
-To undo everything the installer did:
+To roll the installer back:
 
 ```bash
 ./uninstall.sh --yes
 ```
 
-This unstows the linked configs, restores the most recent backup, and removes the iTerm2 profiles. It does not remove Homebrew packages.
+This unstows the linked configs, restores the most recent backup, and removes the iTerm2 profiles.
+
+It does not undo everything. It deliberately leaves behind:
+
+- the `[include]` line it added to `~/.gitconfig`
+- `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
+- your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf` and `art/`
+- the cache in `~/.cache/nekoshell`
+- the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`
+- Homebrew packages
+
+It prints the commands for the last two so you can finish by hand if you want to.
 
 ## 7. Rules
 
-- Do not edit files under `~/.config/nekoshell/` except `zsh/local.zsh` and `greet.conf`. Every other file there is a symlink managed by the installer.
+- Under `~/.config/nekoshell/`, only `zsh/local.zsh`, `greet.conf` and `art/` belong to the user; the installer copies them once and never touches them again. Everything else there is a symlink into the checkout and must not be edited.
 - Do not run `defaults write` for iTerm2 while iTerm2 is running; it will be overwritten when iTerm2 quits.
 - Do not install pokemon-colorscripts with sudo.
 - Do not commit to this repo on the user's behalf.

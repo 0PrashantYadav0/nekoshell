@@ -5,6 +5,7 @@ Usage: build-profiles.py --root /path/to/checkout --out FILE [--window-type N]
 """
 import argparse
 import json
+import shlex
 
 MAIN_GUID = "4E4B4F53-4845-4C4C-0001-000000000001"
 PANEL_GUID = "4E4B4F53-4845-4C4C-0002-000000000002"
@@ -89,7 +90,7 @@ def panel_profile(root, window_type):
         "Columns": 60,
         "Rows": 40,
         "Custom Command": "Yes",
-        "Command": f"/usr/bin/env NEKOSHELL_PANEL=1 {root}/bin/nekoshell-music",
+        "Command": f"/usr/bin/env NEKOSHELL_PANEL=1 {shlex.quote(root)}/bin/nekoshell-music",
     })
     return p
 

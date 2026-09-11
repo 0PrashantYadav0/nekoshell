@@ -3,7 +3,7 @@
   // The logo is passed on the command line by nekoshell-greet.
   "display": {
     "separator": "  ",
-    "color": { "keys": "magenta", "title": "blue" }
+    "color": { "keys": "38;2;203;166;247", "title": "blue" }
   },
   "modules": [
     "title",

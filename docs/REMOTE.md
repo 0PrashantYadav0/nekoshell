@@ -33,8 +33,8 @@ Once installed, these work the same as local:
 
 ```bash
 mkdir -p ~/.config/nekoshell-zsh
-cp ~/.local/share/nekoshell/stow/config/.config/starship.toml ~/.config/starship.toml
-cp ~/.local/share/nekoshell/stow/config/.config/nekoshell/zsh/*.zsh ~/.config/nekoshell-zsh/
+cp ~/.nekoshell/stow/config/.config/starship.toml ~/.config/starship.toml
+cp ~/.nekoshell/stow/config/.config/nekoshell/zsh/*.zsh ~/.config/nekoshell-zsh/
 ```
 
 Then add to your `.zshrc`:

@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Fake git for the installer tests: `clone` fabricates a pokemon-colorscripts
-# checkout, `checkout`/`-C` are no-ops. Everything else just echoes.
+# checkout, `fetch`/`checkout`/`-C` are no-ops. Everything else just echoes.
 echo "git $*"
 for arg in "$@"; do
+  if [[ "$arg" == "fetch" ]]; then
+    exit 0
+  fi
   if [[ "$arg" == "clone" ]]; then
     dest=""
     for a in "$@"; do dest="$a"; done

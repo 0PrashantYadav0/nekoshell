@@ -2,6 +2,9 @@
 # nekoshell-music: what runs inside the Spotify panel.
 # Premium: spotify_player (streams on its own). Fallback: shpotify remote for the desktop app.
 set -euo pipefail
+# iTerm2 runs a profile's custom Command without a login shell, so PATH is
+# launchd's and nothing from Homebrew is on it. Put the usual prefixes back.
+export PATH="${NEKOSHELL_BREW_PREFIX:-/opt/homebrew}/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
 export NEKOSHELL_PANEL=1
 
 mode="${1:-auto}"

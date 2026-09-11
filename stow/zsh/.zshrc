@@ -4,6 +4,7 @@
 # Locate the checkout from this file's real path: stow/zsh/.zshrc -> repo root.
 NEKOSHELL_ROOT="${${(%):-%x}:A:h:h:h}"
 export NEKOSHELL_ROOT
+typeset -U path
 export PATH="$NEKOSHELL_ROOT/bin:$HOME/.local/bin:$PATH"
 
 NEKOSHELL_CONFIG="$HOME/.config/nekoshell"
@@ -22,11 +23,21 @@ setopt HIST_IGNORE_ALL_DUPS SHARE_HISTORY HIST_IGNORE_SPACE
 autoload -Uz compinit && compinit -C
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
-# Plugins via antidote (Homebrew)
-if [[ -r "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/antidote/share/antidote/antidote.zsh" ]]; then
-  source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/antidote/share/antidote/antidote.zsh"
-  antidote load "$NEKOSHELL_CONFIG/zsh/plugins.txt"
+# Plugins via antidote. Homebrew's prefix is /opt/homebrew on Apple silicon and
+# /usr/local on Intel; an explicit HOMEBREW_PREFIX wins and is the only one tried.
+if [[ -n "${HOMEBREW_PREFIX:-}" ]]; then
+  _nk_prefixes=("$HOMEBREW_PREFIX")
+else
+  _nk_prefixes=(/opt/homebrew /usr/local)
 fi
+for _nk_prefix in "${_nk_prefixes[@]}"; do
+  if [[ -r "$_nk_prefix/opt/antidote/share/antidote/antidote.zsh" ]]; then
+    source "$_nk_prefix/opt/antidote/share/antidote/antidote.zsh"
+    antidote load "$NEKOSHELL_CONFIG/zsh/plugins.txt"
+    break
+  fi
+done
+unset _nk_prefix _nk_prefixes
 
 # Tools
 (( $+commands[zoxide] )) && eval "$(zoxide init zsh)"

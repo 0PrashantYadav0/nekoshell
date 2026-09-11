@@ -71,6 +71,7 @@ preflight() {
     exit 1
   }
   command -v zsh >/dev/null 2>&1 || { log_fail "zsh not found"; exit 1; }
+  [[ -d /Applications/iTerm.app || -d "$HOME/Applications/iTerm.app" ]] || { log_fail "iTerm2 not found. Install it first: brew install --cask iterm2"; exit 1; }
   command -v stow >/dev/null 2>&1 || [[ "$SKIP_BREW" == 0 ]] || { log_fail "stow is missing and --skip-brew was given"; exit 1; }
 }
 
@@ -101,6 +102,9 @@ install_pokemon_colorscripts() {
   sha="$(sed -n 's/^pokemon-colorscripts=//p' "$NEKOSHELL_ROOT/deps.lock")"
   if [[ ! -d "$POKEMON_DIR" ]]; then
     run git clone --quiet https://gitlab.com/phoneybadger/pokemon-colorscripts.git "$POKEMON_DIR"
+  else
+    # An older clone may not have the pinned commit yet.
+    run git -C "$POKEMON_DIR" fetch --quiet
   fi
   run git -C "$POKEMON_DIR" checkout --quiet "$sha"
   run chmod +x "$POKEMON_DIR/pokemon-colorscripts.py"
@@ -121,7 +125,12 @@ main() {
   # --check answers from the filesystem alone, so it must not need Homebrew.
   [[ "$CHECK" == 1 ]] && check_only
   preflight
-  [[ "$ONLY_PREFS" == 1 ]] && { iterm_apply_prefs; log_ok "iTerm2 global prefs applied"; exit 0; }
+  # iTerm2 rewrites its own plist when it quits, so anything written now would
+  # be thrown away. Refuse rather than pretend the prefs were applied.
+  if [[ "$ONLY_PREFS" == 1 ]]; then
+    if iterm_is_running; then log_fail "iTerm2 is running; quit it and run this again"; exit 1; fi
+    iterm_apply_prefs; log_ok "iTerm2 global prefs applied"; exit 0
+  fi
 
   log_step 1 $TOTAL "Preflight"
   log_ok "macOS, Homebrew, zsh present. Checkout: $NEKOSHELL_ROOT"
@@ -135,9 +144,24 @@ main() {
   fi
 
   log_step 3 $TOTAL "Back up files nekoshell replaces"
+  if backup_root_inside_checkout; then
+    log_fail "backups would land inside the checkout at $NEKOSHELL_BACKUP_ROOT; move the checkout out of $NEKOSHELL_ROOT and run this again"
+    exit 1
+  fi
   backup_begin
-  local rel old_zshrc=""
-  [[ -f "$HOME/.zshrc" && ! -L "$HOME/.zshrc" ]] && old_zshrc="$NEKOSHELL_BACKUP_DIR/.zshrc"
+  local rel old_zshrc="" zshrc_target=""
+  # A symlinked .zshrc (a dotfiles repo, usually) holds the aliases at the other
+  # end of the link. Resolve it now: backup_path is about to move the link.
+  if [[ -L "$HOME/.zshrc" ]]; then
+    zshrc_target="$(backup_link_target "$HOME/.zshrc" || true)"
+    if [[ -n "$zshrc_target" && -f "$zshrc_target" && "$zshrc_target" != "$NEKOSHELL_ROOT"/* ]]; then
+      old_zshrc="$zshrc_target"
+    else
+      zshrc_target=""
+    fi
+  elif [[ -f "$HOME/.zshrc" ]]; then
+    old_zshrc="$NEKOSHELL_BACKUP_DIR/.zshrc"
+  fi
   while IFS= read -r rel; do
     [[ -n "$rel" ]] || continue
     backup_path "$rel"
@@ -151,6 +175,13 @@ main() {
 
   log_step 4 $TOTAL "Migrate your aliases"
   run mkdir -p "$NEKOSHELL_CONFIG/zsh"
+  # greet.conf is yours to edit, so it is copied once, never linked or replaced.
+  if [[ ! -e "$NEKOSHELL_CONFIG/greet.conf" ]]; then
+    run cp "$NEKOSHELL_ROOT/templates/greet.conf" "$NEKOSHELL_CONFIG/greet.conf"
+  fi
+  if [[ -n "$zshrc_target" ]]; then
+    log_info "your ~/.zshrc was a symlink to $zshrc_target; migrating from there"
+  fi
   if [[ -n "$old_zshrc" && "$NEKOSHELL_DRY_RUN" != "1" ]]; then
     log_ok "$(zsh_migrate_aliases "$old_zshrc" "$NEKOSHELL_CONFIG/zsh/local.zsh") lines copied to ~/.config/nekoshell/zsh/local.zsh"
   else

@@ -2,6 +2,13 @@
 # Backups of files the installer replaces. Requires lib/log.sh and lib/paths.sh.
 # Source this file; do not execute it.
 
+# backup_root_inside_checkout: true when the backup root sits inside the
+# checkout, where re-cloning or `git clean` would take the user's originals
+# with it. Nothing may be backed up until that is fixed.
+backup_root_inside_checkout() {
+  [[ "$NEKOSHELL_BACKUP_ROOT" == "$NEKOSHELL_ROOT"/* ]]
+}
+
 # backup_begin: name a timestamped backup dir. The directory itself is created
 # lazily by the first backup_path that actually moves something, so a run with
 # nothing to back up (and any --dry-run) leaves no empty directory behind.

@@ -1,6 +1,6 @@
 # nekoshell
 
-A Catppuccin-themed iTerm2 rig with a Pokemon greeting, machine stats, and a hotkey Spotify panel, installed by one idempotent script.
+A Catppuccin-themed iTerm2 rig with a Pokémon greeting, machine stats, and a hotkey Spotify panel, installed by one idempotent script.
 
 ![Greeting](docs/screenshots/greeting.png)
 ![Panel](docs/screenshots/panel.png)
@@ -9,15 +9,15 @@ A Catppuccin-themed iTerm2 rig with a Pokemon greeting, machine stats, and a hot
 
 **Look**: Catppuccin Mocha, JetBrainsMono Nerd Font, Starship prompt, eza, bat, fzf, zoxide, delta, btop, lazygit.
 
-**Greeting**: a new interactive terminal prints art next to machine stats. The art is a Pokemon colourscript 70 percent of the time and a picture from your art pack the other 30 percent. Stats come from fastfetch. The greeting finishes in under 150 ms and never runs inside tmux, over SSH, or inside Claude Code.
+**Greeting**: a new interactive terminal prints art next to machine stats. The art is a Pokémon colourscript 70 percent of the time and a picture from your art pack the other 30 percent. Stats come from fastfetch. The greeting finishes in under 150 ms and never runs inside tmux, over SSH, or inside Claude Code.
 
 **Panel**: press ⌥M anywhere to show or hide an iTerm2 hotkey window docked to the right edge of the screen, running spotify_player. Spotify Premium is required for playback; without it, the panel falls back to a shpotify remote for the Spotify desktop app.
 
 ## Install
 
 ```bash
-git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.local/share/nekoshell
-cd ~/.local/share/nekoshell
+git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
+cd ~/.nekoshell
 ./install.sh
 ```
 
@@ -48,9 +48,10 @@ npx skills add 0PrashantYadav0/nekoshell
 ## Customise
 
 - Your own aliases and functions: `~/.config/nekoshell/zsh/local.zsh`.
-- Greeting mix (Pokemon share, shiny odds, image size): `~/.config/nekoshell/greet.conf`.
-- Add images to the art pack: `nekoshell-art add <image>`.
+- Greeting mix (Pokémon share, shiny odds, image size): `~/.config/nekoshell/greet.conf`, copied there on install and never overwritten.
+- Add images to the art pack: `nekoshell-art add <image>`. `nekoshell-art sample` seeds it with the three shipped images.
 - Change the hotkey: edit `HotKey Key Code` and `HotKey Modifier Flags` in `iterm2/build-profiles.py`, then re-run `./install.sh`.
+- Change the theme: edit the `MOCHA` dict in `iterm2/build-profiles.py`, the palette in `stow/config/.config/starship.toml`, and the bat, btop and lazygit theme files under `stow/config/.config/`, then re-run `./install.sh`.
 
 ## Uninstall
 
@@ -58,7 +59,18 @@ npx skills add 0PrashantYadav0/nekoshell
 ./uninstall.sh
 ```
 
-This unstows the linked configs, restores the files it backed up, and removes the iTerm2 profiles. Homebrew packages are left in place.
+This unstows the linked configs, restores the files it backed up, and removes the iTerm2 profiles.
+
+It does not undo everything. It deliberately leaves behind:
+
+- the `[include]` line it added to `~/.gitconfig`
+- `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
+- your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf` and `art/`
+- the cache in `~/.cache/nekoshell`
+- the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`
+- Homebrew packages
+
+It prints the commands for the last two so you can finish by hand if you want to.
 
 ## More
 
@@ -70,4 +82,4 @@ This unstows the linked configs, restores the files it backed up, and removes th
 
 ## Credits
 
-[Catppuccin](https://github.com/catppuccin), [pokemon-colorscripts](https://gitlab.com/phoneybadger/pokemon-colorscripts) (sprites from [PokeSprite](https://github.com/msikma/pokesprite); Pokemon is a trademark of The Pokemon Company), [fastfetch](https://github.com/fastfetch-cli/fastfetch), [spotify_player](https://github.com/aome510/spotify-player), [Starship](https://starship.rs), [iTerm2](https://iterm2.com).
+[Catppuccin](https://github.com/catppuccin), [pokemon-colorscripts](https://gitlab.com/phoneybadger/pokemon-colorscripts) (sprites from [PokeSprite](https://github.com/msikma/pokesprite); Pokémon is a trademark of The Pokémon Company), [fastfetch](https://github.com/fastfetch-cli/fastfetch), [spotify_player](https://github.com/aome510/spotify-player), [Starship](https://starship.rs), [iTerm2](https://iterm2.com).

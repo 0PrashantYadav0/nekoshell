@@ -22,7 +22,12 @@ now_ms() {
 start_ms=""
 [[ -n "${NEKOSHELL_GREET_TIME:-}" ]] && start_ms="$(now_ms)"
 
-paths="$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/../lib/paths.sh"
+# The checkout is this script's own directory, not whatever the recorded root
+# says. A greeting never complains: any problem here just exits 0.
+NEKOSHELL_ROOT="$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/.." 2>/dev/null && pwd -P)"
+[[ -n "$NEKOSHELL_ROOT" ]] || exit 0
+export NEKOSHELL_ROOT
+paths="$NEKOSHELL_ROOT/lib/paths.sh"
 [[ -r "$paths" ]] || exit 0
 # shellcheck source=lib/paths.sh
 source "$paths"

@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # Manage the greeting art pack in ~/.config/nekoshell/art.
 set -euo pipefail
+# The checkout is this script's own directory, so the sample art comes from the
+# copy you actually ran, whatever ~/.config/nekoshell/root records.
+NEKOSHELL_ROOT="$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+export NEKOSHELL_ROOT
 # shellcheck source=lib/paths.sh
-source "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/../lib/paths.sh"
+source "$NEKOSHELL_ROOT/lib/paths.sh"
 
 ART_DIR="$NEKOSHELL_CONFIG/art"
 usage() {

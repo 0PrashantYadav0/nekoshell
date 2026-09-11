@@ -1,7 +1,8 @@
 # Environment shared by every nekoshell shell.
-export EDITOR="${EDITOR:-nvim}"
+export EDITOR="${EDITOR:-vim}"
 export BAT_THEME="Catppuccin Mocha"
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+# Without bat installed this pager turns every man page into an error.
+(( $+commands[bat] )) && export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export FZF_DEFAULT_OPTS=" \
 --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \

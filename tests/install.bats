@@ -104,3 +104,52 @@ teardown() { teardown_tmp_home; }
   grep -q '^cask "font-jetbrains-mono-nerd-font"' "$REPO_ROOT/Brewfile"
   grep -q '^brew "spotify_player"' "$REPO_ROOT/Brewfile"
 }
+
+# Backups must never live inside the checkout: re-cloning or cleaning the repo
+# would take the user's original files with it.
+@test "backup_root_inside_checkout spots a nested backup root" {
+  run bash -c "source '$REPO_ROOT/lib/log.sh'; source '$REPO_ROOT/lib/backup.sh'; NEKOSHELL_ROOT=/a/checkout NEKOSHELL_BACKUP_ROOT=/a/checkout/backup backup_root_inside_checkout"
+  [ "$status" -eq 0 ]
+  run bash -c "source '$REPO_ROOT/lib/log.sh'; source '$REPO_ROOT/lib/backup.sh'; NEKOSHELL_ROOT=/a/checkout NEKOSHELL_BACKUP_ROOT=$HOME/.local/share/nekoshell/backup backup_root_inside_checkout"
+  [ "$status" -ne 0 ]
+}
+
+# iTerm2 rewrites its own plist when it quits, so prefs written while it runs
+# are thrown away. Refusing beats writing a value that quietly disappears.
+@test "--iterm-prefs refuses while iTerm2 is running" {
+  FAKE_ITERM_RUNNING=1 run "$REPO_ROOT/install.sh" --iterm-prefs
+  [ "$status" -ne 0 ]
+  [[ "$output" != *"defaults write"* ]]
+}
+
+@test "--iterm-prefs writes the prefs when iTerm2 is not running" {
+  run "$REPO_ROOT/install.sh" --iterm-prefs
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Default Bookmark Guid"* ]]
+}
+
+# greet.conf is the user's to edit, so the installer copies it once instead of
+# stowing a symlink back into the checkout.
+@test "greet.conf is copied, not linked, and never overwritten" {
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  [ -f "$HOME/.config/nekoshell/greet.conf" ]
+  [ ! -L "$HOME/.config/nekoshell/greet.conf" ]
+  echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  [ "$(cat "$HOME/.config/nekoshell/greet.conf")" = "POKEMON_SHARE=0" ]
+}
+
+# A dotfiles user's ~/.zshrc is a symlink. The aliases are at the far end of it,
+# and the link has to be resolved before the backup moves it out of the way.
+@test "a symlinked .zshrc is migrated from its target" {
+  mkdir -p "$HOME/dotfiles"
+  printf 'alias dot="echo dotfiles"\n' > "$HOME/dotfiles/zshrc"
+  rm -f "$HOME/.zshrc"
+  ln -s "$HOME/dotfiles/zshrc" "$HOME/.zshrc"
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"symlink to $HOME/dotfiles/zshrc"* ]]
+  grep -q 'alias dot="echo dotfiles"' "$HOME/.config/nekoshell/zsh/local.zsh"
+  backup="$(ls -d "$HOME"/.local/share/nekoshell/backup/*/ | head -1)"
+  [ -L "$backup/.zshrc" ]
+}
