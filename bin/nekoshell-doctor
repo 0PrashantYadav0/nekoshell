@@ -105,6 +105,13 @@ if have spotify_player; then
   if glob_exists "$HOME"/.cache/spotify-player/credentials*; then report ok "spotify" "logged in"
   else report warn "spotify" "run: spotify_player authenticate"; fi
 else report warn "spotify" "spotify_player not installed"; fi
+# AeroSpace is opt-in (install.sh --aerospace), so its absence is never a
+# fail: a rig with no tiling window manager still works exactly as designed.
+if have aerospace && aerospace list-workspaces --all >/dev/null 2>&1; then
+  report ok "aerospace" "$(command -v aerospace)"
+else
+  report warn "aerospace" "not installed (optional: install.sh --aerospace)"
+fi
 
 if [[ "$JSON" == 1 ]]; then printf '[%s]\n' "${ROWS%,}"; fi
 [[ "$FAILS" == 0 ]]
