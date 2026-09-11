@@ -19,12 +19,12 @@ EOF
   local key
   while IFS= read -r -s -n 1 key; do
     case "$key" in
-      " ") spotify pause ;;
-      n) spotify next ;;
-      p) spotify prev ;;
-      +) spotify vol up ;;
-      -) spotify vol down ;;
-      s) spotify status ;;
+      " ") spotify pause || true ;;
+      n) spotify next || true ;;
+      p) spotify prev || true ;;
+      +) spotify vol up || true ;;
+      -) spotify vol down || true ;;
+      s) spotify status || true ;;
       q) break ;;
     esac
   done
