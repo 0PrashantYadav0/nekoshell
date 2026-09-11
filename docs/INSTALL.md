@@ -20,13 +20,15 @@ cd ~/.nekoshell
 
 Run this from Terminal.app, not from iTerm2. The last installer step writes iTerm2's global preferences, and iTerm2 rewrites those preferences itself when it quits. If iTerm2 is running while `install.sh` writes them, iTerm2 will overwrite the change on its next quit. Running from Terminal.app lets the installer check whether iTerm2 is running and skip that step cleanly instead of writing a value that gets lost.
 
-The installer asks for confirmation, then runs ten steps: it installs Homebrew packages, backs up any files it is about to replace, renders the theme and migrates aliases out of your old `.zshrc`, links its own configs with `stow`, records where you cloned it, installs pokemon-colorscripts, adds a git-delta include to `~/.gitconfig`, writes two iTerm2 profiles, and applies iTerm2's global preferences.
+The installer asks for confirmation, then runs twelve steps: it installs Homebrew packages, backs up any files it is about to replace, renders the theme and copies your Neovim, tmux and greeting configs into place, migrates aliases out of your old `.zshrc`, links its own configs with `stow`, records where you cloned it, installs pokemon-colorscripts, clones the tmux plugin manager, adds a git-delta include to `~/.gitconfig`, downloads iTerm2's shell integration, writes two iTerm2 profiles, and applies iTerm2's global preferences.
 
 Re-running `./install.sh` is safe at any time. Use `install.sh --check` to see what it would change without changing anything, and `install.sh --skip-spotify` if this machine has no Spotify account.
 
 The installer records where you cloned it and writes that path into the iTerm2 panel profile. If you move the checkout, re-run `./install.sh` from its new location.
 
-Your greeting settings are copied to `~/.config/nekoshell/greet.conf` on the first install. That file is yours: later installs leave it alone. The same goes for `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc`, which the first install renders from `templates/`.
+Your greeting settings are copied to `~/.config/nekoshell/greet.conf` on the first install. That file is yours: later installs leave it alone. The same goes for `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc`, which the first install renders from `templates/`, and for `~/.config/nvim/` and `~/.config/tmux/tmux.conf`, which it copies there.
+
+If you already had a `~/.config/nvim/init.lua` or a `~/.config/tmux/tmux.conf`, the first install moves it into the backup directory before copying its own in. Nothing is deleted, and `./uninstall.sh` puts yours back.
 
 ## 2. Steps only you can do
 
@@ -39,6 +41,7 @@ The installer prints these at the end. Do them in order:
    ```
 3. **Run `spotify_player authenticate`.** This opens a browser to log in. It requires a Spotify Premium account; without one, the panel falls back to controlling the Spotify desktop app instead of streaming directly.
 4. **Press ⌥M anywhere** to open the Spotify panel.
+5. **Start `tmux` and press `C-a I` once.** The installer clones the tmux plugin manager, but the plugins themselves are fetched by the plugin manager's own install binding, which only runs inside a tmux session. Press it once and the status bar takes the Catppuccin colours. Until you do, tmux still works; it just wears its default look.
 
 ## 3. Themes
 
@@ -73,7 +76,7 @@ To change a colour rather than a flavour, edit the hex in `data/palettes.json` a
 nekoshell-doctor
 ```
 
-This prints one line per check: font, tools, zshrc, iTerm2 profiles and preferences, theme, bat theme, pokemon-colorscripts, greeting time, and Spotify. It exits 1 if any check fails. Add `--json` for machine-readable output.
+This prints one line per check: font, tools (including `nvim` and `tmux`), zshrc, iTerm2 profiles and preferences, theme, bat theme, pokemon-colorscripts, greeting time, and Spotify. It exits 1 if any check fails. Add `--json` for machine-readable output.
 
 ## Troubleshooting
 
@@ -99,6 +102,12 @@ bat cache --build
 
 **Ctrl-R opens the old fzf history instead of atuin.** atuin is installed by `brew bundle`, so a run with `--skip-brew` leaves it out. Check `nekoshell-doctor` for the `tool: atuin` row, install it with `brew install atuin`, and open a new terminal.
 
+**The tmux status bar is not in the Catppuccin colours.** The theme is a tmux plugin, so it arrives with `C-a I` inside a tmux session, not with `./install.sh`. Check that `~/.tmux/plugins/tpm` exists (re-run `./install.sh` if it does not), start tmux and press `C-a I`, then `C-a r` to reload.
+
+**Neovim opens with no plugins and no colours.** The first `nvim` clones lazy.nvim and then installs the plugins, which takes a few seconds and needs the network. Watch the lazy.nvim window; quit and start it again when it finishes. If it never starts, check `nekoshell-doctor` for the `tool: nvim` row.
+
+**tmux does not follow a flavour switch.** `nekoshell-theme` rewrites `~/.config/tmux/nekoshell-theme.conf`, and tmux only reads it when a config is loaded. Press `C-a r` in a running session, or start a new one.
+
 **The panel does not open.** Check iTerm2 Settings, Keys, Hotkey Window. It should show ⌥M bound to the nekoshell panel profile. If the binding is missing, re-run `./install.sh` to rewrite the profiles. `nekoshell-doctor` reports the `iterm2 profiles` row as stale when the profile still points at an old checkout location.
 
 ## Uninstall
@@ -114,6 +123,7 @@ It does not undo everything. It deliberately leaves behind:
 - the `[include]` line it added to `~/.gitconfig`
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
 - your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
+- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugin manager in `~/.tmux/plugins/`
 - `~/.iterm2_shell_integration.zsh`, which is iTerm2's own file
 - `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`

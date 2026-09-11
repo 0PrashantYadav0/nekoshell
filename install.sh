@@ -34,17 +34,26 @@ for arg in "$@"; do
   esac
 done
 
-TOTAL=11
+TOTAL=12
 ZSHRC_LINK="$NEKOSHELL_ROOT/stow/zsh/.zshrc"
 GIT_INCLUDE="$NEKOSHELL_CONFIG/git/delta.gitconfig"
 POKEMON_DIR="$HOME/.local/share/pokemon-colorscripts"
 POKEMON_BIN="$HOME/.local/bin/pokemon-colorscripts"
+TPM_DIR="$HOME/.tmux/plugins/tpm"
+NVIM_DIR="$HOME/.config/nvim"
+TMUX_DIR="$HOME/.config/tmux"
+# The nvim files the installer ships, relative to templates/nvim/ and to
+# ~/.config/nvim/. init.lua requires the other three, so they travel together.
+NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nekoshell/plugins.lua"
 ITERM_SHELL_INTEGRATION="$HOME/.iterm2_shell_integration.zsh"
 
 # RENDERED_PATHS: files the installer renders from templates/ rather than stows,
 # so stowed_paths cannot see them. The first install still replaces whatever is
 # already there, so they are backed up by hand. See backup_rendered_paths.
-RENDERED_PATHS=".config/starship.toml .config/fastfetch/config.jsonc .iterm2_shell_integration.zsh"
+RENDERED_PATHS=".config/starship.toml .config/fastfetch/config.jsonc .iterm2_shell_integration.zsh
+.config/nvim/init.lua .config/nvim/lua/nekoshell/options.lua
+.config/nvim/lua/nekoshell/keymaps.lua .config/nvim/lua/nekoshell/plugins.lua
+.config/tmux/tmux.conf"
 
 # stowed_paths: every path stow will claim in $HOME, one per line, relative to
 # $HOME. Read from the packages themselves so the backup can never drift from
@@ -104,6 +113,7 @@ check_only() {
   [[ -f "$NEKOSHELL_CONFIG/theme.zsh" ]] || { log_info "would render the theme"; todo=1; }
   [[ -L "$POKEMON_BIN" ]] || { log_info "would install pokemon-colorscripts"; todo=1; }
   [[ -f "$ITERM_SHELL_INTEGRATION" ]] || { log_info "would download iTerm2 shell integration"; todo=1; }
+  [[ -d "$TPM_DIR" ]] || { log_info "would clone the tmux plugin manager"; todo=1; }
   if iterm_prefs_pending; then log_info "iTerm2 global prefs pending (run: ./install.sh --iterm-prefs with iTerm2 closed)"; fi
   if [[ "$todo" == 0 ]]; then log_ok "nothing to do"; fi
   exit 0
@@ -132,6 +142,46 @@ install_pokemon_colorscripts() {
   run chmod +x "$POKEMON_DIR/pokemon-colorscripts.py"
   run mkdir -p "$HOME/.local/bin"
   run ln -sfn "$POKEMON_DIR/pokemon-colorscripts.py" "$POKEMON_BIN"
+}
+
+# install_tpm: the tmux plugin manager, cloned at the commit deps.lock pins.
+# TPM itself is all the installer fetches; the plugins tmux.conf lists arrive
+# when the user presses C-a I, because TPM is an interactive tool and running
+# its installer headless here would leave a half-populated plugin directory
+# nobody asked for. tmux.conf guards its `run` line, so a machine without this
+# clone still has a config that parses.
+install_tpm() {
+  local sha
+  sha="$(sed -n 's/^tpm=//p' "$NEKOSHELL_ROOT/deps.lock")"
+  if [[ ! -d "$TPM_DIR" ]]; then
+    run mkdir -p "$(dirname "$TPM_DIR")"
+    run git clone --quiet https://github.com/tmux-plugins/tpm.git "$TPM_DIR"
+  else
+    # An older clone may not have the pinned commit yet.
+    run git -C "$TPM_DIR" fetch --quiet
+  fi
+  run git -C "$TPM_DIR" checkout --quiet "$sha"
+}
+
+# install_user_configs: the configs that are the user's to edit, copied once and
+# then never touched again. greet.conf, the nvim files and tmux.conf are all the
+# same deal: a symlink back into the checkout would turn every edit of theirs
+# into a change to the repo, so these are real files. Each one is copied only
+# when it is absent, so deleting one is how you ask for it back.
+install_user_configs() {
+  local rel
+  if [[ ! -e "$NEKOSHELL_CONFIG/greet.conf" ]]; then
+    run cp "$NEKOSHELL_ROOT/templates/greet.conf" "$NEKOSHELL_CONFIG/greet.conf"
+  fi
+  run mkdir -p "$NVIM_DIR/lua/nekoshell" "$TMUX_DIR"
+  for rel in $NVIM_FILES; do
+    if [[ ! -e "$NVIM_DIR/$rel" ]]; then
+      run cp "$NEKOSHELL_ROOT/templates/nvim/$rel" "$NVIM_DIR/$rel"
+    fi
+  done
+  if [[ ! -e "$TMUX_DIR/tmux.conf" ]]; then
+    run cp "$NEKOSHELL_ROOT/templates/tmux/tmux.conf" "$TMUX_DIR/tmux.conf"
+  fi
 }
 
 # install_shell_integration: iTerm2's own zsh hooks. They report the working
@@ -208,12 +258,9 @@ main() {
   set -E
   trap 'log_fail "install failed after backup; restore with: $NEKOSHELL_ROOT/uninstall.sh --yes"' ERR
 
-  log_step 4 $TOTAL "Theme and your aliases"
+  log_step 4 $TOTAL "Theme, your configs and your aliases"
   run mkdir -p "$NEKOSHELL_CONFIG/zsh"
-  # greet.conf is yours to edit, so it is copied once, never linked or replaced.
-  if [[ ! -e "$NEKOSHELL_CONFIG/greet.conf" ]]; then
-    run cp "$NEKOSHELL_ROOT/templates/greet.conf" "$NEKOSHELL_CONFIG/greet.conf"
-  fi
+  install_user_configs
   # starship.toml and the fastfetch config are rendered once and then yours, the
   # same deal as greet.conf; theme.zsh is nekoshell's and is always rewritten.
   # Switching flavour later is `nekoshell-theme <flavour>`, which rewrites all of
@@ -243,17 +290,20 @@ main() {
   log_step 7 $TOTAL "pokemon-colorscripts"
   install_pokemon_colorscripts
 
-  log_step 8 $TOTAL "git delta include"
+  log_step 8 $TOTAL "tmux plugin manager"
+  install_tpm
+
+  log_step 9 $TOTAL "git delta include"
   add_gitconfig_include
 
-  log_step 9 $TOTAL "iTerm2 shell integration"
+  log_step 10 $TOTAL "iTerm2 shell integration"
   install_shell_integration
 
-  log_step 10 $TOTAL "iTerm2 profiles"
+  log_step 11 $TOTAL "iTerm2 profiles"
   iterm_write_profiles "$FLAVOR"
   log_ok "profiles: nekoshell, nekoshell panel (hotkey ⌥M)"
 
-  log_step 11 $TOTAL "iTerm2 global preferences"
+  log_step 12 $TOTAL "iTerm2 global preferences"
   apply_prefs_step
 
   trap - ERR
@@ -261,7 +311,8 @@ main() {
   log_ok "installed. Human steps left:"
   echo "  1. Quit and reopen iTerm2 (pick the 'nekoshell' profile if it is not the default)."
   [[ "$SKIP_SPOTIFY" == 1 ]] || echo "  2. Run: spotify_player authenticate   (opens a browser; needs Spotify Premium)"
-  echo "  3. Press ⌥M anywhere for the Spotify panel. Run nekoshell-doctor to verify."
+  echo "  3. Press ⌥M anywhere for the Spotify panel."
+  echo "  4. Start tmux and press C-a I once to install its plugins. Run nekoshell-doctor to verify."
 }
 
 main

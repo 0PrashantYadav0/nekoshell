@@ -47,7 +47,7 @@ glob_exists() {
 }
 
 if have brew; then report ok "homebrew" "$(brew --version | head -1)"; else report fail "homebrew" "not on PATH"; fi
-for tool in starship fastfetch fzf eza bat zoxide stow atuin; do
+for tool in starship fastfetch fzf eza bat zoxide stow atuin nvim tmux; do
   if have "$tool"; then report ok "tool: $tool" "$(command -v "$tool")"; else report fail "tool: $tool" "missing (brew bundle)"; fi
 done
 if glob_exists "$HOME"/Library/Fonts/JetBrainsMonoNerdFont* /Library/Fonts/JetBrainsMonoNerdFont*; then
