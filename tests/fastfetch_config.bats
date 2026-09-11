@@ -51,6 +51,6 @@ print(d[\"display\"][\"color\"][\"title\"])'"
   render mocha
   run fastfetch --config "$HOME/config.jsonc" --logo none --pipe
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Storage"* ]]
-  [[ "$output" == *"Packages"* ]]
+  assert_contains "$output" "Storage"
+  assert_contains "$output" "Packages"
 }

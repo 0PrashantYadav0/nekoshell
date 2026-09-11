@@ -6,8 +6,10 @@
 export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:200 {}' --preview-window=right:60%"
 # Alt-C: directories, two levels of tree.
 export FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --icons --color=always {}' --preview-window=right:60%"
-# Ctrl-R: history. The preview is the command itself, wrapped, because a long
-# one-liner is otherwise cut off at the width of the list.
+# Ctrl-R: history. atuin takes this binding over when it is installed, so this
+# preview only ever shows on a machine without atuin. The preview is the command
+# itself, wrapped, because a long one-liner is otherwise cut off at the width of
+# the list.
 export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window=down:3:wrap"
 
 # fd walks faster than find and honours .gitignore. Without it, fzf's own

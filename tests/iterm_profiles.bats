@@ -70,7 +70,7 @@ PY
 @test "iterm_apply_prefs in dry-run prints the defaults commands without running them" {
   run bash -c "NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN; source '$REPO_ROOT/lib/log.sh'; source '$REPO_ROOT/lib/paths.sh'; source '$REPO_ROOT/lib/iterm.sh'; iterm_apply_prefs"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"defaults write com.googlecode.iterm2 Default Bookmark Guid -string 4E4B4F53-4845-4C4C-0001-000000000001"* ]]
-  [[ "$output" == *"HideTab -bool true"* ]]
-  [[ "$output" == *"TerminalMargin -int 16"* ]]
+  assert_contains "$output" "defaults write com.googlecode.iterm2 Default Bookmark Guid -string 4E4B4F53-4845-4C4C-0001-000000000001"
+  assert_contains "$output" "HideTab -bool true"
+  assert_contains "$output" "TerminalMargin -int 16"
 }

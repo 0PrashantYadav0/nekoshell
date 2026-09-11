@@ -23,3 +23,35 @@ teardown_tmp_home() {
     */nekoshell-home.??????) rm -rf "$HOME" ;;
   esac
 }
+
+# Assertions.
+#
+# bats 1.14: a failing `[[ ]]` that is not a test's last statement does not fail
+# the test, because a compound command's status does not reach the ERR trap bats
+# installs. `[ ]` and ordinary commands do. These are plain functions, so their
+# non-zero return stops the test, and they print what they expected next to what
+# they got instead of leaving a bare line number.
+assert_contains() {
+  case "$1" in *"$2"*) return 0;; esac
+  echo "expected to contain: $2" >&2
+  echo "actual: $1" >&2
+  return 1
+}
+
+assert_not_contains() {
+  case "$1" in
+    *"$2"*)
+      echo "expected NOT to contain: $2" >&2
+      echo "actual: $1" >&2
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+assert_matches() {
+  if [[ "$1" =~ $2 ]]; then return 0; fi
+  echo "expected to match: $2" >&2
+  echo "actual: $1" >&2
+  return 1
+}

@@ -16,8 +16,8 @@ teardown() { teardown_tmp_home; }
 @test "--dry-run runs nothing and prints the plan" {
   run "$REPO_ROOT/install.sh" --dry-run --yes
   [ "$status" -eq 0 ]
-  [[ "$output" == *"brew bundle"* ]]
-  [[ "$output" == *"stow"* ]]
+  assert_contains "$output" "brew bundle"
+  assert_contains "$output" "stow"
   [ ! -L "$HOME/.zshrc" ]
   [ "$(cat "$HOME/.config/starship.toml")" = "old" ]
   [ "$(cat "$HOME/.config/fastfetch/config.jsonc")" = "oldff" ]
@@ -39,12 +39,12 @@ teardown() { teardown_tmp_home; }
   grep -q '^\.zshrc$' "$backup/manifest.txt"
   grep -q '^\.config/fastfetch/config\.jsonc$' "$backup/manifest.txt"
   grep -q 'alias gs="git status"' "$HOME/.config/nekoshell/zsh/local.zsh"
-  ! grep -q 'oh-my-zsh' "$HOME/.config/nekoshell/zsh/local.zsh"
+  assert_not_contains "$(cat "$HOME/.config/nekoshell/zsh/local.zsh")" 'oh-my-zsh'
   [ -f "$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json" ]
   [ -L "$HOME/.local/bin/pokemon-colorscripts" ]
   [ -x "$HOME/.local/bin/pokemon-colorscripts" ]
   grep -q 'nekoshell' "$HOME/.gitconfig"
-  [[ "$output" == *"Default Bookmark Guid"* ]]
+  assert_contains "$output" "Default Bookmark Guid"
 }
 
 @test "install is idempotent" {
@@ -60,14 +60,14 @@ teardown() { teardown_tmp_home; }
   "$REPO_ROOT/install.sh" --yes
   run "$REPO_ROOT/install.sh" --check
   [ "$status" -eq 0 ]
-  [[ "$output" == *"nothing to do"* ]]
+  assert_contains "$output" "nothing to do"
 }
 
 @test "prefs are deferred while iTerm2 is running" {
   FAKE_ITERM_RUNNING=1 run "$REPO_ROOT/install.sh" --yes
   [ "$status" -eq 0 ]
-  [[ "$output" == *"pending"* ]]
-  [[ "$output" == *"install.sh --iterm-prefs"* ]]
+  assert_contains "$output" "pending"
+  assert_contains "$output" "install.sh --iterm-prefs"
 }
 
 @test "uninstall restores the backup" {
@@ -126,13 +126,13 @@ teardown() { teardown_tmp_home; }
 @test "--iterm-prefs refuses while iTerm2 is running" {
   FAKE_ITERM_RUNNING=1 run "$REPO_ROOT/install.sh" --iterm-prefs
   [ "$status" -ne 0 ]
-  [[ "$output" != *"defaults write"* ]]
+  assert_not_contains "$output" "defaults write"
 }
 
 @test "--iterm-prefs writes the prefs when iTerm2 is not running" {
   run "$REPO_ROOT/install.sh" --iterm-prefs
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Default Bookmark Guid"* ]]
+  assert_contains "$output" "Default Bookmark Guid"
 }
 
 # greet.conf is the user's to edit, so the installer copies it once instead of
@@ -155,7 +155,7 @@ teardown() { teardown_tmp_home; }
   ln -s "$HOME/dotfiles/zshrc" "$HOME/.zshrc"
   run "$REPO_ROOT/install.sh" --yes
   [ "$status" -eq 0 ]
-  [[ "$output" == *"symlink to $HOME/dotfiles/zshrc"* ]]
+  assert_contains "$output" "symlink to $HOME/dotfiles/zshrc"
   grep -q 'alias dot="echo dotfiles"' "$HOME/.config/nekoshell/zsh/local.zsh"
   backup="$(ls -d "$HOME"/.local/share/nekoshell/backup/*/ | head -1)"
   [ -L "$backup/.zshrc" ]

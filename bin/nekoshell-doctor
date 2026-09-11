@@ -9,7 +9,8 @@ export NEKOSHELL_ROOT
 source "$NEKOSHELL_ROOT/lib/paths.sh"
 # shellcheck source=lib/iterm.sh
 source "$NEKOSHELL_ROOT/lib/iterm.sh"
-# Only for theme_is_flavor, which needs nothing but lib/paths.sh.
+# Only for theme_is_flavor, theme_current and theme_title, none of which need
+# anything but lib/paths.sh.
 # shellcheck source=lib/theme.sh
 source "$NEKOSHELL_ROOT/lib/theme.sh"
 

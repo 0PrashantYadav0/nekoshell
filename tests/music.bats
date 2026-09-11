@@ -23,16 +23,16 @@ teardown() { teardown_tmp_home; }
 @test "authenticates first when no credentials are cached" {
   run "$REPO_ROOT/bin/nekoshell-music"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"spotify_player authenticate"* ]]
-  [[ "${lines[${#lines[@]}-2]}" == "spotify_player " ]]
+  assert_contains "$output" "spotify_player authenticate"
+  [ "${lines[${#lines[@]}-2]}" = "spotify_player " ]
 }
 
 @test "--remote drives shpotify with single keys" {
   run bash -c "printf 'ns q' | '$REPO_ROOT/bin/nekoshell-music' --remote"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"spotify next"* ]]
-  [[ "$output" == *"spotify status"* ]]
-  [[ "$output" == *"spotify pause"* ]]
+  assert_contains "$output" "spotify next"
+  assert_contains "$output" "spotify status"
+  assert_contains "$output" "spotify pause"
 }
 
 @test "--remote survives a failing shpotify command" {
@@ -46,15 +46,15 @@ EOF
   chmod +x "$HOME/bin/spotify"
   run bash -c "printf 'nsq' | PATH='$HOME/bin:$PATH' '$REPO_ROOT/bin/nekoshell-music' --remote"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"spotify next"* ]]
-  [[ "$output" == *"spotify status"* ]]
+  assert_contains "$output" "spotify next"
+  assert_contains "$output" "spotify status"
 }
 
 @test "falls back to the remote when spotify_player is missing" {
   mkdir -p "$HOME/bin"; cp "$REPO_ROOT/tests/fakes/spotify" "$HOME/bin/"
   run bash -c "printf 'q' | PATH='$HOME/bin:/usr/bin:/bin' '$REPO_ROOT/bin/nekoshell-music'"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"remote"* ]]
+  assert_contains "$output" "remote"
 }
 
 @test "spotify_player config selects the mocha theme and the nekoshell device" {
@@ -77,5 +77,5 @@ print(t['themes'][0]['name'], t['themes'][0]['palette']['background'])"
   touch "$HOME/.cache/spotify-player/credentials.json"
   run env NEKOSHELL_BREW_PREFIX="$HOME/fakebrew" PATH=/usr/bin:/bin "$REPO_ROOT/bin/nekoshell-music"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"PANEL=1"* ]]
+  assert_contains "$output" "PANEL=1"
 }

@@ -30,13 +30,14 @@ run() {
   "$@"
 }
 
-# run_quiet CMD ARGS...: run, with the command's own output thrown away. The
+# run_quiet CMD ARGS...: run, with the command's own stdout thrown away. The
 # command line is still printed, so a log still says what happened; only the
-# chatter a successful run produces is dropped.
+# chatter a successful run produces is dropped. stderr is kept, because a
+# command that is failing has to be able to say so.
 run_quiet() {
   printf '%s$ %s%s\n' "$_NK_DIM" "$*" "$_NK_RESET"
   if [[ "$NEKOSHELL_DRY_RUN" == "1" ]]; then
     return 0
   fi
-  "$@" >/dev/null 2>&1
+  "$@" >/dev/null
 }
