@@ -39,10 +39,11 @@ Re-running this command is safe; the installer is idempotent. On a machine witho
 bin/nekoshell-doctor --json
 ```
 
-Success is exit code 0. In the JSON output, a `warn` status is acceptable only for these two checks:
+Success is exit code 0. Only `fail` rows block that; `warn` rows do not. On a fresh machine, expect `warn` on these checks, and report them to the human rather than trying to fix them yourself:
 
 - `spotify`: the human still needs to log in.
 - `iterm2 prefs`: iTerm2 needs to be quit for this to apply.
+- `greet time`: the greeting took longer than its 150 ms budget, or could not be measured. Report the number; do not block on it.
 
 Any `fail` row means the install is not done. Read that row's detail, fix the underlying problem, and re-run the doctor. Do not proceed to step 5 with a `fail` row present.
 
