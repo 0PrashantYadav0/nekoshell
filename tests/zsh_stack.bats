@@ -50,6 +50,24 @@ print(d['palette']); print(d['palettes']['catppuccin_mocha']['mauve'])"
   [ "${lines[1]}" = "#cba6f7" ]
 }
 
+@test "starship prompt is two lines with a full-path directory and a right-aligned clock" {
+  run python3 -c "
+import tomllib
+d=tomllib.load(open('$REPO_ROOT/stow/config/.config/starship.toml','rb'))
+print(d['directory']['truncation_length'], d['directory']['truncate_to_repo'])
+print('\$fill' in d['format'], '\$time' in d['format'], '\$status' in d['format'], '\$line_break' in d['format'], d['format'].rstrip().endswith('\$character'))
+print(d['time']['disabled'], d['status']['disabled'])"
+  [ "${lines[0]}" = "0 False" ]
+  [ "${lines[1]}" = "True True True True True" ]
+  [ "${lines[2]}" = "False False" ]
+}
+
+@test "starship validates its own config" {
+  command -v starship >/dev/null || skip "starship not installed"
+  run env STARSHIP_CONFIG="$REPO_ROOT/stow/config/.config/starship.toml" starship print-config
+  [ "$status" -eq 0 ]
+}
+
 @test "zsh_migrate_aliases copies plain aliases and exports only" {
   cat > "$HOME/old.zshrc" <<'EOF'
 export ZSH="$HOME/.oh-my-zsh"

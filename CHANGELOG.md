@@ -4,6 +4,8 @@
 
 - Catppuccin Mocha look: iTerm2 theme, Starship prompt, themed bat and btop, JetBrainsMono Nerd Font.
 - Greeting on new interactive terminals: Pokémon colourscripts or your own art pack, plus machine stats from fastfetch, under a 150 ms budget.
+- Greeting stats now include storage, battery, Wi-Fi and IP address alongside OS, host, uptime, shell, terminal, CPU, memory and packages.
+- Two-line Starship prompt: full working directory, git and language status on top, with duration, exit status and the clock right-aligned; the character prompt on its own line below.
 - Pokémon facts line in the greeting: national dex number, type and generation next to the name, from a generated PokéAPI data table.
 - Spotify panel: a hotkey-toggled iTerm2 window running spotify_player, with a shpotify remote fallback for non-Premium accounts.
 - Idempotent installer with automatic backups, a `nekoshell-doctor` check, and a matching uninstaller.
