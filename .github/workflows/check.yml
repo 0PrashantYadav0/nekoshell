@@ -5,6 +5,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - run: brew install bats-core shellcheck
+      - run: brew install bats-core shellcheck stow
       - run: shellcheck -x $(git ls-files 'install.sh' 'uninstall.sh' 'lib/*.sh' 'bin/*' 'tests/helpers.bash')
       - run: bats tests
