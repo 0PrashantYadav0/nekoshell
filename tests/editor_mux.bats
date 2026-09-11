@@ -16,7 +16,11 @@ setup() {
   export NEKOSHELL_SKIP_PREFLIGHT=1
   export HOMEBREW_PREFIX=/nonexistent
 }
-teardown() { teardown_tmp_home; }
+teardown() {
+  # A probe server on its own socket, in case a test died before killing it.
+  PATH="$NEKO_REAL_PATH" tmux -L nekotest3 kill-server 2>/dev/null || true
+  teardown_tmp_home
+}
 
 marker() { printf '%s\n' "$output" | sed -n "s/^$1=//p"; }
 
@@ -63,31 +67,90 @@ NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nek
   grep -q '# mine' "$HOME/.config/tmux/tmux.conf"
 }
 
-# The first install is the one that replaces what was there. Anything it
-# replaces has to be in the backup, or an existing setup is simply gone.
-@test "an nvim or tmux config already in place is backed up first" {
-  mkdir -p "$HOME/.config/nvim/lua/nekoshell" "$HOME/.config/tmux"
+# A config of someone else's is theirs whole. nekoshell copies its own in only
+# when there is nothing there at all, and says so when it backs off, because a
+# silent skip looks exactly like a silent overwrite from the outside.
+@test "an existing Neovim config is left alone, whole" {
+  mkdir -p "$HOME/.config/nvim/lua/myplug" "$HOME/.config/nvim/after/plugin"
   echo 'old init' > "$HOME/.config/nvim/init.lua"
-  echo 'old options' > "$HOME/.config/nvim/lua/nekoshell/options.lua"
-  echo 'old tmux' > "$HOME/.config/tmux/tmux.conf"
+  echo 'old plug' > "$HOME/.config/nvim/lua/myplug/x.lua"
+  echo 'old after' > "$HOME/.config/nvim/after/plugin/mine.lua"
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "existing Neovim config found at ~/.config/nvim; leaving it alone"
+  [ "$(cat "$HOME/.config/nvim/init.lua")" = "old init" ]
+  [ "$(cat "$HOME/.config/nvim/lua/myplug/x.lua")" = "old plug" ]
+  [ "$(cat "$HOME/.config/nvim/after/plugin/mine.lua")" = "old after" ]
+  # Not one file of ours, and not even the directory they would live in.
+  [ ! -e "$HOME/.config/nvim/lua/nekoshell" ]
+  # Nothing was replaced, so there was nothing to back up: on this HOME the
+  # nvim files are the only thing the installer could have taken.
+  [ ! -e "$HOME/.local/share/nekoshell/backup" ]
+}
+
+# init.vim is the trap: Neovim reads init.lua in preference to it, so dropping
+# ours in would silence a vimscript config without replacing a single file.
+@test "an init.vim config is left alone and never shadowed by an init.lua" {
+  mkdir -p "$HOME/.config/nvim"
+  echo '" old vimscript' > "$HOME/.config/nvim/init.vim"
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "existing Neovim config found at ~/.config/nvim"
+  [ "$(cat "$HOME/.config/nvim/init.vim")" = '" old vimscript' ]
+  [ ! -e "$HOME/.config/nvim/init.lua" ]
+  [ ! -e "$HOME/.config/nvim/lua" ]
+}
+
+# Same trap, the other way round: tmux 3.x prefers ~/.config/tmux/tmux.conf
+# over ~/.tmux.conf, so ours would quietly win a config still in use.
+@test "an existing ~/.tmux.conf keeps tmux out of the XDG path" {
+  echo '# old tmux' > "$HOME/.tmux.conf"
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "existing tmux config found"
+  [ "$(cat "$HOME/.tmux.conf")" = "# old tmux" ]
+  [ ! -e "$HOME/.config/tmux/tmux.conf" ]
+  # The flavour file is still written: it is inert until something sources it.
+  [ "$(cat "$HOME/.config/tmux/nekoshell-theme.conf")" = 'set -g @catppuccin_flavor "mocha"' ]
+}
+
+@test "a fresh HOME gets the whole nvim tree, not a handful of files" {
   "$REPO_ROOT/install.sh" --yes >/dev/null
-  backup="$(ls -d "$HOME"/.local/share/nekoshell/backup/*/ | head -1)"
-  [ "$(cat "$backup/.config/nvim/init.lua")" = "old init" ]
-  [ "$(cat "$backup/.config/nvim/lua/nekoshell/options.lua")" = "old options" ]
-  [ "$(cat "$backup/.config/tmux/tmux.conf")" = "old tmux" ]
-  grep -q '^\.config/nvim/init\.lua$' "$backup/manifest.txt"
-  grep -q '^\.config/tmux/tmux\.conf$' "$backup/manifest.txt"
-  # And the rig's own files took their place.
-  grep -q 'nekoshell' "$HOME/.config/nvim/init.lua"
-  grep -q 'nekoshell' "$HOME/.config/tmux/tmux.conf"
+  for rel in $NVIM_FILES; do
+    [ -f "$HOME/.config/nvim/$rel" ]
+  done
+  [ -d "$HOME/.config/nvim/lua/nekoshell" ]
+  [ -f "$HOME/.config/tmux/tmux.conf" ]
 }
 
 @test "the tmux plugin manager is cloned at the pinned commit" {
   grep -q '^tpm=[0-9a-f]\{40\}$' "$REPO_ROOT/deps.lock"
   run "$REPO_ROOT/install.sh" --yes
   [ "$status" -eq 0 ]
-  [ -d "$HOME/.tmux/plugins/tpm" ]
+  # The XDG path, because that is the one TPM itself uses next to this config.
+  [ -d "$HOME/.config/tmux/plugins/tpm" ]
+  [ ! -e "$HOME/.tmux/plugins/tpm" ]
   assert_contains "$output" "$(sed -n 's/^tpm=//p' "$REPO_ROOT/deps.lock")"
+}
+
+# A clone in the wrong place is never read, and TPM fetches itself again with no
+# pin at all. The config and the installer have to name the same directory.
+@test "the config and the installer agree on where the plugins live" {
+  grep -q 'set-environment -g TMUX_PLUGIN_MANAGER_PATH "~/.config/tmux/plugins/"' \
+    "$REPO_ROOT/templates/tmux/tmux.conf"
+  grep -q 'TPM_DIR="\$HOME/.config/tmux/plugins/tpm"' "$REPO_ROOT/install.sh"
+}
+
+@test "a deps.lock without a usable tpm commit stops before the backup step" {
+  mkdir -p "$HOME/checkout"
+  for d in lib templates data stow iterm2 bin; do cp -R "$REPO_ROOT/$d" "$HOME/checkout/"; done
+  cp "$REPO_ROOT/install.sh" "$REPO_ROOT/Brewfile" "$HOME/checkout/"
+  sed 's/^tpm=.*/tpm=/' "$REPO_ROOT/deps.lock" > "$HOME/checkout/deps.lock"
+  run "$HOME/checkout/install.sh" --yes
+  [ "$status" -ne 0 ]
+  assert_contains "$output" "deps.lock has no valid commit for tpm"
+  # Before the backup step means nothing of theirs has moved yet.
+  [ ! -d "$HOME/.local/share/nekoshell/backup" ]
 }
 
 @test "a second install does not clone the plugin manager again" {
@@ -95,7 +158,7 @@ NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nek
   run "$REPO_ROOT/install.sh" --yes
   [ "$status" -eq 0 ]
   assert_not_contains "$output" "git clone --quiet https://github.com/tmux-plugins/tpm.git"
-  [ -d "$HOME/.tmux/plugins/tpm" ]
+  [ -d "$HOME/.config/tmux/plugins/tpm" ]
 }
 
 # The flavour is nekoshell's, not the user's, so it lives in its own file that
@@ -116,7 +179,7 @@ NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nek
   [ ! -e "$HOME/.config/nvim/init.lua" ]
   [ ! -e "$HOME/.config/tmux/tmux.conf" ]
   [ ! -e "$HOME/.config/tmux/nekoshell-theme.conf" ]
-  [ ! -d "$HOME/.tmux/plugins/tpm" ]
+  [ ! -d "$HOME/.config/tmux/plugins/tpm" ]
 }
 
 @test "EDITOR prefers nvim when it is installed and falls back to vim" {
@@ -228,7 +291,9 @@ NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nek
 # TPM is cloned by the installer and catppuccin/tmux only arrives when the user
 # presses the install binding, so the config has to parse with neither present.
 @test "the tmux config tolerates a missing plugin manager and a missing theme" {
-  grep -q 'if-shell "test -f ~/.tmux/plugins/tpm/tpm" "run ~/.tmux/plugins/tpm/tpm"' \
+  grep -q 'if-shell "test -f ~/.config/tmux/plugins/tpm/tpm" "run ~/.config/tmux/plugins/tpm/tpm"' \
+    "$REPO_ROOT/templates/tmux/tmux.conf"
+  grep -q 'if-shell "test -f ~/.config/tmux/plugins/tmux/catppuccin.tmux"' \
     "$REPO_ROOT/templates/tmux/tmux.conf"
   # source-file -q: the flavour file is not there until the installer renders it.
   grep -q 'source-file -q ~/.config/tmux/nekoshell-theme.conf' \
@@ -237,6 +302,32 @@ NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nek
   run env PATH="$NEKO_REAL_PATH" HOME="$HOME" \
     tmux -f "$REPO_ROOT/templates/tmux/tmux.conf" -L nekotest2 start-server ";" kill-server
   [ "$status" -eq 0 ]
+}
+
+# The editor follows the flavour by reading the variable theme.zsh exports.
+# Renaming it in one place and not the other is a silent mocha-forever bug.
+@test "the nvim colourscheme reads NEKOSHELL_THEME with a mocha fallback" {
+  grep -q 'vim.env.NEKOSHELL_THEME' "$REPO_ROOT/templates/nvim/lua/nekoshell/plugins.lua"
+  grep -q 'flavour = "mocha"' "$REPO_ROOT/templates/nvim/lua/nekoshell/plugins.lua"
+  grep -q 'NEKOSHELL_THEME' "$REPO_ROOT/lib/theme.sh"
+}
+
+# tmux reads TMUX_PLUGIN_MANAGER_PATH out of the global environment, so ask a
+# real server what it ended up with rather than trusting the grep above.
+@test "a live tmux server takes the plugin path from the config" {
+  have_real tmux || skip "tmux is not installed"
+  # Detached, on a socket of its own, in the throwaway HOME: nothing here can
+  # reach the terminal running the tests. A server with no session exits at
+  # once, so the probe holds one open with a sleep.
+  env PATH="$NEKO_REAL_PATH" HOME="$HOME" \
+    tmux -f "$REPO_ROOT/templates/tmux/tmux.conf" -L nekotest3 \
+    new-session -d -s probe -- sh -c 'sleep 60'
+  run env PATH="$NEKO_REAL_PATH" HOME="$HOME" \
+    tmux -L nekotest3 show-environment -g TMUX_PLUGIN_MANAGER_PATH
+  env PATH="$NEKO_REAL_PATH" HOME="$HOME" tmux -L nekotest3 kill-server
+  # tmux expands the ~ against the HOME the server started in, so the value
+  # that comes back is absolute.
+  [ "$output" = "TMUX_PLUGIN_MANAGER_PATH=$HOME/.config/tmux/plugins/" ]
 }
 
 @test "the tmux config sets the C-a prefix and vim-style panes" {

@@ -28,7 +28,7 @@ The installer records where you cloned it and writes that path into the iTerm2 p
 
 Your greeting settings are copied to `~/.config/nekoshell/greet.conf` on the first install. That file is yours: later installs leave it alone. The same goes for `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc`, which the first install renders from `templates/`, and for `~/.config/nvim/` and `~/.config/tmux/tmux.conf`, which it copies there.
 
-If you already had a `~/.config/nvim/init.lua` or a `~/.config/tmux/tmux.conf`, the first install moves it into the backup directory before copying its own in. Nothing is deleted, and `./uninstall.sh` puts yours back.
+A Neovim or tmux config you already have is left completely alone. If `~/.config/nvim/init.lua` or `~/.config/nvim/init.vim` exists, the installer copies no Neovim files at all and warns instead; if `~/.tmux.conf` or `~/.config/tmux/tmux.conf` exists, it copies no tmux config. Nothing of yours is replaced, moved or merged, so there is nothing to restore either. Nekoshell's versions stay in `templates/nvim/` and `templates/tmux/` if you want to read or copy from them.
 
 ## 2. Steps only you can do
 
@@ -102,7 +102,7 @@ bat cache --build
 
 **Ctrl-R opens the old fzf history instead of atuin.** atuin is installed by `brew bundle`, so a run with `--skip-brew` leaves it out. Check `nekoshell-doctor` for the `tool: atuin` row, install it with `brew install atuin`, and open a new terminal.
 
-**The tmux status bar is not in the Catppuccin colours.** The theme is a tmux plugin, so it arrives with `C-a I` inside a tmux session, not with `./install.sh`. Check that `~/.tmux/plugins/tpm` exists (re-run `./install.sh` if it does not), start tmux and press `C-a I`, then `C-a r` to reload.
+**The tmux status bar is not in the Catppuccin colours.** The theme is a tmux plugin, so it arrives with `C-a I` inside a tmux session, not with `./install.sh`. Check that `~/.config/tmux/plugins/tpm` exists (re-run `./install.sh` if it does not), start tmux and press `C-a I`, then `C-a r` to reload.
 
 **Neovim opens with no plugins and no colours.** The first `nvim` clones lazy.nvim and then installs the plugins, which takes a few seconds and needs the network. Watch the lazy.nvim window; quit and start it again when it finishes. If it never starts, check `nekoshell-doctor` for the `tool: nvim` row.
 
@@ -123,7 +123,7 @@ It does not undo everything. It deliberately leaves behind:
 - the `[include]` line it added to `~/.gitconfig`
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
 - your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
-- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugin manager in `~/.tmux/plugins/`
+- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugins in `~/.config/tmux/plugins/`
 - `~/.iterm2_shell_integration.zsh`, which is iTerm2's own file
 - `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`

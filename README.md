@@ -76,6 +76,7 @@ npx skills add 0PrashantYadav0/nekoshell
 - Change what atuin does: `~/.config/atuin/config.toml`, linked from `stow/config/.config/atuin/config.toml`.
 - Change the Neovim setup: `~/.config/nvim/`, copied there on install and never overwritten. Options, keymaps and the plugin list are one file each under `lua/nekoshell/`. lazy.nvim writes its own `lazy-lock.json` next to them; that file is yours and is not shipped.
 - Change the tmux setup: `~/.config/tmux/tmux.conf`, also copied once and never overwritten. The flavour is the one thing nekoshell keeps hold of: it lives in `~/.config/tmux/nekoshell-theme.conf`, which the config sources and `nekoshell-theme` rewrites. Press `C-a r` to reload.
+- Already have a Neovim or tmux config? The installer leaves it completely alone and says so: if `~/.config/nvim/init.lua` or `init.vim` is there it copies no Neovim files at all, and if `~/.tmux.conf` or `~/.config/tmux/tmux.conf` is there it copies no tmux config. Nekoshell's stay in `templates/nvim/` and `templates/tmux/` for you to take what you want from.
 - Change the status bar: edit `STATUS_BAR_COMPONENTS` in `iterm2/build-profiles.py` and re-run `./install.sh`. To remove the bar, set `primary["Show Status Bar"] = False` in that file's `main()`, which is where the main profile is given its bar.
 
 ## Uninstall
@@ -91,7 +92,7 @@ It does not undo everything. It deliberately leaves behind:
 - the `[include]` line it added to `~/.gitconfig`
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
 - your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
-- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugin manager in `~/.tmux/plugins/`
+- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugins in `~/.config/tmux/plugins/`
 - `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`
 - `~/.iterm2_shell_integration.zsh`, which is iTerm2's own file

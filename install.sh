@@ -39,21 +39,15 @@ ZSHRC_LINK="$NEKOSHELL_ROOT/stow/zsh/.zshrc"
 GIT_INCLUDE="$NEKOSHELL_CONFIG/git/delta.gitconfig"
 POKEMON_DIR="$HOME/.local/share/pokemon-colorscripts"
 POKEMON_BIN="$HOME/.local/bin/pokemon-colorscripts"
-TPM_DIR="$HOME/.tmux/plugins/tpm"
+TPM_DIR="$HOME/.config/tmux/plugins/tpm"
 NVIM_DIR="$HOME/.config/nvim"
 TMUX_DIR="$HOME/.config/tmux"
-# The nvim files the installer ships, relative to templates/nvim/ and to
-# ~/.config/nvim/. init.lua requires the other three, so they travel together.
-NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nekoshell/plugins.lua"
 ITERM_SHELL_INTEGRATION="$HOME/.iterm2_shell_integration.zsh"
 
 # RENDERED_PATHS: files the installer renders from templates/ rather than stows,
 # so stowed_paths cannot see them. The first install still replaces whatever is
 # already there, so they are backed up by hand. See backup_rendered_paths.
-RENDERED_PATHS=".config/starship.toml .config/fastfetch/config.jsonc .iterm2_shell_integration.zsh
-.config/nvim/init.lua .config/nvim/lua/nekoshell/options.lua
-.config/nvim/lua/nekoshell/keymaps.lua .config/nvim/lua/nekoshell/plugins.lua
-.config/tmux/tmux.conf"
+RENDERED_PATHS=".config/starship.toml .config/fastfetch/config.jsonc .iterm2_shell_integration.zsh"
 
 # stowed_paths: every path stow will claim in $HOME, one per line, relative to
 # $HOME. Read from the packages themselves so the backup can never drift from
@@ -113,6 +107,16 @@ check_only() {
   [[ -f "$NEKOSHELL_CONFIG/theme.zsh" ]] || { log_info "would render the theme"; todo=1; }
   [[ -L "$POKEMON_BIN" ]] || { log_info "would install pokemon-colorscripts"; todo=1; }
   [[ -f "$ITERM_SHELL_INTEGRATION" ]] || { log_info "would download iTerm2 shell integration"; todo=1; }
+  if [[ -e "$NVIM_DIR/init.lua" || -e "$NVIM_DIR/init.vim" ]]; then
+    log_info "Neovim config already at $NVIM_DIR; the template would be left in templates/nvim"
+  else
+    log_info "would copy templates/nvim to $NVIM_DIR"; todo=1
+  fi
+  if [[ -e "$HOME/.tmux.conf" || -e "$TMUX_DIR/tmux.conf" ]]; then
+    log_info "tmux config already in place; the template would be left in templates/tmux"
+  else
+    log_info "would copy templates/tmux/tmux.conf to $TMUX_DIR"; todo=1
+  fi
   [[ -d "$TPM_DIR" ]] || { log_info "would clone the tmux plugin manager"; todo=1; }
   if iterm_prefs_pending; then log_info "iTerm2 global prefs pending (run: ./install.sh --iterm-prefs with iTerm2 closed)"; fi
   if [[ "$todo" == 0 ]]; then log_ok "nothing to do"; fi
@@ -129,9 +133,32 @@ apply_prefs_step() {
   log_ok "iTerm2 global prefs applied"
 }
 
+# dep_sha NAME: the commit deps.lock pins for NAME, or a non-zero status when
+# the line is missing or is not a full hash. bash 3.2 keeps the pattern in a
+# variable: an unquoted literal on the right of =~ is the only portable shape.
+dep_sha() {
+  local sha re='^[0-9a-f]{40}$'
+  sha="$(sed -n "s/^$1=//p" "$NEKOSHELL_ROOT/deps.lock" | head -1)"
+  [[ "$sha" =~ $re ]] || return 1
+  printf '%s\n' "$sha"
+}
+
+# check_deps_lock: read every pin before anything moves. An empty line would
+# otherwise reach `git checkout ""` in a step that runs after the backup, with
+# the user's files already out of place and an ERR trap to explain it.
+check_deps_lock() {
+  local name
+  for name in pokemon-colorscripts tpm; do
+    dep_sha "$name" >/dev/null || {
+      log_fail "deps.lock has no valid commit for $name; this checkout is incomplete"
+      exit 1
+    }
+  done
+}
+
 install_pokemon_colorscripts() {
   local sha
-  sha="$(sed -n 's/^pokemon-colorscripts=//p' "$NEKOSHELL_ROOT/deps.lock")"
+  sha="$(dep_sha pokemon-colorscripts)"
   if [[ ! -d "$POKEMON_DIR" ]]; then
     run git clone --quiet https://gitlab.com/phoneybadger/pokemon-colorscripts.git "$POKEMON_DIR"
   else
@@ -145,6 +172,13 @@ install_pokemon_colorscripts() {
 }
 
 # install_tpm: the tmux plugin manager, cloned at the commit deps.lock pins.
+#
+# The path matters. TPM picks its own plugin directory from where the config
+# lives: with a ~/.config/tmux/tmux.conf it uses ~/.config/tmux/plugins/, not
+# ~/.tmux/plugins/. A clone in the other place is simply never read, and TPM
+# clones itself again, unpinned, the first time it runs. tmux.conf also sets
+# TMUX_PLUGIN_MANAGER_PATH to the same directory, so the two cannot drift.
+#
 # TPM itself is all the installer fetches; the plugins tmux.conf lists arrive
 # when the user presses C-a I, because TPM is an interactive tool and running
 # its installer headless here would leave a half-populated plugin directory
@@ -152,7 +186,7 @@ install_pokemon_colorscripts() {
 # clone still has a config that parses.
 install_tpm() {
   local sha
-  sha="$(sed -n 's/^tpm=//p' "$NEKOSHELL_ROOT/deps.lock")"
+  sha="$(dep_sha tpm)"
   if [[ ! -d "$TPM_DIR" ]]; then
     run mkdir -p "$(dirname "$TPM_DIR")"
     run git clone --quiet https://github.com/tmux-plugins/tpm.git "$TPM_DIR"
@@ -164,22 +198,35 @@ install_tpm() {
 }
 
 # install_user_configs: the configs that are the user's to edit, copied once and
-# then never touched again. greet.conf, the nvim files and tmux.conf are all the
-# same deal: a symlink back into the checkout would turn every edit of theirs
-# into a change to the repo, so these are real files. Each one is copied only
-# when it is absent, so deleting one is how you ask for it back.
+# then never touched again. A symlink back into the checkout would turn every
+# edit of theirs into a change to the repo, so these are real files.
+#
+# The Neovim and tmux configs are all or nothing, and nekoshell always loses the
+# tie. Copying our files in one at a time beside someone else's would build a
+# config neither of us wrote, and there is no version of that which is the
+# user's own. The tests for "is one already here" are wider than the files we
+# write, because both tools have more than one name for their entry point:
+#
+#   nvim  init.vim is shadowed by init.lua rather than merged with it, so a
+#         vimscript config would go quiet without a single file being replaced.
+#   tmux  3.x reads ~/.config/tmux/tmux.conf in preference to ~/.tmux.conf, so
+#         writing ours would take over a config that is still in use.
+#
+# Nothing here is ever backed up, because nothing here is ever replaced.
 install_user_configs() {
-  local rel
   if [[ ! -e "$NEKOSHELL_CONFIG/greet.conf" ]]; then
     run cp "$NEKOSHELL_ROOT/templates/greet.conf" "$NEKOSHELL_CONFIG/greet.conf"
   fi
-  run mkdir -p "$NVIM_DIR/lua/nekoshell" "$TMUX_DIR"
-  for rel in $NVIM_FILES; do
-    if [[ ! -e "$NVIM_DIR/$rel" ]]; then
-      run cp "$NEKOSHELL_ROOT/templates/nvim/$rel" "$NVIM_DIR/$rel"
-    fi
-  done
-  if [[ ! -e "$TMUX_DIR/tmux.conf" ]]; then
+  if [[ -e "$NVIM_DIR/init.lua" || -e "$NVIM_DIR/init.vim" ]]; then
+    log_warn "existing Neovim config found at ~/.config/nvim; leaving it alone (nekoshell's is in templates/nvim)"
+  else
+    run mkdir -p "$NVIM_DIR"
+    run cp -R "$NEKOSHELL_ROOT/templates/nvim/." "$NVIM_DIR/"
+  fi
+  if [[ -e "$HOME/.tmux.conf" || -e "$TMUX_DIR/tmux.conf" ]]; then
+    log_warn "existing tmux config found; leaving it alone (nekoshell's is in templates/tmux/tmux.conf)"
+  else
+    run mkdir -p "$TMUX_DIR"
     run cp "$NEKOSHELL_ROOT/templates/tmux/tmux.conf" "$TMUX_DIR/tmux.conf"
   fi
 }
@@ -218,6 +265,7 @@ main() {
 
   log_step 1 $TOTAL "Preflight"
   log_ok "macOS, Homebrew, zsh present. Checkout: $NEKOSHELL_ROOT"
+  check_deps_lock
   confirm "Install nekoshell into $HOME?" || { log_warn "aborted"; exit 1; }
 
   log_step 2 $TOTAL "Homebrew packages"

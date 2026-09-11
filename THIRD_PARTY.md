@@ -27,7 +27,7 @@ checked against.
 
 | Project | Version | Fetched by | License |
 |---|---|---|---|
-| [tmux-plugins/tpm](https://github.com/tmux-plugins/tpm) | `e261deb1b47614eed3400089ce7197dc68acc4eb` (pinned for the installer in `deps.lock`) | `install.sh`, into `~/.tmux/plugins/tpm` | MIT |
+| [tmux-plugins/tpm](https://github.com/tmux-plugins/tpm) | `e261deb1b47614eed3400089ce7197dc68acc4eb` (pinned for the installer in `deps.lock`) | `install.sh`, into `~/.config/tmux/plugins/tpm` | MIT |
 | [catppuccin/tmux](https://github.com/catppuccin/tmux) | `v2.3.0` (`d2d25bd3393fe43f19eb4fff6cdd2bdf5578e622`), named in `templates/tmux/tmux.conf` | TPM, when the human presses `C-a I` inside tmux | MIT |
 | [tmux-plugins/tmux-sensible](https://github.com/tmux-plugins/tmux-sensible) | default branch | TPM, at `C-a I` | MIT |
 | [tmux-plugins/tmux-yank](https://github.com/tmux-plugins/tmux-yank) | default branch | TPM, at `C-a I` | MIT |
