@@ -3,9 +3,8 @@ add_newline = true
 palette = "catppuccin_mocha"
 
 format = """
-$directory$git_branch$git_status$nodejs$python$rust$golang
-$character"""
-right_format = "$cmd_duration"
+$directory$git_branch$git_status$git_state$nodejs$python$rust$golang$docker_context$fill$cmd_duration$status$jobs$time
+$line_break$character"""
 
 [palettes.catppuccin_mocha]
 rosewater = "#f5e0dc"
@@ -26,9 +25,31 @@ base = "#1e1e2e"
 
 [directory]
 style = "bold blue"
-truncation_length = 3
-truncate_to_repo = true
+truncation_length = 0
+truncate_to_repo = false
+home_symbol = "~"
+read_only = " 󰌾"
 format = "[$path]($style)[$read_only]($read_only_style) "
+
+[fill]
+symbol = " "
+
+[time]
+disabled = false
+style = "overlay0"
+format = "[$time]($style)"
+time_format = "%H:%M"
+
+[status]
+disabled = false
+style = "red"
+symbol = "✘ "
+format = "[$symbol$status]($style) "
+
+[jobs]
+symbol = " "
+style = "peach"
+format = "[$symbol$number]($style) "
 
 [git_branch]
 symbol = " "
@@ -38,6 +59,15 @@ format = "[$symbol$branch]($style) "
 [git_status]
 style = "red"
 format = "[$all_status$ahead_behind]($style) "
+
+[git_state]
+style = "yellow"
+format = "[$state( $progress_current/$progress_total)]($style) "
+
+[docker_context]
+symbol = " "
+style = "sky"
+format = "[$symbol$context]($style) "
 
 [cmd_duration]
 min_time = 2000

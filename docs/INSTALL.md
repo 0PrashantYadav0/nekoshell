@@ -61,6 +61,8 @@ This prints one line per check: font, tools, zshrc, iTerm2 profiles and preferen
 
 **No greeting appears.** Run `nekoshell-greet` directly to see any error, and `nekoshell-doctor` to check that fastfetch and pokemon-colorscripts are installed. The greeting is also suppressed on purpose inside tmux, over SSH (unless `NEKOSHELL_GREET_SSH=1`), and inside Claude Code.
 
+**Wi-Fi shows `<redacted>` or is missing.** Give iTerm2 Location Services access in System Settings, Privacy and Security, Location Services.
+
 **The panel does not open.** Check iTerm2 Settings, Keys, Hotkey Window. It should show ⌥M bound to the nekoshell panel profile. If the binding is missing, re-run `./install.sh` to rewrite the profiles. `nekoshell-doctor` reports the `iterm2 profiles` row as stale when the profile still points at an old checkout location.
 
 ## Uninstall
