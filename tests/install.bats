@@ -7,6 +7,8 @@ setup() {
   export NEKOSHELL_SKIP_PREFLIGHT=1
   printf 'export EDITOR=vim\nalias gs="git status"\nexport ZSH="$HOME/.oh-my-zsh"\n' > "$HOME/.zshrc"
   echo 'old' > "$HOME/.config/starship.toml"
+  mkdir -p "$HOME/.config/fastfetch"
+  echo 'mine' > "$HOME/.config/fastfetch/mine.jsonc"
 }
 teardown() { teardown_tmp_home; }
 
@@ -36,6 +38,7 @@ teardown() { teardown_tmp_home; }
   ! grep -q 'oh-my-zsh' "$HOME/.config/nekoshell/zsh/local.zsh"
   [ -f "$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json" ]
   [ -L "$HOME/.local/bin/pokemon-colorscripts" ]
+  [ -x "$HOME/.local/bin/pokemon-colorscripts" ]
   grep -q 'nekoshell' "$HOME/.gitconfig"
   [[ "$output" == *"Default Bookmark Guid"* ]]
 }
@@ -71,4 +74,20 @@ teardown() { teardown_tmp_home; }
   grep -q 'EDITOR=vim' "$HOME/.zshrc"
   [ "$(cat "$HOME/.config/starship.toml")" = "old" ]
   [ ! -f "$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json" ]
+}
+
+@test "a second uninstall keeps the restored files" {
+  "$REPO_ROOT/install.sh" --yes
+  "$REPO_ROOT/uninstall.sh" --yes
+  run "$REPO_ROOT/uninstall.sh" --yes
+  [ "$status" -eq 0 ]
+  grep -q 'EDITOR=vim' "$HOME/.zshrc"
+  [ "$(cat "$HOME/.config/starship.toml")" = "old" ]
+}
+
+@test "files nekoshell does not own are left alone" {
+  "$REPO_ROOT/install.sh" --yes
+  [ "$(cat "$HOME/.config/fastfetch/mine.jsonc")" = "mine" ]
+  "$REPO_ROOT/uninstall.sh" --yes
+  [ "$(cat "$HOME/.config/fastfetch/mine.jsonc")" = "mine" ]
 }
