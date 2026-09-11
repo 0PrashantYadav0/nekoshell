@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Fake Homebrew for the installer tests.
+if [[ "${1:-}" == "--prefix" ]]; then
+  echo "/opt/homebrew"
+  exit 0
+fi
+echo "brew $*"
