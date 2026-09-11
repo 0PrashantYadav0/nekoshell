@@ -91,7 +91,7 @@ It does not undo everything. It deliberately leaves behind:
 - the `[include]` line it added to `~/.gitconfig`
 - `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
 - your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
-- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugin manager in `~/.tmux/plugins/`
+- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugins in `~/.config/tmux/plugins/`
 - `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
 - the cache in `~/.cache/nekoshell`
 - the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`
@@ -103,6 +103,7 @@ It prints the commands for the last two so you can finish by hand if you want to
 
 - These files belong to the user. The installer writes each one once and then leaves it alone: `~/.config/nekoshell/zsh/local.zsh`, `~/.config/nekoshell/greet.conf`, `~/.config/nekoshell/art/`, `~/.config/starship.toml`, `~/.config/fastfetch/config.jsonc`, `~/.config/nvim/init.lua` with the three files under `~/.config/nvim/lua/nekoshell/`, and `~/.config/tmux/tmux.conf`. Everything else under `~/.config/nekoshell/` is a symlink into the checkout and must not be edited.
 - `~/.config/nekoshell/theme`, `~/.config/nekoshell/theme.zsh` and `~/.config/tmux/nekoshell-theme.conf` are nekoshell's own: the installer rewrites them every run. Change them with `nekoshell-theme <flavour>`, never by hand.
+- The installer never touches a Neovim or tmux config that is already there. If `~/.config/nvim/init.lua` or `init.vim` exists it copies no Neovim files at all; if `~/.tmux.conf` or `~/.config/tmux/tmux.conf` exists it copies no tmux config. It warns instead. Do not merge nekoshell's templates into the human's config to work around this; tell them the templates are in `templates/nvim/` and `templates/tmux/` and let them decide.
 - Do not start a tmux session to finish the install. The plugin install binding is a human step, and a session started from an agent's shell attaches to the terminal it is running in.
 - `nekoshell-theme <flavour>` is the one command that does overwrite `~/.config/starship.toml`, `~/.config/fastfetch/config.jsonc` and `~/.config/nekoshell/theme.zsh`. Only run it when the human asked for a different flavour; say so first if they have edited those files.
 - Do not run `defaults write` for iTerm2 while iTerm2 is running; it will be overwritten when iTerm2 quits.
