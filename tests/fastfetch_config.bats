@@ -3,8 +3,6 @@ load helpers
 
 CFG="$REPO_ROOT/stow/config/.config/fastfetch/config.jsonc"
 
-strip_jsonc() { sed -e 's://[^"]*$::' "$CFG"; }
-
 @test "fastfetch config is valid JSONC with the expected rows in order" {
   run bash -c "sed -e 's://[^\"]*\$::' '$CFG' | python3 -c '
 import json,sys

@@ -56,10 +56,22 @@ import tomllib
 d=tomllib.load(open('$REPO_ROOT/stow/config/.config/starship.toml','rb'))
 print(d['directory']['truncation_length'], d['directory']['truncate_to_repo'])
 print('\$fill' in d['format'], '\$time' in d['format'], '\$status' in d['format'], '\$line_break' in d['format'], d['format'].rstrip().endswith('\$character'))
-print(d['time']['disabled'], d['status']['disabled'])"
+print(d['time']['disabled'], d['status']['disabled'])
+print(d['format'].count(chr(10)))"
   [ "${lines[0]}" = "0 False" ]
   [ "${lines[1]}" = "True True True True True" ]
   [ "${lines[2]}" = "False False" ]
+  # No newline embedded in the format value itself: $line_break must sit on
+  # the same segment as $time, or a raw newline plus $line_break's own
+  # newline render a blank row between the info line and the character.
+  [ "${lines[3]}" = "0" ]
+}
+
+@test "starship prompt renders as exactly two lines after the add_newline blank line" {
+  command -v starship >/dev/null || skip "starship not installed"
+  run bash -c "STARSHIP_CONFIG='$REPO_ROOT/stow/config/.config/starship.toml' starship prompt --status=1 --cmd-duration=3500 --jobs=1 2>/dev/null | tail -n +2 | grep -c ''"
+  [ "$status" -eq 0 ]
+  [ "$output" = "2" ]
 }
 
 @test "starship validates its own config" {
