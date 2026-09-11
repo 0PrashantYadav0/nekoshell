@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# nekoshell-music: what runs inside the Spotify panel.
+# Premium: spotify_player (streams on its own). Fallback: shpotify remote for the desktop app.
+set -euo pipefail
+export NEKOSHELL_PANEL=1
+
+mode="${1:-auto}"
+
+remote() {
+  command -v spotify >/dev/null 2>&1 || {
+    echo "nekoshell: neither spotify_player nor shpotify is installed. Run: brew install spotify_player shpotify" >&2
+    exit 1
+  }
+  cat <<'EOF'
+nekoshell remote (shpotify -> Spotify desktop app)
+  space  play/pause     n  next     p  previous
+  +/-    volume         s  status   q  quit
+EOF
+  local key
+  while IFS= read -r -s -n 1 key; do
+    case "$key" in
+      " ") spotify pause ;;
+      n) spotify next ;;
+      p) spotify prev ;;
+      +) spotify vol up ;;
+      -) spotify vol down ;;
+      s) spotify status ;;
+      q) break ;;
+    esac
+  done
+}
+
+if [[ "$mode" == "--remote" ]] || ! command -v spotify_player >/dev/null 2>&1; then
+  remote
+  exit 0
+fi
+
+cache="$HOME/.cache/spotify-player"
+if ! ls "$cache"/credentials* >/dev/null 2>&1; then
+  echo "nekoshell: first run, logging in to Spotify. A browser window will open."
+  echo "           You need a Spotify Premium account for playback."
+  spotify_player authenticate
+fi
+exec spotify_player
