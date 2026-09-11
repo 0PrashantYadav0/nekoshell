@@ -11,7 +11,13 @@ setup() {
 }
 teardown() { teardown_tmp_home; }
 
-greet() { script -q /dev/null "$REPO_ROOT/bin/nekoshell-greet" "$@" < /dev/null | sed $'1s/^\^D\b\b//'; }
+greet() {
+  local out rc
+  out="$(script -q /dev/null "$REPO_ROOT/bin/nekoshell-greet" "$@" < /dev/null)"
+  rc=$?
+  printf '%s\n' "$out" | sed $'1s/^\^D\b\b//'
+  return $rc
+}
 
 @test "silent when CLAUDECODE is set" {
   CLAUDECODE=1 run greet

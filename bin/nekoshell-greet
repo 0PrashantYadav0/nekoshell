@@ -22,8 +22,10 @@ now_ms() {
 start_ms=""
 [[ -n "${NEKOSHELL_GREET_TIME:-}" ]] && start_ms="$(now_ms)"
 
+paths="$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/../lib/paths.sh"
+[[ -r "$paths" ]] || exit 0
 # shellcheck source=lib/paths.sh
-source "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/../lib/paths.sh"
+source "$paths"
 
 POKEMON_SHARE=70
 SHINY_ODDS=128
@@ -58,6 +60,7 @@ show_pokemon() {
     args+=(-s); shiny=" ✦ shiny"
   fi
   out="$(pokemon-colorscripts "${args[@]}" 2>/dev/null)" || return 0
+  [[ "$out" == *$'\n'* ]] || return 0
   name="${out%%$'\n'*}"
   printf '%s%s\n' "$name" "$shiny" > "$NEKOSHELL_CACHE/art-name"
   printf '%s\n' "${out#*$'\n'}" | fastfetch --config "$ff_config" --file-raw -
@@ -66,7 +69,7 @@ show_pokemon() {
 show_image() {
   local img="$1"
   basename "$img" > "$NEKOSHELL_CACHE/art-name"
-  fastfetch --config "$ff_config" --iterm "$img" --logo-width "$IMAGE_WIDTH" --logo-height "$IMAGE_HEIGHT"
+  fastfetch --config "$ff_config" --iterm "$img" --logo-width "$IMAGE_WIDTH" --logo-height "$IMAGE_HEIGHT" </dev/null
 }
 
 roll=$((RANDOM % 100))
