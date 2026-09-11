@@ -118,9 +118,10 @@ add_gitconfig_include() {
 }
 
 main() {
+  # --check answers from the filesystem alone, so it must not need Homebrew.
+  [[ "$CHECK" == 1 ]] && check_only
   preflight
   [[ "$ONLY_PREFS" == 1 ]] && { iterm_apply_prefs; log_ok "iTerm2 global prefs applied"; exit 0; }
-  [[ "$CHECK" == 1 ]] && check_only
 
   log_step 1 $TOTAL "Preflight"
   log_ok "macOS, Homebrew, zsh present. Checkout: $NEKOSHELL_ROOT"
@@ -142,6 +143,11 @@ main() {
     backup_path "$rel"
   done < <(stowed_paths)
   if [[ -d "$NEKOSHELL_BACKUP_DIR" ]]; then log_ok "backup at $NEKOSHELL_BACKUP_DIR"; else log_ok "nothing to back up"; fi
+
+  # Your files are saved from here on, so say where they are if a later step
+  # dies. -E so a failure inside one of the helper functions reaches the trap.
+  set -E
+  trap 'log_fail "install failed after backup; restore with: $NEKOSHELL_ROOT/uninstall.sh --yes"' ERR
 
   log_step 4 $TOTAL "Migrate your aliases"
   run mkdir -p "$NEKOSHELL_CONFIG/zsh"
@@ -171,6 +177,7 @@ main() {
   log_step 10 $TOTAL "iTerm2 global preferences"
   apply_prefs_step
 
+  trap - ERR
   echo
   log_ok "installed. Human steps left:"
   echo "  1. Quit and reopen iTerm2 (pick the 'nekoshell' profile if it is not the default)."

@@ -52,9 +52,14 @@ backup_restore_latest() {
   [[ -n "$latest" && -r "$latest/manifest.txt" ]] || { log_warn "no backup to restore"; return 0; }
   while IFS= read -r rel; do
     [[ -n "$rel" ]] || continue
+    # An entry already restored (or never saved) must not clobber what is in
+    # $HOME now: only remove the destination when there is a source to move.
+    [[ -e "$latest/$rel" || -L "$latest/$rel" ]] || continue
     run rm -rf "$HOME/$rel"
     run mkdir -p "$HOME/$(dirname "$rel")"
     run mv "$latest/$rel" "$HOME/$rel"
   done < "$latest/manifest.txt"
   log_ok "restored $(wc -l < "$latest/manifest.txt" | tr -d ' ') paths from $latest"
+  # Retire the manifest so a second uninstall finds nothing to restore.
+  run mv "$latest/manifest.txt" "$latest/manifest.restored"
 }
