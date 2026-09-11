@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Fake `defaults`: records the call, and reports no stored value for reads.
+echo "defaults $*"
+if [[ "${1:-}" == "read" ]]; then
+  echo "NONE"
+fi

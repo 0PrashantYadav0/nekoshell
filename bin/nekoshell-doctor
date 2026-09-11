@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# nekoshell-doctor: one line per check. Exit 1 if any check fails. --json for agents.
+set -uo pipefail
+# shellcheck source=lib/paths.sh
+source "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/../lib/paths.sh"
+# shellcheck source=lib/iterm.sh
+source "$NEKOSHELL_ROOT/lib/iterm.sh"
+
+JSON=0
+case "${1:-}" in
+  --json) JSON=1 ;;
+  -h|--help) echo "usage: nekoshell-doctor [--json]"; exit 0 ;;
+  "") ;;
+  *) echo "unknown flag: $1" >&2; exit 2 ;;
+esac
+
+FAILS=0; ROWS=""
+
+report() { # status check detail
+  local status="$1" check="$2" detail="$3"
+  if [[ "$status" == "fail" ]]; then FAILS=$((FAILS + 1)); fi
+  if [[ "$JSON" == 1 ]]; then
+    ROWS+="$(printf '{"check":"%s","status":"%s","detail":"%s"},' "$check" "$status" "${detail//\"/\\\"}")"
+  else
+    printf '%-4s %-28s %s\n' "$status" "$check" "$detail"
+  fi
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# glob_exists PATTERN...: true when any expanded pattern names something that exists.
+# A loop, not `ls`: `ls a* b*` exits non-zero as soon as one pattern has no match.
+glob_exists() {
+  local f
+  for f in "$@"; do
+    [[ -e "$f" ]] && return 0
+  done
+  return 1
+}
+
+if have brew; then report ok "homebrew" "$(brew --version | head -1)"; else report fail "homebrew" "not on PATH"; fi
+for tool in starship fastfetch fzf eza bat zoxide stow; do
+  if have "$tool"; then report ok "tool: $tool" "$(command -v "$tool")"; else report fail "tool: $tool" "missing (brew bundle)"; fi
+done
+if glob_exists "$HOME"/Library/Fonts/JetBrainsMonoNerdFont* /Library/Fonts/JetBrainsMonoNerdFont*; then
+  report ok "font" "JetBrainsMono Nerd Font"; else report fail "font" "brew install --cask font-jetbrains-mono-nerd-font"; fi
+if [[ -L "$HOME/.zshrc" && "$HOME/.zshrc" -ef "$NEKOSHELL_ROOT/stow/zsh/.zshrc" ]]; then
+  report ok "zshrc" "linked to $NEKOSHELL_ROOT"; else report fail "zshrc" "not a nekoshell symlink (run install.sh)"; fi
+if [[ "$(cat "$NEKOSHELL_CONFIG/root" 2>/dev/null)" == "$NEKOSHELL_ROOT" ]]; then
+  report ok "root" "$NEKOSHELL_ROOT"; else report fail "root" "$NEKOSHELL_CONFIG/root missing or stale"; fi
+prof="$ITERM_DYNAMIC_DIR/nekoshell.json"
+if [[ -f "$prof" ]] && grep -q "$NEKOSHELL_MAIN_GUID" "$prof" && grep -q "$NEKOSHELL_PANEL_GUID" "$prof"; then
+  report ok "iterm2 profiles" "$prof"; else report fail "iterm2 profiles" "missing (run install.sh)"; fi
+if iterm_prefs_pending; then
+  report warn "iterm2 prefs" "pending: quit iTerm2, run install.sh --iterm-prefs"; else report ok "iterm2 prefs" "default profile is nekoshell"; fi
+if have pokemon-colorscripts && pokemon-colorscripts -r >/dev/null 2>&1; then
+  report ok "pokemon-colorscripts" "$(command -v pokemon-colorscripts)"; else report fail "pokemon-colorscripts" "missing or broken"; fi
+if have fastfetch; then
+  ms="$(NEKOSHELL_SEED=1 NEKOSHELL_GREET_TIME=1 NEKOSHELL_NO_GREET='' CLAUDECODE='' TMUX='' \
+    script -q /dev/null "$NEKOSHELL_ROOT/bin/nekoshell-greet" </dev/null 2>/dev/null \
+    | tr -d '\r' | sed -n 's/^greet: \([0-9]*\) ms$/\1/p')"
+  if [[ -z "$ms" ]]; then report warn "greet time" "could not measure"
+  elif (( ms <= 150 )); then report ok "greet time" "${ms} ms"
+  else report warn "greet time" "${ms} ms (budget 150)"; fi
+fi
+if have spotify_player; then
+  if glob_exists "$HOME"/.cache/spotify-player/credentials*; then report ok "spotify" "logged in"
+  else report warn "spotify" "run: spotify_player authenticate"; fi
+else report warn "spotify" "spotify_player not installed"; fi
+
+if [[ "$JSON" == 1 ]]; then printf '[%s]\n' "${ROWS%,}"; fi
+[[ "$FAILS" == 0 ]]

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Fake git for the installer tests: `clone` fabricates a pokemon-colorscripts
+# checkout, `checkout`/`-C` are no-ops. Everything else just echoes.
+echo "git $*"
+for arg in "$@"; do
+  if [[ "$arg" == "clone" ]]; then
+    dest=""
+    for a in "$@"; do dest="$a"; done
+    mkdir -p "$dest"
+    printf '#!/usr/bin/env bash\necho pikachu\n' > "$dest/pokemon-colorscripts.py"
+    chmod +x "$dest/pokemon-colorscripts.py"
+    exit 0
+  fi
+done
+exit 0
