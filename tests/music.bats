@@ -32,6 +32,21 @@ teardown() { teardown_tmp_home; }
   [[ "$output" == *"spotify pause"* ]]
 }
 
+@test "--remote survives a failing shpotify command" {
+  mkdir -p "$HOME/bin"
+  cat > "$HOME/bin/spotify" <<'EOF'
+#!/usr/bin/env bash
+echo "spotify $*"
+[ "$1" = "next" ] && exit 1
+exit 0
+EOF
+  chmod +x "$HOME/bin/spotify"
+  run bash -c "printf 'nsq' | PATH='$HOME/bin:$PATH' '$REPO_ROOT/bin/nekoshell-music' --remote"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"spotify next"* ]]
+  [[ "$output" == *"spotify status"* ]]
+}
+
 @test "falls back to the remote when spotify_player is missing" {
   mkdir -p "$HOME/bin"; cp "$REPO_ROOT/tests/fakes/spotify" "$HOME/bin/"
   run bash -c "printf 'q' | PATH='$HOME/bin:/usr/bin:/bin' '$REPO_ROOT/bin/nekoshell-music'"
