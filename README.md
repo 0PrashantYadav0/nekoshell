@@ -9,7 +9,7 @@ A Catppuccin-themed iTerm2 rig with a Pokémon greeting, machine stats, and a ho
 
 **Look**: Catppuccin Mocha, JetBrainsMono Nerd Font, Starship prompt, eza, bat, fzf, zoxide, delta, btop, lazygit.
 
-**Greeting**: a new interactive terminal prints art next to machine stats. The art is a Pokémon colourscript 70 percent of the time and a picture from your art pack the other 30 percent. Stats come from fastfetch. The greeting finishes in under 150 ms and never runs inside tmux, over SSH, or inside Claude Code.
+**Greeting**: a new interactive terminal prints art next to machine stats. The art is a Pokémon colourscript 70 percent of the time and a picture from your art pack the other 30 percent. Stats come from fastfetch. The greeting finishes in under 150 ms and never runs inside tmux, over SSH, or inside Claude Code. The Art line shows the Pokémon's name, national dex number, type and generation.
 
 **Panel**: press ⌥M anywhere to show or hide an iTerm2 hotkey window docked to the right edge of the screen, running spotify_player. Spotify Premium is required for playback; without it, the panel falls back to a shpotify remote for the Spotify desktop app.
 

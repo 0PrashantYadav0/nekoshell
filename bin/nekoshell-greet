@@ -56,6 +56,17 @@ pick_image() {
   printf '%s\n' "${files[$((RANDOM % ${#files[@]}))]}"
 }
 
+# pokemon_facts NAME: "Pikachu · #025 · Electric · Gen 1", or just the capitalised name if unknown.
+pokemon_facts() {
+  local name="$1" tsv="$NEKOSHELL_ROOT/data/pokemon.tsv" cap
+  cap="$(printf '%s' "${name:0:1}" | tr '[:lower:]' '[:upper:]')${name:1}"
+  if [[ -r "$tsv" ]]; then
+    awk -F'\t' -v n="$name" -v cap="$cap" '$1==n {printf "%s · #%03d · %s · Gen %s\n", cap, $2, $3, $4; found=1} END {if (!found) print cap}' "$tsv"
+  else
+    printf '%s\n' "$cap"
+  fi
+}
+
 show_pokemon() {
   command -v pokemon-colorscripts >/dev/null 2>&1 || return 0
   local args=(-r) out name
@@ -67,7 +78,7 @@ show_pokemon() {
   out="$(pokemon-colorscripts "${args[@]}" 2>/dev/null)" || return 0
   [[ "$out" == *$'\n'* ]] || return 0
   name="${out%%$'\n'*}"
-  printf '%s%s\n' "$name" "$shiny" > "$NEKOSHELL_CACHE/art-name"
+  printf '%s%s\n' "$(pokemon_facts "$name")" "$shiny" > "$NEKOSHELL_CACHE/art-name"
   printf '%s\n' "${out#*$'\n'}" | fastfetch --config "$ff_config" --file-raw -
 }
 

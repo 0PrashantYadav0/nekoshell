@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-name="pikachu"
-for a in "$@"; do [[ "$a" == "-s" ]] && name="pikachu (shiny)"; done
-echo "$name"
+# Real pokemon-colorscripts always prints the plain name; shininess only
+# changes the colours, not the name line.
+echo "pikachu"
 printf '▄▄▄\n███\n▀▀▀\n'

@@ -46,7 +46,7 @@ greet() {
   NEKOSHELL_SEED=1 run greet
   [ "$status" -eq 0 ]
   [[ "$output" == *"--file-raw - stdin=3"* ]]
-  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "pikachu" ]
+  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Pikachu · #025 · Electric · Gen 1" ]
 }
 
 @test "image path is used when the roll lands above the pokemon share" {
@@ -73,7 +73,7 @@ greet() {
 @test "shiny odds of 1 always passes -s" {
   echo 'SHINY_ODDS=1' > "$HOME/.config/nekoshell/greet.conf"
   NEKOSHELL_SEED=1 run greet
-  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "pikachu (shiny) ✦ shiny" ]
+  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Pikachu · #025 · Electric · Gen 1 ✦ shiny" ]
 }
 
 @test "prints nothing when fastfetch is missing" {
