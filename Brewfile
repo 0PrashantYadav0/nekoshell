@@ -1,6 +1,4 @@
-tap "homebrew/bundle"
 cask "font-jetbrains-mono-nerd-font"
-cask "iterm2"
 brew "antidote"
 brew "bat"
 brew "bats-core"

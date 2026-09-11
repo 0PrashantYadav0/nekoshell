@@ -91,3 +91,16 @@ teardown() { teardown_tmp_home; }
   "$REPO_ROOT/uninstall.sh" --yes
   [ "$(cat "$HOME/.config/fastfetch/mine.jsonc")" = "mine" ]
 }
+
+# The Brewfile must only name things `brew bundle` can still resolve on a
+# current Homebrew. `homebrew/bundle` was deprecated and tapping it now fails
+# the whole bundle; iTerm2 is a precondition installed outside Homebrew, so a
+# cask for it collides with an existing /Applications/iTerm.app.
+@test "Brewfile has no deprecated tap and does not install iTerm2" {
+  run grep -c '^tap ' "$REPO_ROOT/Brewfile"
+  [ "$output" = "0" ]
+  run grep -c '^cask "iterm2"' "$REPO_ROOT/Brewfile"
+  [ "$output" = "0" ]
+  grep -q '^cask "font-jetbrains-mono-nerd-font"' "$REPO_ROOT/Brewfile"
+  grep -q '^brew "spotify_player"' "$REPO_ROOT/Brewfile"
+}
