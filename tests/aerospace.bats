@@ -115,8 +115,14 @@ print('ok')
   assert_matches "$output" 'ok[[:space:]]+aerospace'
 }
 
+# The row format is `printf '%-4s %-28s %s\n'`, so a failing row reads
+# "fail aerospace" with exactly one space between "fail" and the check name
+# (no padding needed: "fail" is already 4 characters); the aerospace row
+# never goes through the "tool: X" loop, so that shape can never occur here
+# either way. Asserting the reachable "fail" shape, and that the row is
+# actually present as a warn, is what makes this test able to fail.
 @test "the doctor never fails because AeroSpace is missing" {
   run env PATH="/usr/bin:/bin:/usr/sbin:/sbin" "$REPO_ROOT/bin/nekoshell-doctor"
-  assert_not_contains "$output" "fail  aerospace"
-  assert_not_contains "$output" "fail tool: aerospace"
+  assert_not_contains "$output" "fail aerospace"
+  assert_matches "$output" 'warn[[:space:]]+aerospace'
 }
