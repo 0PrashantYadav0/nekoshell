@@ -9,6 +9,12 @@ setup() {
 }
 teardown() { teardown_tmp_home; }
 
+# relpath TARGET FROM_DIR: TARGET as a path relative to FROM_DIR, the shape stow
+# writes its links in.
+relpath() {
+  python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$1" "$2"
+}
+
 @test "palettes.json has four flavours with the known bases" {
   run python3 -c "
 import json; d=json.load(open('$REPO_ROOT/data/palettes.json'))
@@ -60,6 +66,52 @@ bg=p['Background Color']; print(round(bg['Red Component']*255), round(bg['Green 
   [ ! -L "$HOME/.config/fastfetch/config.jsonc" ]
   grep -q '@@FLAVOR@@' "$REPO_ROOT/templates/starship.toml"
   ! grep -q '@@FLAVOR@@' "$HOME/.config/starship.toml"
+}
+
+# stow writes RELATIVE links, and this version deleted the directory the
+# fastfetch one pointed through, so that link cannot be resolved by following it.
+# Left in place it took `nekoshell-theme` down mid-render: the recorded flavour,
+# theme.zsh and btop.conf had already moved while the fastfetch config and the
+# iTerm2 profile stayed on the old flavour.
+@test "a theme switch survives the relative stow links an upgrade leaves behind" {
+  rm -f "$HOME/.config/starship.toml" "$HOME/.config/fastfetch/config.jsonc"
+  # ~/.config/starship.toml -> ../../<checkout>/templates/starship.toml
+  ln -s "$(relpath "$REPO_ROOT/templates/starship.toml" "$HOME/.config")" \
+    "$HOME/.config/starship.toml"
+  # ~/.config/fastfetch/config.jsonc -> a path whose directory no longer exists
+  ln -s "$(relpath "$REPO_ROOT/stow/config/.config/fastfetch/config.jsonc" "$HOME/.config/fastfetch")" \
+    "$HOME/.config/fastfetch/config.jsonc"
+  [ -L "$HOME/.config/fastfetch/config.jsonc" ]
+  [ ! -e "$HOME/.config/fastfetch/config.jsonc" ]
+
+  run "$REPO_ROOT/bin/nekoshell-theme" latte
+  [ "$status" -eq 0 ]
+
+  for f in "$HOME/.config/starship.toml" "$HOME/.config/fastfetch/config.jsonc"; do
+    [ ! -L "$f" ]
+    [ -f "$f" ]
+  done
+  grep -q '^palette = "catppuccin_latte"' "$HOME/.config/starship.toml"
+  grep -q '38;2;136;57;239' "$HOME/.config/fastfetch/config.jsonc"
+  [ "$(cat "$HOME/.config/nekoshell/theme")" = "latte" ]
+  # The profile has to move with the rest, not stay on the old flavour.
+  run python3 -c "
+import json; p=json.load(open('$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json'))['Profiles'][0]
+bg=p['Background Color']; print(round(bg['Red Component']*255), round(bg['Green Component']*255), round(bg['Blue Component']*255))"
+  [ "$output" = "239 241 245" ]
+  # The checkout must not have been written through either link.
+  grep -q '@@FLAVOR@@' "$REPO_ROOT/templates/starship.toml"
+}
+
+# A link of the user's own to a real file elsewhere is not stow's leftover and
+# must survive: only a link into the checkout or a broken one is cleared.
+@test "a re-install leaves the user's own symlinked starship config alone" {
+  echo '# theirs' > "$HOME/mine.toml"
+  rm -f "$HOME/.config/starship.toml"
+  ln -s "$HOME/mine.toml" "$HOME/.config/starship.toml"
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  [ -L "$HOME/.config/starship.toml" ]
+  [ "$(cat "$HOME/.config/starship.toml")" = "# theirs" ]
 }
 
 @test "a user edit to starship.toml survives a re-install but not a theme switch" {

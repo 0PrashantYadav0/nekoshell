@@ -48,6 +48,29 @@ EOF
   [[ "$output" =~ greet\ time[[:space:]]+[0-9]+\ ms ]]
 }
 
+# The theme row names the flavour in force. It warns rather than fails, because
+# a rig with no recorded flavour still works; it is just wearing whatever colours
+# were there before.
+@test "the theme row names the flavour, and warns when none is recorded" {
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  # The font is the other check that would fail here; satisfy it so the exit
+  # status at the end answers for the theme row alone.
+  mkdir -p "$HOME/Library/Fonts"; touch "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
+  run "$REPO_ROOT/bin/nekoshell-doctor"
+  [[ "$output" =~ ok[[:space:]]+theme[[:space:]]+catppuccin\ mocha ]]
+
+  "$REPO_ROOT/bin/nekoshell-theme" latte >/dev/null
+  run "$REPO_ROOT/bin/nekoshell-doctor"
+  [[ "$output" =~ ok[[:space:]]+theme[[:space:]]+catppuccin\ latte ]]
+
+  rm -f "$HOME/.config/nekoshell/theme"
+  run "$REPO_ROOT/bin/nekoshell-doctor"
+  [[ "$output" =~ warn[[:space:]]+theme ]]
+  [[ "$output" == *"nekoshell-theme mocha"* ]]
+  # A missing flavour is a warning, not a failure: the doctor still exits 0.
+  [ "$status" -eq 0 ]
+}
+
 # The doctor derives the checkout from its own location, so it can tell that the
 # recorded root points somewhere else. Reading the root file to find itself made
 # this check compare the file to itself and always pass.

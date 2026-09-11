@@ -8,6 +8,7 @@ setup() {
   printf 'export EDITOR=vim\nalias gs="git status"\nexport ZSH="$HOME/.oh-my-zsh"\n' > "$HOME/.zshrc"
   echo 'old' > "$HOME/.config/starship.toml"
   mkdir -p "$HOME/.config/fastfetch"
+  echo 'oldff' > "$HOME/.config/fastfetch/config.jsonc"
   echo 'mine' > "$HOME/.config/fastfetch/mine.jsonc"
 }
 teardown() { teardown_tmp_home; }
@@ -19,6 +20,7 @@ teardown() { teardown_tmp_home; }
   [[ "$output" == *"stow"* ]]
   [ ! -L "$HOME/.zshrc" ]
   [ "$(cat "$HOME/.config/starship.toml")" = "old" ]
+  [ "$(cat "$HOME/.config/fastfetch/config.jsonc")" = "oldff" ]
   [ ! -d "$HOME/.local/share/nekoshell/backup" ]
   [ ! -f "$HOME/.config/nekoshell/root" ]
   [ ! -f "$HOME/.gitconfig" ]
@@ -33,7 +35,9 @@ teardown() { teardown_tmp_home; }
   backup="$(ls -d "$HOME"/.local/share/nekoshell/backup/*/ | head -1)"
   [ -f "$backup/.zshrc" ]
   [ "$(cat "$backup/.config/starship.toml")" = "old" ]
+  [ "$(cat "$backup/.config/fastfetch/config.jsonc")" = "oldff" ]
   grep -q '^\.zshrc$' "$backup/manifest.txt"
+  grep -q '^\.config/fastfetch/config\.jsonc$' "$backup/manifest.txt"
   grep -q 'alias gs="git status"' "$HOME/.config/nekoshell/zsh/local.zsh"
   ! grep -q 'oh-my-zsh' "$HOME/.config/nekoshell/zsh/local.zsh"
   [ -f "$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json" ]
@@ -73,6 +77,7 @@ teardown() { teardown_tmp_home; }
   [ ! -L "$HOME/.zshrc" ]
   grep -q 'EDITOR=vim' "$HOME/.zshrc"
   [ "$(cat "$HOME/.config/starship.toml")" = "old" ]
+  [ "$(cat "$HOME/.config/fastfetch/config.jsonc")" = "oldff" ]
   [ ! -f "$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json" ]
 }
 
@@ -83,6 +88,7 @@ teardown() { teardown_tmp_home; }
   [ "$status" -eq 0 ]
   grep -q 'EDITOR=vim' "$HOME/.zshrc"
   [ "$(cat "$HOME/.config/starship.toml")" = "old" ]
+  [ "$(cat "$HOME/.config/fastfetch/config.jsonc")" = "oldff" ]
 }
 
 @test "files nekoshell does not own are left alone" {
