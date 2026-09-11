@@ -2524,3 +2524,175 @@ The list:
 
 ---
 
+### Task 13: Neovim and tmux, themed with the rest of the rig
+
+Requested by the owner mid-run: "add neovim and tmux". Both follow the flavour chosen with `nekoshell-theme`; both are installed by the Brewfile; both configs are stowed user files where the user is expected to edit them (so they are templates copied once, like `greet.conf`, not symlinks).
+
+**Files:**
+- Create: `templates/nvim/init.lua`, `templates/nvim/lua/nekoshell/options.lua`, `templates/nvim/lua/nekoshell/keymaps.lua`, `templates/nvim/lua/nekoshell/plugins.lua`, `templates/tmux/tmux.conf`, `tests/editor_mux.bats`, `tests/fakes/nvim`, `tests/fakes/tmux`
+- Modify: `Brewfile` (`brew "neovim"`, `brew "tmux"`), `install.sh` (copy the two templates on first install; add `~/.config/nvim/` files and `~/.config/tmux/tmux.conf` to the backup list; `tmux` plugin manager clone), `lib/theme.sh` (write `~/.config/nekoshell/theme.zsh` line `export NEKOSHELL_THEME=<flavour>` is already there; add `~/.config/tmux/nekoshell-theme.conf` render), `stow/config/.config/nekoshell/zsh/env.zsh` (`EDITOR` prefers nvim when installed), `stow/config/.config/nekoshell/zsh/aliases.zsh` (`vim`/`vi` → nvim when installed, `t` → tmux new/attach), `bin/nekoshell-doctor` (tools `nvim`, `tmux`), `bin/nekoshell-greet` (no change: it already stays silent inside tmux), `README.md`, `docs/INSTALL.md`, `AGENTS.md` (user files list), `CHANGELOG.md`, `THIRD_PARTY.md`, `tests/install.bats` (Brewfile test), `tests/doctor.bats`
+
+**Interfaces:**
+- Consumes: `lib/theme.sh` `theme_apply` (renders per-flavour files), `data/palettes.json`, `install.sh` step 4 template pattern (`greet.conf`), `NEKOSHELL_THEME` exported by `theme.zsh`.
+- Produces: `~/.config/nvim/` (lazy.nvim bootstrap, catppuccin colourscheme following `$NEKOSHELL_THEME`, treesitter, telescope, lualine, gitsigns, which-key, oil.nvim, indent-blankline, nvim-autopairs, Comment.nvim), `~/.config/tmux/tmux.conf` (TPM + catppuccin/tmux with `@catppuccin_flavor` read from `~/.config/tmux/nekoshell-theme.conf`, which `theme_apply` rewrites), `~/.tmux/plugins/tpm` cloned at a pinned commit by the installer.
+
+**Neovim config (`templates/nvim/init.lua`):**
+```lua
+-- nekoshell Neovim config. Yours to edit; nekoshell never overwrites it.
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+require("nekoshell.options")
+require("nekoshell.keymaps")
+
+-- lazy.nvim bootstrap
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable",
+    "https://github.com/folke/lazy.nvim.git", lazypath })
+end
+vim.opt.rtp:prepend(lazypath)
+require("lazy").setup(require("nekoshell.plugins"), {
+  install = { colorscheme = { "catppuccin" } },
+  checker = { enabled = false },
+  change_detection = { notify = false },
+})
+```
+`options.lua`: `number`, `relativenumber`, `termguicolors`, `signcolumn = "yes"`, `cursorline`, `scrolloff = 8`, `expandtab`, `shiftwidth = 2`, `tabstop = 2`, `smartindent`, `ignorecase`, `smartcase`, `splitright`, `splitbelow`, `undofile`, `updatetime = 250`, `clipboard = "unnamedplus"`, `mouse = "a"`.
+`keymaps.lua`: `<leader>e` oil, `<leader>ff` telescope find_files, `<leader>fg` live_grep, `<leader>fb` buffers, `<leader>fh` help_tags, `<C-h/j/k/l>` window navigation, `<Esc>` clears search highlight, `<leader>w` write, `<leader>q` quit.
+`plugins.lua` returns the lazy spec: `catppuccin/nvim` (name `catppuccin`, `priority = 1000`, `lazy = false`, config reads `vim.env.NEKOSHELL_THEME` with fallback `"mocha"`, `require("catppuccin").setup({ flavour = flavour, integrations = { telescope = true, gitsigns = true, which_key = true, treesitter = true, indent_blankline = { enabled = true } } })`, then `vim.cmd.colorscheme("catppuccin")`), `nvim-treesitter/nvim-treesitter` (`build = ":TSUpdate"`, `ensure_installed = { "lua", "vim", "vimdoc", "bash", "python", "javascript", "typescript", "json", "yaml", "toml", "markdown" }`, `highlight.enable = true`, `indent.enable = true`), `nvim-telescope/telescope.nvim` (`dependencies = { "nvim-lua/plenary.nvim" }`), `nvim-lualine/lualine.nvim` (`options.theme = "catppuccin"`, `globalstatus = true`), `lewis6991/gitsigns.nvim`, `folke/which-key.nvim`, `stevearc/oil.nvim`, `lukas-reineke/indent-blankline.nvim` (`main = "ibl"`), `windwp/nvim-autopairs`, `numToStr/Comment.nvim`, `nvim-tree/nvim-web-devicons`. Every plugin pinned with `version = "*"` or a tag where the project publishes them; lazy.nvim's lockfile (`lazy-lock.json`) is the user's, not shipped.
+
+**tmux config (`templates/tmux/tmux.conf`):**
+```tmux
+# nekoshell tmux config. Yours to edit; nekoshell never overwrites it.
+set -g default-terminal "tmux-256color"
+set -ag terminal-overrides ",xterm-256color:RGB"
+set -g mouse on
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+set -g history-limit 50000
+set -g escape-time 10
+set -g focus-events on
+set -g status-position top
+
+# Prefix: C-a (C-b stays as a fallback)
+set -g prefix C-a
+bind C-a send-prefix
+bind r source-file ~/.config/tmux/tmux.conf \; display "tmux.conf reloaded"
+
+# Splits and panes, vim style, keeping the current path
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+bind -r H resize-pane -L 5
+bind -r J resize-pane -D 5
+bind -r K resize-pane -U 5
+bind -r L resize-pane -R 5
+bind c new-window -c "#{pane_current_path}"
+setw -g mode-keys vi
+
+# Theme: flavour written by nekoshell-theme
+source-file ~/.config/tmux/nekoshell-theme.conf
+set -g @catppuccin_window_status_style "rounded"
+set -g @catppuccin_status_modules_right "directory session date_time"
+set -g @catppuccin_date_time_text "%H:%M"
+
+# Plugins (TPM; prefix + I installs)
+set -g @plugin "tmux-plugins/tpm"
+set -g @plugin "tmux-plugins/tmux-sensible"
+set -g @plugin "tmux-plugins/tmux-yank"
+set -g @plugin "catppuccin/tmux"
+run "~/.tmux/plugins/tpm/tpm"
+```
+`~/.config/tmux/nekoshell-theme.conf` (rendered by `theme_apply`, one line): `set -g @catppuccin_flavor "<flavour>"`. Check catppuccin/tmux's current README for the option names (`@catppuccin_flavor`, status module names) and adjust to what the pinned version documents; record the TPM and catppuccin/tmux commits you validated against in THIRD_PARTY.md as "pinned for the installer" (`install.sh` clones TPM at that commit; catppuccin/tmux is fetched by TPM at `prefix + I`, so document that step as a human step: "inside tmux press `C-a I` once").
+
+**Installer:** step 4 copies `templates/nvim/` to `~/.config/nvim/` and `templates/tmux/tmux.conf` to `~/.config/tmux/tmux.conf` only when absent; `theme_apply` always writes `~/.config/tmux/nekoshell-theme.conf`; a new step clones TPM (`git clone` at the pinned commit into `~/.tmux/plugins/tpm`, via `run`, fake `git` handles it in tests). Backup list gains `.config/nvim/init.lua` (and the three lua files) and `.config/tmux/tmux.conf`. `env.zsh`: `(( $+commands[nvim] )) && export EDITOR="${EDITOR:-nvim}"` before the existing vim fallback. Aliases: `vim`, `vi` → `nvim` when present; `t` = `tmux new-session -A -s main`.
+
+**Tests (`tests/editor_mux.bats`):** Brewfile has `neovim` and `tmux`; after a fake install `~/.config/nvim/init.lua` and `~/.config/tmux/tmux.conf` exist, are not symlinks, and a second install keeps an edit; `nekoshell-theme latte` writes `set -g @catppuccin_flavor "latte"` to `~/.config/tmux/nekoshell-theme.conf`; `~/.tmux/plugins/tpm` exists after install; `EDITOR` resolves to nvim in a zsh with a fake `nvim` on PATH and to vim without; the doctor has `tool: nvim` and `tool: tmux` rows (fakes). `init.lua` and the lua files pass `luac -p` if `luac` is installed, else `nvim --headless -c 'luafile <file>' -c q` with the real nvim if present, else skip. `tmux -f templates/tmux/tmux.conf -L nekotest start-server \; kill-server` with the real tmux if present (proves the config parses; TPM's `run` line must tolerate a missing TPM: guard it with `if-shell "test -f ~/.tmux/plugins/tpm/tpm" "run ~/.tmux/plugins/tpm/tpm"`), else skip.
+
+**Docs:** README "What you get": Neovim (lazy.nvim, catppuccin, treesitter, telescope, oil) and tmux (C-a prefix, vim panes, catppuccin status bar); "Customise": both configs are yours; AGENTS.md user-file list; INSTALL human step "press `C-a I` in tmux once"; CHANGELOG; THIRD_PARTY (no vendored files unless you vendor; lazy.nvim and TPM are cloned at install time).
+
+Commit subject: `feat: neovim and tmux, themed with the rig`.
+
+---
+
+### Task 14: AeroSpace tiling window manager (opt-in)
+
+Requested by the owner mid-run, pointing at https://github.com/nikitabobko/AeroSpace. AeroSpace tiles macOS windows (i3-style), so it sits beside tmux (which tiles panes inside one terminal window) rather than replacing it. It is opt-in: `./install.sh --aerospace` installs and configures it; the default install does not touch it. It needs the Accessibility permission, which only the human can grant.
+
+**Files:**
+- Create: `templates/aerospace/aerospace.toml`, `tests/aerospace.bats`, `tests/fakes/aerospace`
+- Modify: `Brewfile.aerospace` (new file: `tap "nikitabobko/tap"` and `cask "nikitabobko/tap/aerospace"`; kept out of the main Brewfile so the default install never adds the tap), `install.sh` (`--aerospace` flag: `brew bundle --file Brewfile.aerospace`, copy the template to `~/.config/aerospace/aerospace.toml` when absent, add it to the backup list, print the Accessibility human step), `bin/nekoshell-doctor` (`aerospace` row: ok when installed and `aerospace list-workspaces --all` works, `warn` "not installed (optional: install.sh --aerospace)" otherwise; never fail), `README.md`, `docs/INSTALL.md`, `AGENTS.md` (the flag and the human step), `CHANGELOG.md`
+
+**Config (`templates/aerospace/aerospace.toml`)** — check the AeroSpace guide (https://nikitabobko.github.io/AeroSpace/guide) for the current key names; the shape below is from the documented default config:
+```toml
+# nekoshell AeroSpace config. Yours to edit; nekoshell never overwrites it.
+start-at-login = true
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+accordion-padding = 30
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+[gaps]
+inner.horizontal = 8
+inner.vertical = 8
+outer.left = 8
+outer.bottom = 8
+outer.top = 8
+outer.right = 8
+
+[mode.main.binding]
+alt-enter = 'exec-and-forget open -na iTerm'
+alt-slash = 'layout tiles horizontal vertical'
+alt-comma = 'layout accordion horizontal vertical'
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'
+alt-shift-h = 'move left'
+alt-shift-j = 'move down'
+alt-shift-k = 'move up'
+alt-shift-l = 'move right'
+alt-minus = 'resize smart -50'
+alt-equal = 'resize smart +50'
+alt-f = 'fullscreen'
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-shift-1 = 'move-node-to-workspace 1'
+alt-shift-2 = 'move-node-to-workspace 2'
+alt-shift-3 = 'move-node-to-workspace 3'
+alt-shift-4 = 'move-node-to-workspace 4'
+alt-shift-5 = 'move-node-to-workspace 5'
+alt-tab = 'workspace-back-and-forth'
+alt-shift-semicolon = 'mode service'
+
+[mode.service.binding]
+esc = ['reload-config', 'mode main']
+r = ['flatten-workspace-tree', 'mode main']
+f = ['layout floating tiling', 'mode main']
+backspace = ['close-all-windows-but-current', 'mode main']
+
+# The nekoshell Spotify panel is an iTerm2 hotkey window; keep it floating.
+[[on-window-detected]]
+if.app-id = 'com.googlecode.iterm2'
+if.window-title-regex-substring = 'nekoshell panel'
+run = 'layout floating'
+```
+The `alt-m` hotkey is NOT bound here on purpose: ⌥M belongs to the nekoshell Spotify panel (iTerm2 global hotkey). Say so in a comment.
+
+**Tests (`tests/aerospace.bats`):** default `install.sh --yes` does not create `~/.config/aerospace/` and does not print `Brewfile.aerospace`; `install.sh --yes --aerospace` (fake `brew`) prints `brew bundle --file .../Brewfile.aerospace`, creates the config (not a symlink), backs up a pre-existing one, keeps an edit on re-run, and prints the Accessibility step; `--dry-run --aerospace` creates nothing; the toml parses with `tomllib` and has the `on-window-detected` rule and no `alt-m` binding; doctor row `warn` without the tool and `ok` with the fake (`tests/fakes/aerospace` prints `1` for `list-workspaces --all`).
+
+**Docs:** README "Optional: tiling windows with AeroSpace" (what it does, the flag, the keybinds table, the Accessibility step, that ⌥M stays with the panel); INSTALL; AGENTS.md: the flag is opt-in and must not be passed unless the human asked for it; CHANGELOG.
+
+Commit subject: `feat: optional AeroSpace tiling window manager`.
+
+---
+
