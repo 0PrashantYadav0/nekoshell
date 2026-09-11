@@ -96,6 +96,8 @@ The shipped keybinds:
 | Key | Action |
 | --- | --- |
 | `⌥ Enter` | open a new iTerm2 window |
+| `⌥ /` | switch the focused container to tiles layout |
+| `⌥ ,` | switch the focused container to accordion layout |
 | `⌥ H` / `J` / `K` / `L` | focus left / down / up / right |
 | `⌥ Shift H` / `J` / `K` / `L` | move the focused window left / down / up / right |
 | `⌥ -` / `⌥ =` | shrink / grow the focused window |

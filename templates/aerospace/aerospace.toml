@@ -1,4 +1,6 @@
 # nekoshell AeroSpace config. Yours to edit; nekoshell never overwrites it.
+# config-version = 2 matches current upstream; without it reload-config warns.
+config-version = 2
 start-at-login = true
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
