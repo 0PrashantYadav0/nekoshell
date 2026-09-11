@@ -1,0 +1,10 @@
+name: check
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install bats-core shellcheck
+      - run: shellcheck -x $(git ls-files 'install.sh' 'uninstall.sh' 'lib/*.sh' 'bin/*' 'tests/helpers.bash')
+      - run: bats tests
