@@ -1,7 +1,10 @@
 #!/usr/bin/env bats
 load helpers
 
-setup() { setup_tmp_home; }
+# A throwaway HOME means antidote's plugin cache is always cold, and `antidote
+# load` would clone every plugin over the network. Point HOMEBREW_PREFIX at
+# nothing so .zshrc finds no antidote and skips the block entirely.
+setup() { setup_tmp_home; export HOMEBREW_PREFIX=/nonexistent; }
 teardown() { teardown_tmp_home; }
 
 stow_it() {
@@ -9,10 +12,8 @@ stow_it() {
   stow --no-folding -d "$REPO_ROOT/stow" -t "$HOME" zsh config
 }
 
-# Every test gets a fresh HOME, so antidote's plugin cache is always cold and
-# `antidote load` prints "# antidote cloning ..." lines before anything the
-# test echoes. Read values back by marker instead of by line number; the line
-# index is not ours to predict.
+# Read values back by marker instead of by line number: the shell prints its
+# own lines and the index is not ours to predict.
 marker() { printf '%s\n' "$output" | sed -n "s/^$1=//p"; }
 
 @test "zshrc parses and sets NEKOSHELL_ROOT and PATH from its stowed location" {

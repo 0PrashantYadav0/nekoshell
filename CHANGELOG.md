@@ -3,9 +3,9 @@
 ## 0.1.0 (unreleased)
 
 - Catppuccin Mocha look: iTerm2 theme, Starship prompt, themed bat and btop, JetBrainsMono Nerd Font.
-- Greeting on new interactive terminals: Pokemon colourscripts or your own art pack, plus machine stats from fastfetch, under a 150 ms budget.
+- Greeting on new interactive terminals: Pokémon colourscripts or your own art pack, plus machine stats from fastfetch, under a 150 ms budget.
 - Spotify panel: a hotkey-toggled iTerm2 window running spotify_player, with a shpotify remote fallback for non-Premium accounts.
-- Idempotent installer with automatic backups, an `nekoshell-doctor` health check, and a matching uninstaller.
+- Idempotent installer with automatic backups, a `nekoshell-doctor` check, and a matching uninstaller.
 - Agent install contract (`AGENTS.md`) and a skill for installing nekoshell unattended.
 
 ### Verified on real hardware
@@ -19,10 +19,11 @@ Fixed while verifying:
 
 - `Brewfile` no longer taps `homebrew/bundle`. That tap is deprecated and tapping it now
   aborts the whole bundle, taking every package with it.
-- `Brewfile` no longer carries `cask "iterm2"`. iTerm2 is a precondition the installer
-  already checks for, and the cask collides with an existing `/Applications/iTerm.app`.
+- `Brewfile` no longer carries `cask "iterm2"`, because the cask collides with an existing
+  `/Applications/iTerm.app`. iTerm2 is a precondition instead, and the installer's preflight
+  now checks for it and stops with `brew install --cask iterm2` if it is missing.
 - `nekoshell-doctor` reads the greeting's timing line off the end of the line. Real
-  Pokemon art ends on a colour reset with no newline, so the line arrives as
+  Pokémon art ends on a colour reset with no newline, so the line arrives as
   `<ESC>[mgreet: 88 ms` and the old anchored pattern never matched it: every real machine
   reported "could not measure".
 

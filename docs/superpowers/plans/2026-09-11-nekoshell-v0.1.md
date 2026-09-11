@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Repo root is the git checkout at `/Users/prashantkumaryadav/Downloads/Project/Config` (remote `0PrashantYadav0/nekoshell`, branch `build/v0.1`). All paths below are relative to it.
+- Repo root is the git checkout of this repo (remote `0PrashantYadav0/nekoshell`, branch `build/v0.1`). All paths below are relative to it.
 - Scripts start with `#!/usr/bin/env bash` and `set -euo pipefail` (except `nekoshell-greet`, which uses `set -uo pipefail` because it must never fail a fresh shell). Must run on macOS's `/bin/bash` 3.2: no associative arrays, no `mapfile`, no `${var,,}`.
 - Every `.sh` file and every file in `bin/` passes `shellcheck -x` with zero findings.
 - Tests are bats-core files under `tests/`, run with `bats tests`. Every test creates a temporary `$HOME` via `tests/helpers.bash` and never touches the real home directory. Test output must be pristine.
@@ -2022,8 +2022,8 @@ Write these with the following required content. Use sentence case headings, str
 - "What you get": look (Catppuccin Mocha, JetBrainsMono Nerd Font, Starship, eza, bat, fzf, zoxide, delta, btop, lazygit), greeting (Pokémon via pokemon-colorscripts 70 percent, your art pack 30 percent, machine stats via fastfetch, under 150 ms, never inside tmux, SSH, or Claude Code), panel (⌥M anywhere, iTerm2 hotkey window docked right, spotify_player, Premium required, shpotify remote fallback).
 - "Install" in three commands:
   ```
-  git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.local/share/nekoshell
-  cd ~/.local/share/nekoshell
+  git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
+  cd ~/.nekoshell
   ./install.sh
   ```
   then the human steps (restart iTerm2, `spotify_player authenticate`, press ⌥M), then `nekoshell-doctor`.
@@ -2035,9 +2035,9 @@ Write these with the following required content. Use sentence case headings, str
 `AGENTS.md` (the contract; write it as instructions to the agent, imperative):
 1. Preconditions, each with its check command: macOS (`uname -s` = Darwin), Homebrew (`command -v brew`), iTerm2 (`ls /Applications/iTerm.app`), zsh (`zsh --version`). If Homebrew is missing, stop and hand the human the official install command; do not run it yourself.
 2. Where to run from: a terminal that is not iTerm2 (Terminal.app, or the Claude Code desktop app) so iTerm2 can be quit for the global prefs step. If that is impossible, run anyway and expect the prefs step to be reported as pending.
-3. Install: `git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.local/share/nekoshell && cd ~/.local/share/nekoshell && ./install.sh --yes`. Re-running is safe. Use `--skip-spotify` on machines without Spotify.
+3. Install: `[ -d ~/.nekoshell ] || git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell; cd ~/.nekoshell && git pull --ff-only && ./install.sh --yes`. Re-running is safe. Use `--skip-spotify` on machines without Spotify.
 4. Verify: `bin/nekoshell-doctor --json`. Success is exit code 0. `warn` rows are acceptable only for `spotify` (needs the human to log in) and `iterm2 prefs` (needs iTerm2 quit). Any `fail` row means the install is not done: read its detail and fix that, then re-run the doctor.
-5. Hand these to the human, verbatim, and stop: (a) quit and reopen iTerm2; (b) if the doctor said prefs are pending, with iTerm2 closed run `~/.local/share/nekoshell/install.sh --iterm-prefs` from Terminal.app; (c) run `spotify_player authenticate` (opens a browser, Premium required); (d) press ⌥M.
+5. Hand these to the human, verbatim, and stop: (a) quit and reopen iTerm2; (b) if the doctor said prefs are pending, with iTerm2 closed run `~/.nekoshell/install.sh --iterm-prefs` from Terminal.app; (c) run `spotify_player authenticate` (opens a browser, Premium required); (d) press ⌥M.
 6. What the installer changed and where the originals are: `~/.local/share/nekoshell/backup/<timestamp>/` with `manifest.txt`. Never delete that directory. To undo everything: `./uninstall.sh --yes`.
 7. Rules: do not edit files under `~/.config/nekoshell/` except `zsh/local.zsh` and `greet.conf`; do not run `defaults write` for iTerm2 while iTerm2 is running; do not install pokemon-colorscripts with sudo; do not commit to this repo on the user's behalf.
 
@@ -2061,7 +2061,7 @@ description: Install the nekoshell terminal rig (Catppuccin iTerm2 look, Pokémo
 Follow `AGENTS.md` in https://github.com/0PrashantYadav0/nekoshell exactly. In short:
 
 1. Check preconditions: macOS, Homebrew, iTerm2, zsh.
-2. `git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.local/share/nekoshell && cd ~/.local/share/nekoshell && ./install.sh --yes`
+2. `[ -d ~/.nekoshell ] || git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell; cd ~/.nekoshell && git pull --ff-only && ./install.sh --yes`
 3. `bin/nekoshell-doctor --json`; exit 0 with only `spotify` and `iterm2 prefs` warns is success.
 4. Tell the human: restart iTerm2, run `spotify_player authenticate`, press ⌥M. If prefs are pending, they run `install.sh --iterm-prefs` with iTerm2 closed.
 

@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # nekoshell-doctor: one line per check. Exit 1 if any check fails. --json for agents.
 set -uo pipefail
+# The checkout is this script's own directory, not whatever ~/.config/nekoshell/root
+# says: the doctor has to be able to report that the recorded root is stale.
+NEKOSHELL_ROOT="$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+export NEKOSHELL_ROOT
 # shellcheck source=lib/paths.sh
-source "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/../lib/paths.sh"
+source "$NEKOSHELL_ROOT/lib/paths.sh"
 # shellcheck source=lib/iterm.sh
 source "$NEKOSHELL_ROOT/lib/iterm.sh"
 
@@ -49,8 +53,16 @@ if [[ -L "$HOME/.zshrc" && "$HOME/.zshrc" -ef "$NEKOSHELL_ROOT/stow/zsh/.zshrc" 
 if [[ "$(cat "$NEKOSHELL_CONFIG/root" 2>/dev/null)" == "$NEKOSHELL_ROOT" ]]; then
   report ok "root" "$NEKOSHELL_ROOT"; else report fail "root" "$NEKOSHELL_CONFIG/root missing or stale"; fi
 prof="$ITERM_DYNAMIC_DIR/nekoshell.json"
-if [[ -f "$prof" ]] && grep -q "$NEKOSHELL_MAIN_GUID" "$prof" && grep -q "$NEKOSHELL_PANEL_GUID" "$prof"; then
-  report ok "iterm2 profiles" "$prof"; else report fail "iterm2 profiles" "missing (run install.sh)"; fi
+# The panel profile names the checkout, so a moved checkout leaves a profile
+# that opens a command that is no longer there.
+if [[ -f "$prof" ]] && grep -q "$NEKOSHELL_MAIN_GUID" "$prof" && grep -q "$NEKOSHELL_PANEL_GUID" "$prof" \
+  && grep -qF "$NEKOSHELL_ROOT/bin/nekoshell-music" "$prof"; then
+  report ok "iterm2 profiles" "$prof"
+elif [[ -f "$prof" ]]; then
+  report fail "iterm2 profiles" "stale: re-run install.sh"
+else
+  report fail "iterm2 profiles" "missing (run install.sh)"
+fi
 if iterm_prefs_pending; then
   report warn "iterm2 prefs" "pending: quit iTerm2, run install.sh --iterm-prefs"; else report ok "iterm2 prefs" "default profile is nekoshell"; fi
 if have pokemon-colorscripts && pokemon-colorscripts -r >/dev/null 2>&1; then

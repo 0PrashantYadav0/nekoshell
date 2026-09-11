@@ -47,3 +47,14 @@ EOF
   [[ "$output" != *"could not measure"* ]]
   [[ "$output" =~ greet\ time[[:space:]]+[0-9]+\ ms ]]
 }
+
+# The doctor derives the checkout from its own location, so it can tell that the
+# recorded root points somewhere else. Reading the root file to find itself made
+# this check compare the file to itself and always pass.
+@test "doctor reports a stale recorded root" {
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  echo '/nowhere/old' > "$HOME/.config/nekoshell/root"
+  run "$REPO_ROOT/bin/nekoshell-doctor"
+  [ "$status" -ne 0 ]
+  [[ "$output" =~ fail[[:space:]]+root ]]
+}
