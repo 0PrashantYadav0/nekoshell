@@ -2133,3 +2133,394 @@ Report the backup path, the doctor output, the verified window type number, and 
 - Spec coverage: look (Tasks 2, 3), greeting (4), panel (2, 5), installer/doctor/uninstall (6), docs and skill (7), verification and screenshots (8), CI and license (1). Free-tier remote (5). Alias migration (3, 6). Backups (6). `--check`, `--dry-run`, `--iterm-prefs` (6). Art pack samples and README (4).
 - Placeholder scan: none. Every step has its content.
 - Consistency: `NEKOSHELL_CONFIG`, `NEKOSHELL_CACHE`, `ITERM_DYNAMIC_DIR` defined in Task 1 and used unchanged after. Guids identical in Task 2 generator, `lib/iterm.sh`, tests and doctor. `nekoshell-music` path in the panel Command matches `bin/nekoshell-music`. Fake `fastfetch` and `pokemon-colorscripts` interfaces match the greet script's calls. `deps.lock` key `pokemon-colorscripts=` matches the `sed` in `install.sh`.
+
+---
+
+## Tasks added after the first build (owner requests, 2026-09-11)
+
+### Task 9: Pokémon facts line in the greeting
+
+Requested by the owner after the plan was written: "include short info about the Pokémon you added". The greeting's `Art` row currently shows only the Pokémon's name (plus ` ✦ shiny`). It should show a short facts line: capitalised name, national dex number, type(s), generation. Facts only: no Pokédex flavour text (that text is copyrighted by Nintendo/Game Freak); numbers, types and generations are facts and are fine.
+
+**Files:**
+- Create: `scripts/gen-pokemon-data.py`, `data/pokemon.tsv`, `tests/pokemon_data.bats`
+- Modify: `bin/nekoshell-greet` (build the facts line), `tests/greet.bats` (expected `art-name` values), `THIRD_PARTY.md` (PokéAPI data row), `README.md` (one sentence under the greeting description), `CHANGELOG.md` (one bullet)
+
+**Interfaces:**
+- Consumes: `bin/nekoshell-greet`'s `show_pokemon` (name is the first line of pokemon-colorscripts output; the cache file is `$NEKOSHELL_CACHE/art-name`); `NEKOSHELL_ROOT` (now set from the script's own location, per the final-review fix).
+- Produces: `data/pokemon.tsv` with a header row and tab-separated columns `name	dex	types	gen	height_m	weight_kg`, one row per species, `name` being the PokéAPI species identifier (lowercase, hyphenated: `pikachu`, `mr-mime`, `nidoran-f`), which is the naming pokemon-colorscripts uses. `types` is slash-joined and capitalised (`Grass/Poison`). A shell function `pokemon_facts NAME` in `bin/nekoshell-greet` that prints `Pikachu · #025 · Electric · Gen 1` for a known name and `Pikachu` (just the capitalised name) for an unknown one.
+
+- [ ] **Step 1: Write the data generator and run it once**
+
+`scripts/gen-pokemon-data.py` (stdlib only):
+- Downloads four CSVs from the PokeAPI/pokeapi repository at a pinned commit (record the 40-char sha you used in the script's docstring and in THIRD_PARTY.md): `data/v2/csv/pokemon_species.csv` (id, identifier, generation_id), `data/v2/csv/pokemon.csv` (id, identifier, species_id, height, weight, is_default), `data/v2/csv/pokemon_types.csv` (pokemon_id, type_id, slot), `data/v2/csv/types.csv` (id, identifier). URL shape: `https://raw.githubusercontent.com/PokeAPI/pokeapi/<sha>/data/v2/csv/<file>`.
+- For each species: dex = species id; types = the default pokemon (`is_default == 1`, or `pokemon.id == species.id`) types ordered by slot, capitalised; gen = generation_id; height_m = height/10; weight_kg = weight/10 (one decimal each).
+- Writes `data/pokemon.tsv` sorted by dex with the header above. Prints the row count.
+- Run it: `python3 scripts/gen-pokemon-data.py` and commit the TSV (expect roughly 1000 to 1100 rows; pokemon-colorscripts covers generations 1 to 8, extra rows are harmless).
+
+- [ ] **Step 2: Write the failing tests**
+
+`tests/pokemon_data.bats`:
+```bash
+#!/usr/bin/env bats
+load helpers
+
+@test "pokemon.tsv has the header and well-known rows" {
+  run head -1 "$REPO_ROOT/data/pokemon.tsv"
+  [ "$output" = $'name\tdex\ttypes\tgen\theight_m\tweight_kg' ]
+  run awk -F'\t' '$1=="pikachu"{print $2, $3, $4}' "$REPO_ROOT/data/pokemon.tsv"
+  [ "$output" = "25 Electric 1" ]
+  run awk -F'\t' '$1=="bulbasaur"{print $2, $3, $4}' "$REPO_ROOT/data/pokemon.tsv"
+  [ "$output" = "1 Grass/Poison 1" ]
+  run awk -F'\t' '$1=="mr-mime"{print $2}' "$REPO_ROOT/data/pokemon.tsv"
+  [ "$output" = "122" ]
+  run bash -c "wc -l < '$REPO_ROOT/data/pokemon.tsv' | tr -d ' '"
+  [ "$output" -gt 900 ]
+}
+
+@test "pokemon_facts formats a known and an unknown name" {
+  run bash -c "NEKOSHELL_ROOT='$REPO_ROOT'; source <(sed -n '/^pokemon_facts()/,/^}/p' '$REPO_ROOT/bin/nekoshell-greet'); pokemon_facts pikachu; pokemon_facts missingno"
+  [ "${lines[0]}" = "Pikachu · #025 · Electric · Gen 1" ]
+  [ "${lines[1]}" = "Missingno" ]
+}
+```
+
+In `tests/greet.bats`, update the two assertions on the cache file: the Pokémon path now expects `Pikachu · #025 · Electric · Gen 1`, and the shiny test expects `Pikachu (shiny) · ...`? No: the fake prints `pikachu (shiny)` as the name when `-s` is passed, which is fake-only behaviour. Change the fake `tests/fakes/pokemon-colorscripts` to always print `pikachu` as the name (real pokemon-colorscripts prints the plain name; shininess is only in the colours), and expect `Pikachu · #025 · Electric · Gen 1 ✦ shiny` in the shiny test.
+
+- [ ] **Step 3: Run the tests to verify they fail**
+
+Run: `bats tests/pokemon_data.bats tests/greet.bats`
+Expected: FAIL (no TSV / no `pokemon_facts`).
+
+- [ ] **Step 4: Implement `pokemon_facts` in bin/nekoshell-greet**
+
+Add above `show_pokemon`:
+```bash
+# pokemon_facts NAME: "Pikachu · #025 · Electric · Gen 1", or just the capitalised name if unknown.
+pokemon_facts() {
+  local name="$1" tsv="$NEKOSHELL_ROOT/data/pokemon.tsv" cap
+  cap="$(printf '%s' "${name:0:1}" | tr '[:lower:]' '[:upper:]')${name:1}"
+  if [[ -r "$tsv" ]]; then
+    awk -F'\t' -v n="$name" -v cap="$cap" '$1==n {printf "%s · #%03d · %s · Gen %s\n", cap, $2, $3, $4; found=1} END {if (!found) print cap}' "$tsv"
+  else
+    printf '%s\n' "$cap"
+  fi
+}
+```
+In `show_pokemon`, write `"$(pokemon_facts "$name")$shiny"` to the cache file instead of `"$name$shiny"`. Keep the name lookup tolerant: pokemon-colorscripts prints the name exactly as its file is named (lowercase, hyphens), so pass it through unchanged.
+
+- [ ] **Step 5: Run the tests, shellcheck, and the greeting for real**
+
+Run: `bats tests && shellcheck -x bin/nekoshell-greet`. Then, since the rig is installed on this machine: `NEKOSHELL_SEED=7 NEKOSHELL_NO_GREET= CLAUDECODE= TMUX= script -q /dev/null bin/nekoshell-greet </dev/null | tail -c 400; cat ~/.cache/nekoshell/art-name` and confirm a real facts line appears (a real Pokémon name from pokemon-colorscripts resolves in the TSV). Try three seeds; if any real name fails to resolve, note it in the report (a naming mismatch between pokemon-colorscripts and PokéAPI) and add a small alias map in `pokemon_facts` only for the mismatches you actually observed.
+
+- [ ] **Step 6: Docs and third-party record**
+
+`THIRD_PARTY.md`: row `data/pokemon.tsv | generated from PokeAPI/pokeapi CSVs at <sha> | BSD-3-Clause (data); Pokémon names and types are trademarks of The Pokémon Company`. README, under the greeting bullet: "The Art line shows the Pokémon's name, national dex number, type and generation." CHANGELOG 0.1.0: one bullet.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add scripts/gen-pokemon-data.py data/pokemon.tsv bin/nekoshell-greet tests/pokemon_data.bats tests/greet.bats tests/fakes/pokemon-colorscripts THIRD_PARTY.md README.md CHANGELOG.md
+git commit -m "feat: show dex number, type and generation beside the Pokémon in the greeting"
+```
+
+---
+
+### Task 10: Greeting v2 (storage, Wi-Fi, IP, battery) and the two-line information prompt
+
+Requested by the owner mid-run. Two parts, one commit.
+
+**Files:**
+- Modify: `stow/config/.config/fastfetch/config.jsonc`, `stow/config/.config/starship.toml`, `tests/zsh_stack.bats` (starship assertions), `tests/greet.bats` (only if a fastfetch fake assertion depends on the module list), `README.md` (greeting and prompt descriptions), `docs/INSTALL.md` (troubleshooting entry for the Wi-Fi row), `CHANGELOG.md`
+- Create: `tests/fastfetch_config.bats`
+
+**Interfaces:**
+- Consumes: fastfetch 2.68 is installed on this machine; run `fastfetch --list-modules` and `fastfetch --help <module>-format` to confirm module names and options before editing. Starship 1.26 is installed; `starship print-config` validates the TOML. The greeting script passes the config with `--config`; nothing else changes there.
+- Produces: the greeting rows and the prompt layout below. Nothing downstream depends on the exact rows.
+
+- [ ] **Step 1: Write the failing test**
+
+`tests/fastfetch_config.bats`:
+```bash
+#!/usr/bin/env bats
+load helpers
+
+CFG="$REPO_ROOT/stow/config/.config/fastfetch/config.jsonc"
+
+strip_jsonc() { sed -e 's://[^"]*$::' "$CFG"; }
+
+@test "fastfetch config is valid JSONC with the expected rows in order" {
+  run bash -c "sed -e 's://[^\"]*\$::' '$CFG' | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+rows=[m if isinstance(m,str) else m[\"type\"] for m in d[\"modules\"]]
+print(\" \".join(rows))
+print(d[\"display\"][\"color\"][\"keys\"])'"
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "title separator os host uptime shell terminal cpu memory disk battery wifi localip packages command break colors" ]
+  [ "${lines[1]}" = "38;2;203;166;247" ]
+}
+
+@test "fastfetch accepts the config" {
+  command -v fastfetch >/dev/null || skip "fastfetch not installed"
+  run fastfetch --config "$CFG" --logo none --pipe
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Storage"* ]]
+  [[ "$output" == *"Packages"* ]]
+}
+```
+
+Starship assertions to add to `tests/zsh_stack.bats` (the existing starship test stays):
+```bash
+@test "starship prompt is two lines with a full-path directory and a right-aligned clock" {
+  run python3 -c "
+import tomllib
+d=tomllib.load(open('$REPO_ROOT/stow/config/.config/starship.toml','rb'))
+print(d['directory']['truncation_length'], d['directory']['truncate_to_repo'])
+print('\$fill' in d['format'], '\$time' in d['format'], '\$status' in d['format'], '\$line_break' in d['format'], d['format'].rstrip().endswith('\$character'))
+print(d['time']['disabled'], d['status']['disabled'])"
+  [ "${lines[0]}" = "0 False" ]
+  [ "${lines[1]}" = "True True True True True" ]
+  [ "${lines[2]}" = "False False" ]
+}
+
+@test "starship validates its own config" {
+  command -v starship >/dev/null || skip "starship not installed"
+  run env STARSHIP_CONFIG="$REPO_ROOT/stow/config/.config/starship.toml" starship print-config
+  [ "$status" -eq 0 ]
+}
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `bats tests/fastfetch_config.bats tests/zsh_stack.bats`
+Expected: the new tests FAIL (row list differs; no `$fill`).
+
+- [ ] **Step 3: Rewrite the fastfetch config**
+
+Replace the `modules` array in `stow/config/.config/fastfetch/config.jsonc` with, in this order (keep `display` as is):
+```jsonc
+"modules": [
+  "title",
+  "separator",
+  { "type": "os", "key": "OS" },
+  { "type": "host", "key": "Host" },
+  { "type": "uptime", "key": "Uptime" },
+  { "type": "shell", "key": "Shell" },
+  { "type": "terminal", "key": "Terminal" },
+  { "type": "cpu", "key": "CPU" },
+  { "type": "memory", "key": "Memory" },
+  { "type": "disk", "key": "Storage", "folders": "/" },
+  { "type": "battery", "key": "Battery" },
+  { "type": "wifi", "key": "Wi-Fi" },
+  { "type": "localip", "key": "IP", "showIpv6": false, "compact": true },
+  { "type": "packages", "key": "Packages" },
+  { "type": "command", "key": "Art", "text": "cat \"$HOME/.cache/nekoshell/art-name\" 2>/dev/null" },
+  "break",
+  "colors"
+]
+```
+Rows dropped on purpose: Kernel (redundant with OS on macOS) and Terminal Font (one-time check, the doctor covers the font). If `fastfetch --list-modules` names an option differently (for example `folders` vs `folder`, or the `wifi` module reports the SSID as `<redacted>` on macOS 26 because Location Services permission is required), keep the module and note it in `docs/INSTALL.md` troubleshooting: "Wi-Fi shows `<redacted>` or is missing: give iTerm2 Location Services access in System Settings, Privacy and Security, Location Services". Run `fastfetch --config <file>` on this machine and read the output to confirm every row renders.
+
+- [ ] **Step 4: Rewrite the Starship prompt**
+
+Replace `stow/config/.config/starship.toml` with a two-line prompt. Keep the palette table exactly as it is and keep `palette = "catppuccin_mocha"`. New layout:
+```toml
+"$schema" = 'https://starship.rs/config-schema.json'
+add_newline = true
+palette = "catppuccin_mocha"
+
+format = """
+$directory$git_branch$git_status$git_state$nodejs$python$rust$golang$docker_context$fill$cmd_duration$status$jobs$time
+$line_break$character"""
+
+[directory]
+style = "bold blue"
+truncation_length = 0
+truncate_to_repo = false
+home_symbol = "~"
+read_only = " 󰌾"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[fill]
+symbol = " "
+
+[time]
+disabled = false
+style = "overlay0"
+format = "[$time]($style)"
+time_format = "%H:%M"
+
+[status]
+disabled = false
+style = "red"
+symbol = "✘ "
+format = "[$symbol$status]($style) "
+
+[jobs]
+symbol = " "
+style = "peach"
+format = "[$symbol$number]($style) "
+
+[git_state]
+style = "yellow"
+format = "[$state( $progress_current/$progress_total)]($style) "
+
+[docker_context]
+symbol = " "
+style = "sky"
+format = "[$symbol$context]($style) "
+```
+plus the existing `[git_branch]`, `[git_status]`, `[cmd_duration]`, `[character]`, `[nodejs]`, `[python]`, `[rust]`, `[golang]` tables unchanged (keep `cmd_duration` `min_time = 2000`). `truncation_length = 0` shows the full path; `home_symbol` keeps it readable. Validate with `starship print-config`.
+
+- [ ] **Step 5: Run the tests and look at the real prompt**
+
+Run: `bats tests`. Then in this checkout: `STARSHIP_CONFIG=stow/config/.config/starship.toml starship prompt --status=1 --cmd-duration=3500 --jobs=1 | cat -v | head -3` and confirm line 1 has the full path on the left and the time on the right, line 2 has the character. Paste that output in the report.
+
+- [ ] **Step 6: Docs and commit**
+
+README (greeting bullet): rows now shown; (new "Prompt" bullet): "Above every command: the full working directory, git branch and status, language versions when inside a project, and on the right the last command's duration, exit status and the clock." CHANGELOG bullet. Commit:
+```bash
+git add stow/config/.config/fastfetch/config.jsonc stow/config/.config/starship.toml tests/fastfetch_config.bats tests/zsh_stack.bats README.md docs/INSTALL.md CHANGELOG.md
+git commit -m "feat: storage, Wi-Fi, IP and battery in the greeting; two-line information prompt"
+```
+
+---
+
+### Task 11: Catppuccin flavours and the `nekoshell-theme` command
+
+Requested by the owner mid-run ("configure the colour theme as well"). All four Catppuccin flavours (latte, frappe, macchiato, mocha) become selectable with one command; mocha stays the default. Everything that carries colour is regenerated from one palette file.
+
+**Files:**
+- Create: `scripts/gen-palettes.py`, `data/palettes.json`, `bin/nekoshell-theme`, `templates/starship.toml` (moved from stow, see below), `templates/fastfetch.jsonc` (moved from stow), `stow/config/.config/bat/themes/Catppuccin Latte.tmTheme`, `... Frappe.tmTheme`, `... Macchiato.tmTheme`, `stow/config/.config/btop/themes/catppuccin_latte.theme`, `..._frappe.theme`, `..._macchiato.theme`, `tests/theme.bats`
+- Modify: `iterm2/build-profiles.py` (`--flavor`, palette from `data/palettes.json`), `lib/iterm.sh` (pass the flavour), `install.sh` (render starship and fastfetch configs from templates; default flavour), `stow/config/.config/nekoshell/zsh/env.zsh` (source `~/.config/nekoshell/theme.zsh`), `bin/nekoshell-doctor` (a `theme` row), `THIRD_PARTY.md`, `README.md`, `docs/INSTALL.md`, `AGENTS.md` (theme.zsh, starship.toml and fastfetch config are now user files), `CHANGELOG.md`, `tests/iterm_profiles.bats`, `tests/install.bats`, `tests/zsh_stack.bats`, `tests/fastfetch_config.bats` (paths)
+- Delete from stow: `stow/config/.config/starship.toml`, `stow/config/.config/fastfetch/config.jsonc` (they become rendered user files, like `greet.conf`)
+
+**Interfaces:**
+- Consumes: `iterm2/build-profiles.py` (`MOCHA` dict and `ANSI` list), `install.sh` step 4 (template copy pattern from `greet.conf`), `lib/iterm.sh` `iterm_write_profiles`, `bin/nekoshell-greet` (`--config "$HOME/.config/fastfetch/config.jsonc"`, unchanged path), Starship (`palette` key), bat (`--theme` name), btop (`color_theme`), fzf (`FZF_DEFAULT_OPTS`).
+- Produces: `data/palettes.json`: `{"mocha": {"base": "1e1e2e", ...26 names...}, "macchiato": {...}, "frappe": {...}, "latte": {...}}` (lowercase hex without `#`, the same 26 role names Catppuccin uses). `bin/nekoshell-theme <flavour>|current|list`. The current flavour is stored in `~/.config/nekoshell/theme` (one word). `~/.config/nekoshell/theme.zsh` exports `BAT_THEME`, `FZF_DEFAULT_OPTS`, `NEKOSHELL_THEME`. Rendered user files: `~/.config/starship.toml`, `~/.config/fastfetch/config.jsonc`.
+
+- [ ] **Step 1: Generate the palette file**
+
+`scripts/gen-palettes.py`: downloads `palette.json` from the catppuccin/palette repository at a pinned commit (`https://raw.githubusercontent.com/catppuccin/palette/<sha>/palette.json`; record the sha in the docstring and THIRD_PARTY.md), extracts for each flavour the 26 colours' `hex` values (strip `#`), and writes `data/palettes.json` sorted by flavour. Run it and commit the output. Sanity: `mocha.base == "1e1e2e"`, `latte.base == "eff1f5"`.
+
+Also download the three missing bat themes from catppuccin/bat and the three btop themes from catppuccin/btop at the commits already recorded in THIRD_PARTY.md, and add rows for them.
+
+- [ ] **Step 2: Write the failing tests**
+
+`tests/theme.bats`:
+```bash
+#!/usr/bin/env bats
+load helpers
+
+setup() {
+  setup_tmp_home
+  export PATH="$REPO_ROOT/tests/fakes:$PATH"
+  export NEKOSHELL_SKIP_PREFLIGHT=1
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+}
+teardown() { teardown_tmp_home; }
+
+@test "palettes.json has four flavours with the known bases" {
+  run python3 -c "
+import json; d=json.load(open('$REPO_ROOT/data/palettes.json'))
+print(sorted(d)); print(d['mocha']['base'], d['latte']['base'], len(d['mocha']))"
+  [ "${lines[0]}" = "['frappe', 'latte', 'macchiato', 'mocha']" ]
+  [ "${lines[1]}" = "1e1e2e eff1f5 26" ]
+}
+
+@test "install renders mocha by default" {
+  [ "$(cat "$HOME/.config/nekoshell/theme")" = "mocha" ]
+  [ ! -L "$HOME/.config/starship.toml" ]
+  grep -q '^palette = "catppuccin_mocha"' "$HOME/.config/starship.toml"
+  grep -q '38;2;203;166;247' "$HOME/.config/fastfetch/config.jsonc"
+  grep -q 'BAT_THEME="Catppuccin Mocha"' "$HOME/.config/nekoshell/theme.zsh"
+}
+
+@test "nekoshell-theme latte re-renders every themed file" {
+  run "$REPO_ROOT/bin/nekoshell-theme" latte
+  [ "$status" -eq 0 ]
+  [ "$(cat "$HOME/.config/nekoshell/theme")" = "latte" ]
+  grep -q '^palette = "catppuccin_latte"' "$HOME/.config/starship.toml"
+  grep -q 'BAT_THEME="Catppuccin Latte"' "$HOME/.config/nekoshell/theme.zsh"
+  grep -q 'color_theme = "catppuccin_latte"' "$HOME/.config/btop/btop.conf"
+  run python3 -c "
+import json; p=json.load(open('$HOME/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json'))['Profiles'][0]
+bg=p['Background Color']; print(round(bg['Red Component']*255), round(bg['Green Component']*255), round(bg['Blue Component']*255))"
+  [ "$output" = "239 241 245" ]
+}
+
+@test "nekoshell-theme rejects unknown flavours and lists the known ones" {
+  run "$REPO_ROOT/bin/nekoshell-theme" dracula
+  [ "$status" -ne 0 ]
+  run "$REPO_ROOT/bin/nekoshell-theme" list
+  [ "$output" = $'frappe\nlatte\nmacchiato\nmocha' ]
+  run "$REPO_ROOT/bin/nekoshell-theme" current
+  [ "$output" = "mocha" ]
+}
+
+@test "a user edit to starship.toml survives a re-install but not a theme switch" {
+  echo '# mine' >> "$HOME/.config/starship.toml"
+  "$REPO_ROOT/install.sh" --yes >/dev/null
+  grep -q '# mine' "$HOME/.config/starship.toml"
+  "$REPO_ROOT/bin/nekoshell-theme" mocha >/dev/null
+  ! grep -q '# mine' "$HOME/.config/starship.toml"
+}
+```
+Update `tests/iterm_profiles.bats`: add a case `--flavor latte` expecting background `239 241 245`; the existing mocha assertions stay (mocha is the default). Update `tests/zsh_stack.bats` and `tests/fastfetch_config.bats` to read the templates (`templates/starship.toml`, `templates/fastfetch.jsonc`) instead of the stow paths, and `tests/install.bats` if it asserted `~/.config/starship.toml` was a symlink (it is now a rendered file; the backup test's pre-existing `starship.toml` must still be backed up).
+
+- [ ] **Step 3: Run the tests to verify they fail**
+
+Run: `bats tests/theme.bats`
+Expected: FAIL.
+
+- [ ] **Step 4: Implement**
+
+1. `iterm2/build-profiles.py`: load `data/palettes.json` relative to the script; add `--flavor` (default `mocha`); `MOCHA` becomes `PALETTE = palettes[flavor]`; the ANSI mapping and roles stay the same names. For `latte` the cursor guide and selection still use `surface0`/`surface2` from that flavour, which is correct.
+2. `templates/starship.toml`: the Task 10 file with FOUR palette tables (`[palettes.catppuccin_latte]` and so on, values from `data/palettes.json` with `#` prefix) and the line `palette = "catppuccin_@@FLAVOR@@"`. `templates/fastfetch.jsonc`: the Task 10 file with `"keys": "@@KEYS_SGR@@"` and `"title": "@@TITLE_SGR@@"` where the renderer substitutes `38;2;R;G;B` of `mauve` and `blue` for the flavour.
+3. `lib/theme.sh` (new, sourced by install.sh and nekoshell-theme): `theme_render FLAVOR` writes `~/.config/nekoshell/theme`, `~/.config/nekoshell/theme.zsh` (BAT_THEME `Catppuccin <Flavour>` with the first letter capitalised, FZF_DEFAULT_OPTS built from the flavour's `surface0`, `base`, `rosewater`, `red`, `text`, `mauve`, `lavender`, `surface1` the same way env.zsh does today, `NEKOSHELL_THEME`), `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` from the templates, `~/.config/btop/btop.conf` with `color_theme = "catppuccin_<flavor>"` (write the file if absent, else replace that one line with sed), then calls `iterm_write_profiles` with `--flavor`. Use `python3` for the substitutions if that is simpler than sed (it is available on macOS). `FZF_DEFAULT_OPTS` and `BAT_THEME` move OUT of `env.zsh`, which instead does `[[ -r "$NEKOSHELL_CONFIG/theme.zsh" ]] && source "$NEKOSHELL_CONFIG/theme.zsh"`.
+4. `install.sh`: step 4 sets the flavour to the existing `~/.config/nekoshell/theme` if present else `mocha`; renders starship.toml and fastfetch config only if they do not exist (like greet.conf), and always renders `theme.zsh` and the iTerm2 profile (step 9 now passes the flavour). The stow package no longer contains starship.toml or fastfetch/config.jsonc, so the backup derivation drops them automatically; add both to the backup list explicitly (they are still files the installer replaces on first install).
+5. `bin/nekoshell-theme`: `set -euo pipefail`; sets `NEKOSHELL_ROOT` from its own location; subcommands `list`, `current`, `<flavour>`; the flavour path calls `theme_render` and prints "theme: <flavour>. Open a new terminal window for the prompt and greeting; iTerm2 reloads the profile colours on its own."
+6. `bin/nekoshell-doctor`: add a `theme` row: `ok` with the flavour when `~/.config/nekoshell/theme` names a known flavour and `theme.zsh` exists, else `warn "run nekoshell-theme mocha"`.
+
+- [ ] **Step 5: Run everything**
+
+Run: `bats tests && shellcheck -x install.sh uninstall.sh lib/*.sh bin/* && zsh -n stow/zsh/.zshrc && STARSHIP_CONFIG=templates/starship.toml starship print-config >/dev/null` (the template has `@@FLAVOR@@` in the palette line; if `print-config` rejects it, render to a temp file with mocha first and validate that).
+
+- [ ] **Step 6: Docs and commit**
+
+README "Customise": `nekoshell-theme latte` (and list). docs/INSTALL.md: a "Themes" section. AGENTS.md: the user-file list now includes `theme`, `theme.zsh`, `starship.toml`, `fastfetch/config.jsonc`. THIRD_PARTY.md rows (palette.json, six theme files). CHANGELOG bullet. Commit:
+```bash
+git add -A
+git commit -m "feat: all four Catppuccin flavours with nekoshell-theme"
+```
+
+---
+
+### Task 12: Polish set (fzf previews, themed highlighting, atuin, iTerm2 status bar)
+
+Requested by the owner mid-run: "find what changes make it aesthetic and beautiful, which makes it functional as well". The controller fixed this list so the task is bounded. Each item is functional first.
+
+**Files:**
+- Modify: `Brewfile` (add `atuin`), `stow/config/.config/nekoshell/zsh/env.zsh`, `stow/config/.config/nekoshell/zsh/plugins.txt`, `stow/zsh/.zshrc`, `iterm2/build-profiles.py` (status bar layout, cursor guide, dim inactive panes), `lib/theme.sh` (zsh-syntax-highlighting theme per flavour), `bin/nekoshell-doctor` (`tool: atuin`), `README.md`, `docs/INSTALL.md`, `CHANGELOG.md`, `THIRD_PARTY.md`, `tests/zsh_stack.bats`, `tests/iterm_profiles.bats`, `tests/install.bats` (Brewfile test)
+- Create: `stow/config/.config/nekoshell/zsh/fzf.zsh`, `stow/config/.config/atuin/config.toml`, `data/zsh-syntax-highlighting/catppuccin_<flavour>-zsh-syntax-highlighting.zsh` (four files vendored from catppuccin/zsh-syntax-highlighting, MIT), `tests/polish.bats`
+
+**Interfaces:**
+- Consumes: Task 11's `theme_render` and `~/.config/nekoshell/theme.zsh`; Task 10's prompt; `bin/nekoshell-music` untouched.
+- Produces: nothing downstream.
+
+The list:
+
+1. **fzf previews.** `fzf.zsh` (sourced from `.zshrc` after `fzf --zsh`): `FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:200 {}' --preview-window=right:60%"`, `FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --icons --color=always {}'"`, `FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window=down:3:wrap"`, and `FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'` when `fd` is present. fzf-tab: `zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --icons --color=always -1 $realpath'` and `zstyle ':fzf-tab:*' use-fzf-default-opts yes`.
+2. **Themed syntax highlighting.** Vendor the four Catppuccin zsh-syntax-highlighting theme files (pinned commit in THIRD_PARTY.md). `theme_render` appends `source "$NEKOSHELL_ROOT/data/zsh-syntax-highlighting/catppuccin_<flavor>-zsh-syntax-highlighting.zsh"` to `theme.zsh`; `.zshrc` sources `theme.zsh` BEFORE antidote loads the plugins (the theme file sets `ZSH_HIGHLIGHT_STYLES`, which the plugin reads at load). Autosuggestions: `ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#<overlay0 of the flavour>"` also in `theme.zsh`.
+3. **atuin.** Add `brew "atuin"` to the Brewfile; `stow/config/.config/atuin/config.toml` with `auto_sync = false`, `update_check = false`, `style = "compact"`, `inline_height = 20`, `search_mode = "fuzzy"`, `filter_mode_shell_up_key_binding = "session"`; `.zshrc`: `(( $+commands[atuin] )) && eval "$(atuin init zsh --disable-up-arrow)"` after fzf (Ctrl-R goes to atuin; up arrow stays plain). Doctor: add `atuin` to the tool list. Brewfile test: expect `brew "atuin"`.
+4. **iTerm2 profile extras** in `iterm2/build-profiles.py` main profile: `"Use Cursor Guide": True`, `"Dim Inactive Split Panes": True`, `"Dimming Amount": 0.3`, `"Window Type": 0` unchanged, `"Show Status Bar": True` with a `"Status Bar Layout"` dict. Research step: fetch iTerm2's `sources/iTermStatusBarLayout.h`, `sources/iTermStatusBarLayout.m` and one component (`sources/iTermStatusBarClockComponent.m`) via `gh api` + raw URLs (as earlier tasks did) to learn the exact dictionary keys (`components`, each with `class` and `configuration` with `knobs`, plus `advanced configuration`). Components, left to right: `iTermStatusBarWorkingDirectoryComponent`, `iTermStatusBarGitComponent`, spring (`iTermStatusBarSpringComponent`), `iTermStatusBarCPUUtilizationComponent`, `iTermStatusBarMemoryUtilizationComponent`, `iTermStatusBarBatteryComponent`, `iTermStatusBarClockComponent`. Colours from the flavour: status bar background `mantle`, text `text`, separators `surface1` (the advanced configuration keys for these are in the header). If, after reading the source, you are not confident the dictionary is right, still emit it (iTerm2 ignores unknown layouts rather than failing) and say so in the report; the owner verifies visually. Working directory and git components need iTerm2 shell integration: add `[[ -r "$HOME/.iterm2_shell_integration.zsh" ]] && source "$HOME/.iterm2_shell_integration.zsh"` to `.zshrc`, have `install.sh` download it with `curl -fsSL https://iterm2.com/shell_integration/zsh -o "$HOME/.iterm2_shell_integration.zsh"` (via `run`, skipped in dry-run, `--skip-brew` does not skip it), and add it to the backup list and to the uninstall "left in place" list.
+5. **Tests** (`tests/polish.bats`): fzf.zsh parses (`zsh -n`); sourcing `.zshrc` in the temp HOME with `HOMEBREW_PREFIX=/nonexistent` still works with the new lines; `atuin/config.toml` is valid TOML with `auto_sync = false`; the profile JSON has `Show Status Bar` true and a `Status Bar Layout` with seven components in that order; the four highlighting theme files exist and each defines `ZSH_HIGHLIGHT_STYLES`.
+
+- [ ] **Step 1: Write tests/polish.bats and the test updates; run to see them fail**
+- [ ] **Step 2: Implement items 1 to 4**
+- [ ] **Step 3: Run `bats tests && shellcheck -x install.sh uninstall.sh lib/*.sh bin/* && zsh -n stow/zsh/.zshrc stow/config/.config/nekoshell/zsh/*.zsh`**
+- [ ] **Step 4: Docs (README "What you get" and "Customise", INSTALL troubleshooting for the status bar needing a new window, CHANGELOG, THIRD_PARTY) and commit** with subject `feat: fzf previews, themed highlighting, atuin, iTerm2 status bar`.
+
+---
+
