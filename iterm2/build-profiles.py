@@ -21,6 +21,25 @@ FONT = "JetBrainsMonoNF-Regular 15"
 ANSI = ["surface1", "red", "green", "yellow", "blue", "pink", "teal", "subtext1",
         "surface2", "red", "green", "yellow", "blue", "pink", "teal", "subtext0"]
 
+# The status bar, left to right. Keys are iTerm2's own, read out of its source:
+# a layout is {"components": [...], "advanced configuration": {...}} and each
+# component is {"class": ..., "configuration": {"knobs": {...}}}. A component
+# with no "configuration" is dropped, so every one of these carries a knobs
+# dictionary even where it has nothing to say.
+#
+# The working directory and git components need iTerm2 shell integration, which
+# install.sh downloads and .zshrc sources. The spring pushes everything after it
+# to the right edge.
+STATUS_BAR_COMPONENTS = [
+    ("iTermStatusBarWorkingDirectoryComponent", {"base: priority": 5}),
+    ("iTermStatusBarGitComponent", {"base: priority": 5}),
+    ("iTermStatusBarSpringComponent", {"iTermStatusBarSpringComponentSpringConstantKey": 1}),
+    ("iTermStatusBarCPUUtilizationComponent", {"base: priority": 4}),
+    ("iTermStatusBarMemoryUtilizationComponent", {"base: priority": 3}),
+    ("iTermStatusBarBatteryComponent", {"base: priority": 2}),
+    ("iTermStatusBarClockComponent", {"format": "H:mm", "base: priority": 6}),
+]
+
 
 def load_palette(flavor):
     with PALETTES.open(encoding="utf-8") as f:
@@ -37,6 +56,25 @@ def color(palette, name):
             "Alpha Component": 1, "Color Space": "sRGB"}
 
 
+def status_bar_layout(palette):
+    """The main profile's status bar. iTerm2 ignores a layout it cannot read."""
+    return {
+        "components": [{"class": cls, "configuration": {"knobs": knobs}}
+                       for cls, knobs in STATUS_BAR_COMPONENTS],
+        "advanced configuration": {
+            # "separator color" was retired after 3.0.0beta1; "separator color 2"
+            # is the key iTerm2 reads now.
+            "separator color 2": color(palette, "surface1"),
+            "background color": color(palette, "mantle"),
+            "default text color": color(palette, "text"),
+            "algorithm": 0,  # stable: components keep their place as widths change
+            "remove empty components": True,
+            "draw separator between status bar and terminal": True,
+            "font": FONT,
+        },
+    }
+
+
 def base_profile(palette, name, guid):
     p = {
         "Name": name,
@@ -50,6 +88,7 @@ def base_profile(palette, name, guid):
         "Minimum Contrast": 0,
         "Cursor Type": 1,
         "Blinking Cursor": False,
+        "Use Cursor Guide": True,
         "Unlimited Scrollback": True,
         "Silence Bell": True,
         "Show Status Bar": False,
@@ -110,8 +149,12 @@ def main():
                     help="iTerm2 numeric window type for 'Right of screen'")
     a = ap.parse_args()
     palette = load_palette(a.flavor)
-    doc = {"Profiles": [base_profile(palette, "nekoshell", MAIN_GUID),
-                        panel_profile(palette, a.root, a.window_type)]}
+    primary = base_profile(palette, "nekoshell", MAIN_GUID)
+    # Only the main profile gets a status bar. The panel is a 60-column Spotify
+    # window, where a status row would cost a line of the queue for nothing.
+    primary["Show Status Bar"] = True
+    primary["Status Bar Layout"] = status_bar_layout(palette)
+    doc = {"Profiles": [primary, panel_profile(palette, a.root, a.window_type)]}
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(doc, f, indent=2, ensure_ascii=False)
         f.write("\n")

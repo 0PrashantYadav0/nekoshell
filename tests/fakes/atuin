@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Fake atuin: `init zsh` prints something a zsh can eval without side effects.
+if [[ "${1:-}" == "init" ]]; then
+  echo ': atuin'
+  exit 0
+fi
+echo "atuin $*"

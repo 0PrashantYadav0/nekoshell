@@ -34,16 +34,17 @@ for arg in "$@"; do
   esac
 done
 
-TOTAL=10
+TOTAL=11
 ZSHRC_LINK="$NEKOSHELL_ROOT/stow/zsh/.zshrc"
 GIT_INCLUDE="$NEKOSHELL_CONFIG/git/delta.gitconfig"
 POKEMON_DIR="$HOME/.local/share/pokemon-colorscripts"
 POKEMON_BIN="$HOME/.local/bin/pokemon-colorscripts"
+ITERM_SHELL_INTEGRATION="$HOME/.iterm2_shell_integration.zsh"
 
 # RENDERED_PATHS: files the installer renders from templates/ rather than stows,
 # so stowed_paths cannot see them. The first install still replaces whatever is
 # already there, so they are backed up by hand. See backup_rendered_paths.
-RENDERED_PATHS=".config/starship.toml .config/fastfetch/config.jsonc"
+RENDERED_PATHS=".config/starship.toml .config/fastfetch/config.jsonc .iterm2_shell_integration.zsh"
 
 # stowed_paths: every path stow will claim in $HOME, one per line, relative to
 # $HOME. Read from the packages themselves so the backup can never drift from
@@ -102,6 +103,7 @@ check_only() {
   [[ -f "$ITERM_DYNAMIC_DIR/nekoshell.json" ]] || { log_info "would write iTerm2 profiles"; todo=1; }
   [[ -f "$NEKOSHELL_CONFIG/theme.zsh" ]] || { log_info "would render the theme"; todo=1; }
   [[ -L "$POKEMON_BIN" ]] || { log_info "would install pokemon-colorscripts"; todo=1; }
+  [[ -f "$ITERM_SHELL_INTEGRATION" ]] || { log_info "would download iTerm2 shell integration"; todo=1; }
   if iterm_prefs_pending; then log_info "iTerm2 global prefs pending (run: ./install.sh --iterm-prefs with iTerm2 closed)"; fi
   if [[ "$todo" == 0 ]]; then log_ok "nothing to do"; fi
   exit 0
@@ -130,6 +132,15 @@ install_pokemon_colorscripts() {
   run chmod +x "$POKEMON_DIR/pokemon-colorscripts.py"
   run mkdir -p "$HOME/.local/bin"
   run ln -sfn "$POKEMON_DIR/pokemon-colorscripts.py" "$POKEMON_BIN"
+}
+
+# install_shell_integration: iTerm2's own zsh hooks. They report the working
+# directory and the last command's status, which is what the status bar's
+# working directory and git components read. Downloaded rather than vendored
+# because it is iTerm2's file and has to match the running iTerm2. Not tied to
+# --skip-brew: it is not a Homebrew package.
+install_shell_integration() {
+  run curl -fsSL https://iterm2.com/shell_integration/zsh -o "$ITERM_SHELL_INTEGRATION"
 }
 
 # The include path is its own marker: it appears once, so a re-run is a no-op.
@@ -218,6 +229,9 @@ main() {
 
   log_step 5 $TOTAL "Link configs with stow"
   run stow --no-folding --dir "$NEKOSHELL_ROOT/stow" --target "$HOME" --restow zsh config
+  # bat reads themes from its own cache, so the tmTheme files stow just linked
+  # into ~/.config/bat/themes stay invisible until the cache is rebuilt.
+  theme_build_bat_cache
 
   log_step 6 $TOTAL "Record checkout location"
   run mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE"
@@ -229,11 +243,14 @@ main() {
   log_step 8 $TOTAL "git delta include"
   add_gitconfig_include
 
-  log_step 9 $TOTAL "iTerm2 profiles"
+  log_step 9 $TOTAL "iTerm2 shell integration"
+  install_shell_integration
+
+  log_step 10 $TOTAL "iTerm2 profiles"
   iterm_write_profiles "$FLAVOR"
   log_ok "profiles: nekoshell, nekoshell panel (hotkey ⌥M)"
 
-  log_step 10 $TOTAL "iTerm2 global preferences"
+  log_step 11 $TOTAL "iTerm2 global preferences"
   apply_prefs_step
 
   trap - ERR

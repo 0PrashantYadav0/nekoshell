@@ -1,2 +1,9 @@
 #!/usr/bin/env bash
+# Fake bat. `--list-themes` answers with the theme the vendored files provide
+# once `bat cache --build` has run, which is what the doctor's bat theme row
+# looks for.
+if [[ "${1:-}" == "--list-themes" ]]; then
+  echo "Catppuccin Mocha"
+  exit 0
+fi
 echo "bat $*"

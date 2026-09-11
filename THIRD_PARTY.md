@@ -13,4 +13,8 @@ Files vendored into this repo and their licenses. Everything else is MIT (see LI
 | `stow/config/.config/btop/themes/catppuccin_frappe.theme` | https://github.com/catppuccin/btop @ f437574b600f1c6d932627050b15ff5153b58fa3 | MIT |
 | `stow/config/.config/btop/themes/catppuccin_macchiato.theme` | https://github.com/catppuccin/btop @ f437574b600f1c6d932627050b15ff5153b58fa3 | MIT |
 | `stow/config/.config/btop/themes/catppuccin_mocha.theme` | https://github.com/catppuccin/btop @ f437574b600f1c6d932627050b15ff5153b58fa3 | MIT |
+| `data/zsh-syntax-highlighting/catppuccin_latte-zsh-syntax-highlighting.zsh` | https://github.com/catppuccin/zsh-syntax-highlighting @ 7926c3d3e17d26b3779851a2255b95ee650bd928 | MIT |
+| `data/zsh-syntax-highlighting/catppuccin_frappe-zsh-syntax-highlighting.zsh` | https://github.com/catppuccin/zsh-syntax-highlighting @ 7926c3d3e17d26b3779851a2255b95ee650bd928 | MIT |
+| `data/zsh-syntax-highlighting/catppuccin_macchiato-zsh-syntax-highlighting.zsh` | https://github.com/catppuccin/zsh-syntax-highlighting @ 7926c3d3e17d26b3779851a2255b95ee650bd928 | MIT |
+| `data/zsh-syntax-highlighting/catppuccin_mocha-zsh-syntax-highlighting.zsh` | https://github.com/catppuccin/zsh-syntax-highlighting @ 7926c3d3e17d26b3779851a2255b95ee650bd928 | MIT |
 | `data/pokemon.tsv` | generated from PokeAPI/pokeapi CSVs at 8fe210b21c9abbe73de93670f3d5a346c80a3625 | BSD-3-Clause (data); Pokémon names and types are trademarks of The Pokémon Company |

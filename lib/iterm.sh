@@ -30,6 +30,10 @@ iterm_apply_prefs() {
   run defaults write com.googlecode.iterm2 TerminalVMargin -int 12
   run defaults write com.googlecode.iterm2 PromptOnQuit -bool false
   run defaults write com.googlecode.iterm2 HideScrollbar -bool true
+  # Dimming is an application preference, not a profile key: the profile
+  # dictionary has no dimming entry, so this is the only place it can be set.
+  run defaults write com.googlecode.iterm2 DimInactiveSplitPanes -bool true
+  run defaults write com.googlecode.iterm2 SplitPaneDimmingAmount -float 0.3
 }
 
 # Exit 0 when the global prefs have not been applied yet.
