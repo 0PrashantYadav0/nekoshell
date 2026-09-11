@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+args="$*"
+if [[ "$args" == *"--file-raw -"* ]]; then
+  n=$(wc -l < /dev/stdin | tr -d ' ')
+  echo "fastfetch $args stdin=$n"
+else
+  echo "fastfetch $args"
+fi

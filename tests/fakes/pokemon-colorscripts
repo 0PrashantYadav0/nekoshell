@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+name="pikachu"
+for a in "$@"; do [[ "$a" == "-s" ]] && name="pikachu (shiny)"; done
+echo "$name"
+printf '▄▄▄\n███\n▀▀▀\n'
