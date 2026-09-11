@@ -7,7 +7,13 @@ setup() {
   export TERM_PROGRAM="iTerm.app"
   unset CLAUDECODE TMUX NEKOSHELL_PANEL SSH_CONNECTION NEKOSHELL_NO_GREET NEKOSHELL_GREET_SSH
   mkdir -p "$HOME/.config/nekoshell/art" "$HOME/.config/fastfetch"
-  cp "$REPO_ROOT/stow/config/.config/fastfetch/config.jsonc" "$HOME/.config/fastfetch/"
+  # The greeting reads the rendered config, never the template, so render one.
+  bash -c "source '$REPO_ROOT/lib/log.sh'
+           source '$REPO_ROOT/lib/paths.sh'
+           NEKOSHELL_ROOT='$REPO_ROOT'
+           source '$REPO_ROOT/lib/theme.sh'
+           theme_render_template '$REPO_ROOT/templates/fastfetch.jsonc' \\
+             '$HOME/.config/fastfetch/config.jsonc' mocha"
 }
 teardown() { teardown_tmp_home; }
 

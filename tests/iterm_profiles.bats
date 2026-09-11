@@ -28,6 +28,25 @@ PY
   [ "${lines[2]}" = "245 194 231" ]
 }
 
+@test "--flavor picks another Catppuccin palette" {
+  python3 "$REPO_ROOT/iterm2/build-profiles.py" --root "$REPO_ROOT" --out "$OUT" --flavor latte
+  run python3 - "$OUT" <<'PY'
+import json,sys
+p=json.load(open(sys.argv[1]))['Profiles'][0]
+bg=p['Background Color']; fg=p['Foreground Color']
+print(round(bg['Red Component']*255), round(bg['Green Component']*255), round(bg['Blue Component']*255))
+print(round(fg['Red Component']*255), round(fg['Green Component']*255), round(fg['Blue Component']*255))
+PY
+  [ "${lines[0]}" = "239 241 245" ]
+  [ "${lines[1]}" = "76 79 105" ]
+}
+
+@test "an unknown flavour is refused instead of written" {
+  run python3 "$REPO_ROOT/iterm2/build-profiles.py" --root "$REPO_ROOT" --out "$OUT" --flavor dracula
+  [ "$status" -ne 0 ]
+  [ ! -f "$OUT" ]
+}
+
 @test "panel profile is a right-docked hotkey window running nekoshell-music" {
   python3 "$REPO_ROOT/iterm2/build-profiles.py" --root "$REPO_ROOT" --out "$OUT" --window-type 6
   run python3 - "$OUT" <<'PY'

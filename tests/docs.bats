@@ -10,6 +10,8 @@ load helpers
   grep -q 'spotify_player authenticate' "$REPO_ROOT/AGENTS.md"
   grep -q -- '--iterm-prefs' "$REPO_ROOT/AGENTS.md"
   grep -q 'backup' "$REPO_ROOT/AGENTS.md"
+  grep -q 'nekoshell-theme' "$REPO_ROOT/AGENTS.md"
+  grep -q 'nekoshell-theme' "$REPO_ROOT/README.md"
   grep -q 'NEKOSHELL_GREET_SSH' "$REPO_ROOT/docs/REMOTE.md"
   grep -q -- '--skip-spotify' "$REPO_ROOT/docs/REMOTE.md"
   grep -q '^name: nekoshell' "$REPO_ROOT/skills/nekoshell/SKILL.md"

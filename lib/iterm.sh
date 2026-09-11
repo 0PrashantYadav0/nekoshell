@@ -9,12 +9,16 @@ export NEKOSHELL_MAIN_GUID NEKOSHELL_PANEL_GUID NEKOSHELL_PANEL_WINDOW_TYPE
 
 iterm_is_running() { pgrep -xq iTerm2; }
 
-# Generate ~/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json.
+# iterm_write_profiles [FLAVOR]: generate
+# ~/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json.
+# The flavour defaults to mocha so this stays usable without lib/theme.sh.
 iterm_write_profiles() {
+  local flavor="${1:-mocha}"
   run mkdir -p "$ITERM_DYNAMIC_DIR"
   run python3 "$NEKOSHELL_ROOT/iterm2/build-profiles.py" \
     --root "$NEKOSHELL_ROOT" \
     --out "$ITERM_DYNAMIC_DIR/nekoshell.json" \
+    --flavor "$flavor" \
     --window-type "$NEKOSHELL_PANEL_WINDOW_TYPE"
 }
 
