@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
-# Fake Homebrew for the installer tests.
-if [[ "${1:-}" == "--prefix" ]]; then
-  echo "/opt/homebrew"
-  exit 0
-fi
+# Fake Homebrew. FAKE_BREW_INSTALLED / FAKE_BREW_CASKS / FAKE_BREW_TAPS list what is "installed".
+case "${1:-}" in
+  --prefix) echo "/opt/homebrew"; exit 0 ;;
+  list)
+    shift
+    if [[ "${1:-}" == "--cask" ]]; then shift; for c in ${FAKE_BREW_CASKS:-}; do [[ "$c" == "$1" ]] && exit 0; done; exit 1; fi
+    [[ "${1:-}" == "--formula" ]] && shift
+    for f in ${FAKE_BREW_INSTALLED:-}; do [[ "$f" == "$1" ]] && exit 0; done; exit 1 ;;
+  tap)
+    if [[ $# -eq 1 ]]; then for t in ${FAKE_BREW_TAPS:-}; do printf '%s\n' "$t"; done; exit 0; fi ;;
+esac
 echo "brew $*"
