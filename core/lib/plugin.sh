@@ -98,7 +98,10 @@ plugin_add() {
   plugin_run_hook "$name" theme || return 1
   config_list_add plugins "$name"
   plugin_regen_antidote
-  _plugin_doctor_rows "$name"
+  # Rows are informational here: a doctor.sh whose last command is a guarded,
+  # legitimately-false check (see tests/fixtures/plugins/flaky-doctor) must
+  # not abort plugin_add under set -e after the plugin is already recorded.
+  _plugin_doctor_rows "$name" || true
   log_ok "$name enabled"
 }
 

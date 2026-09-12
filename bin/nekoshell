@@ -5,7 +5,7 @@ _self="${BASH_SOURCE[0]}"
 [[ -L "$_self" ]] && _self="$(readlink "$_self")"
 NEKOSHELL_ROOT="$(cd "$(dirname "$_self")/.." && pwd -P)"
 export NEKOSHELL_ROOT
-for _lib in log paths backup config link brew terminal plugin theme; do
+for _lib in log paths backup config link brew terminal plugin theme zsh_migrate; do
   # shellcheck source=/dev/null
   source "$NEKOSHELL_ROOT/core/lib/$_lib.sh"
 done
