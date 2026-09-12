@@ -10,7 +10,7 @@ plugin_exists()    { [[ -f "$(plugin_dir "$1")/plugin.toml" ]]; }
 plugin_all()       { local d; for d in "$NEKOSHELL_PLUGINS_DIR"/*/; do [[ -f "$d/plugin.toml" ]] && basename "$d"; done; return 0; }
 plugin_meta()      { toml_get "$(plugin_dir "$1")/plugin.toml" "$2"; }
 plugin_meta_list() { toml_list "$(plugin_dir "$1")/plugin.toml" "$2"; }
-plugin_enabled()   { config_list plugins | grep -qx "$1"; }
+plugin_enabled()   { config_list plugins | grep -Fqx "$1"; }
 plugin_enabled_all() { config_list plugins; }
 
 plugin_supports_terminal() {
@@ -86,10 +86,14 @@ plugin_add() {
   local formulas=() casks=() f
   while IFS= read -r f; do [[ -n "$f" ]] && formulas+=("$f"); done < <(plugin_meta_list "$name" requires)
   while IFS= read -r f; do [[ -n "$f" ]] && casks+=("$f"); done < <(plugin_meta_list "$name" casks)
-  [[ ${#formulas[@]} -gt 0 ]] && brew_install "${formulas[@]}"
-  [[ ${#casks[@]} -gt 0 ]] && brew_cask_install "${casks[@]}"
-  link_tree "$(plugin_dir "$name")/files/link" "$HOME"
-  copy_once "$(plugin_dir "$name")/files/copy" "$HOME"
+  if [[ ${#formulas[@]} -gt 0 ]]; then
+    brew_install "${formulas[@]}" || { log_fail "$name: Homebrew install failed"; return 1; }
+  fi
+  if [[ ${#casks[@]} -gt 0 ]]; then
+    brew_cask_install "${casks[@]}" || { log_fail "$name: Homebrew install failed"; return 1; }
+  fi
+  link_tree "$(plugin_dir "$name")/files/link" "$HOME" || { log_fail "$name: linking files failed"; return 1; }
+  copy_once "$(plugin_dir "$name")/files/copy" "$HOME" || { log_fail "$name: copying files failed"; return 1; }
   plugin_run_hook "$name" install || return 1
   plugin_run_hook "$name" theme || return 1
   config_list_add plugins "$name"
@@ -102,9 +106,10 @@ plugin_add() {
 plugin_remove() {
   local name="$1" purge="${2:-}" other f
   plugin_exists "$name" || { log_fail "no plugin named $name"; return 1; }
+  plugin_enabled "$name" || { log_warn "$name is not enabled"; return 0; }
   for other in $(plugin_enabled_all); do
     [[ "$other" == "$name" ]] && continue
-    plugin_meta_list "$other" requires_plugins | grep -qx "$name" && { log_fail "$other needs $name; remove $other first"; return 1; }
+    plugin_meta_list "$other" requires_plugins | grep -Fqx "$name" && { log_fail "$other needs $name; remove $other first"; return 1; }
   done
   plugin_run_hook "$name" uninstall || return 1
   unlink_tree "$(plugin_dir "$name")/files/link" "$HOME"
@@ -121,6 +126,6 @@ plugin_remove() {
 
 _plugin_formula_needed_elsewhere() {
   local p
-  for p in $(plugin_enabled_all); do plugin_meta_list "$p" requires | grep -qx "$1" && return 0; done
+  for p in $(plugin_enabled_all); do plugin_meta_list "$p" requires | grep -Fqx "$1" && return 0; done
   return 1
 }
