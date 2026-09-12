@@ -37,3 +37,12 @@ teardown() { teardown_tmp_home; }
   assert_contains "$output" "touch"
   [ ! -f "$HOME/made" ]
 }
+
+@test "confirm reads y/N from stdin, and a closed stdin reads as no" {
+  run bash -c "source '$REPO_ROOT/core/lib/log.sh'; confirm 'ok?' <<< 'y'"
+  [ "$status" -eq 0 ]
+  run bash -c "source '$REPO_ROOT/core/lib/log.sh'; confirm 'ok?' <<< 'n'"
+  [ "$status" -eq 1 ]
+  run bash -c "source '$REPO_ROOT/core/lib/log.sh'; confirm 'ok?' </dev/null"
+  [ "$status" -eq 1 ]
+}

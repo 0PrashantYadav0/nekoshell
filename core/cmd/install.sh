@@ -7,16 +7,6 @@ usage: nekoshell install [--profile P] [--with a,b] [--without c] [--yes] [--che
 EOF
 }
 
-# _install_confirm PROMPT: v0.1's confirm, ported. A closed/absent stdin reads
-# as empty, which is a "no": nothing here is destructive enough to default
-# the other way.
-_install_confirm() {
-  printf '%s [y/N] ' "$1"
-  local reply=""
-  read -r reply || true
-  [[ "$reply" == y* || "$reply" == Y* ]]
-}
-
 # _install_in_list NEEDLE HAY...: true when NEEDLE is one of HAY.
 _install_in_list() {
   local needle="$1" hay; shift
@@ -27,7 +17,11 @@ _install_in_list() {
 # _install_detect_terminal: --terminal wins; then the quick env-only check
 # (real terminal apps on a real Mac); then each adapter's own terminal_detect
 # (what the fixture "fake" terminal uses, via FAKE_TERM, so this path is
-# exercised without a real terminal app). Prints the id or nothing.
+# exercised without a real terminal app). The adapter probe runs in a
+# subshell so a non-matching (or matching) adapter's functions never leak
+# into the caller's shell; whoever ends up using the chosen id calls
+# terminal_load again for real (theme_apply does, via terminal_current).
+# Prints the id or nothing.
 _install_detect_terminal() {
   local id t
   if t="$(terminal_detect_env 2>/dev/null)"; then
@@ -35,7 +29,7 @@ _install_detect_terminal() {
     return 0
   fi
   for id in $(terminal_all); do
-    if terminal_load "$id" 2>/dev/null && terminal_detect 2>/dev/null; then
+    if ( terminal_load "$id" 2>/dev/null && terminal_detect 2>/dev/null ); then
       printf '%s\n' "$id"
       return 0
     fi
@@ -43,8 +37,9 @@ _install_detect_terminal() {
   return 1
 }
 
-# _install_pick_from_list PROMPT ITEM...: an interactive `select`, one retry
-# on a blank/invalid choice. Prints the chosen item, or nothing on EOF.
+# _install_pick_from_list PROMPT ITEM...: an interactive `select`; invalid
+# input reprompts (select's own behaviour), and a blank line or a closed
+# stdin gives up with nothing printed. Prints the chosen item, or nothing.
 _install_pick_from_list() {
   local prompt="$1" choice=""; shift
   PS3="$prompt "
@@ -176,12 +171,14 @@ cmd_install() {
     for w in "${with_arr[@]}"; do [[ -n "$w" ]] && profile_plugins+=("$w"); done
   fi
   local -a final_plugins=()
-  local p
-  for p in "${profile_plugins[@]}"; do
-    if [[ ${#without_arr[@]} -gt 0 ]] && _install_in_list "$p" "${without_arr[@]}"; then continue; fi
-    if [[ ${#final_plugins[@]} -gt 0 ]] && _install_in_list "$p" "${final_plugins[@]}"; then continue; fi
-    final_plugins+=("$p")
-  done
+  if [[ ${#profile_plugins[@]} -gt 0 ]]; then
+    local p
+    for p in "${profile_plugins[@]}"; do
+      if [[ ${#without_arr[@]} -gt 0 ]] && _install_in_list "$p" "${without_arr[@]}"; then continue; fi
+      if [[ ${#final_plugins[@]} -gt 0 ]] && _install_in_list "$p" "${final_plugins[@]}"; then continue; fi
+      final_plugins+=("$p")
+    done
+  fi
   if [[ ${#final_plugins[@]} -gt 0 ]]; then
     local pchk
     for pchk in "${final_plugins[@]}"; do
@@ -195,11 +192,15 @@ cmd_install() {
   if [[ "$CHECK" == 1 || "$YES" == 1 ]]; then
     log_info "skipped (--yes or --check)"
   else
-    _install_confirm "Install nekoshell into $HOME?" || { log_warn "aborted"; return 1; }
+    confirm "Install nekoshell into $HOME?" || { log_warn "aborted"; return 1; }
   fi
 
   # --- 4: Backup + core. -------------------------------------------------
   log_step 4 "$TOTAL" "Backup + core"
+  if backup_root_inside_checkout; then
+    log_fail "backups would land inside the checkout at $NEKOSHELL_BACKUP_ROOT; move the checkout out of $NEKOSHELL_ROOT and run this again"
+    return 1
+  fi
   backup_begin
   local old_theme=""
   if [[ -e "$NEKOSHELL_CONFIG/theme" ]]; then
@@ -210,8 +211,33 @@ cmd_install() {
   if [[ -L "$HOME/.zshrc" ]]; then
     local zshrc_target
     zshrc_target="$(backup_link_target "$HOME/.zshrc" 2>/dev/null || true)"
-    if [[ -n "$zshrc_target" && "$zshrc_target" == "$NEKOSHELL_ROOT/stow"* ]]; then
-      run rm -f "$HOME/.zshrc"
+    if [[ -n "$zshrc_target" && "$zshrc_target" == "$NEKOSHELL_ROOT"/* ]]; then
+      # Already nekoshell's: the old stow-era file was never the user's (its
+      # aliases lived in stow/zsh/.zshrc itself, not something to migrate),
+      # so it is simply dropped. A link already at the current core/zsh path
+      # is left for link_tree's own idempotent check.
+      if [[ "$zshrc_target" == "$NEKOSHELL_ROOT/stow"* ]]; then
+        run rm -f "$HOME/.zshrc"
+      fi
+    else
+      # A foreign symlink (a dotfiles repo, usually): the aliases live at the
+      # other end of the link. Migrate from there when it resolves to a real
+      # file, then back up the symlink itself — backup_path moves rather
+      # than dereferences a symlink not pointing into the checkout — so
+      # `nekoshell uninstall` can restore it exactly as it was.
+      if [[ -n "$zshrc_target" && -f "$zshrc_target" ]]; then
+        if [[ "$NEKOSHELL_DRY_RUN" == "1" ]]; then
+          log_info "would migrate aliases from ~/.zshrc (-> $zshrc_target)"
+        else
+          mkdir -p "$NEKOSHELL_CONFIG/zsh"
+          local migrated
+          migrated="$(zsh_migrate_aliases "$zshrc_target" "$NEKOSHELL_CONFIG/zsh/local.zsh")"
+          if [[ "$migrated" =~ ^[0-9]+$ ]] && [[ "$migrated" -gt 0 ]]; then
+            log_ok "$migrated lines migrated to ~/.config/nekoshell/zsh/local.zsh"
+          fi
+        fi
+      fi
+      backup_path .zshrc
     fi
   elif [[ -f "$HOME/.zshrc" ]]; then
     if [[ "$NEKOSHELL_DRY_RUN" == "1" ]]; then
@@ -238,11 +264,15 @@ cmd_install() {
     fi
     config_set theme "$theme_val"
     config_set profile "$chosen_profile"
+    # A brand-new toml has no "plugins" key at all until plugin_add writes
+    # one; an empty profile would otherwise leave the file without one.
+    # Never touched when the key already exists, so an existing list from a
+    # previous install is never reset by re-running install.
+    config_has plugins || toml_set_list "$NEKOSHELL_TOML" plugins
   fi
 
   # --- 5: Theme. ---------------------------------------------------------
   log_step 5 "$TOTAL" "Theme"
-  mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE"
   if [[ "$NEKOSHELL_DRY_RUN" == "1" ]]; then
     log_info "would apply theme $(theme_resolve)"
   else
@@ -256,23 +286,17 @@ cmd_install() {
   elif [[ ${#final_plugins[@]} -gt 0 ]]; then
     local name
     for name in "${final_plugins[@]}"; do
-      plugin_add "$name" || return 1
+      plugin_add "$name" || { log_fail "stopped at $name; re-run nekoshell install to continue"; return 1; }
     done
   fi
 
   # --- 7: Doctor + human steps. --------------------------------------------
   log_step 7 "$TOTAL" "Doctor and next steps"
   if [[ "$NEKOSHELL_DRY_RUN" != "1" ]]; then
-    if [[ -n "$term" ]]; then
-      # report is defined by the caller in the real doctor command; here a
-      # minimal stand-in only surfaces warnings, so terminal_doctor never
-      # aborts install under set -e when it ends on a legitimately-false
-      # guarded check.
-      # shellcheck disable=SC2329 # invoked indirectly by terminal_doctor
-      report() { [[ "${1:-}" == "warn" || "${1:-}" == "fail" ]] && log_warn "$2: $3"; return 0; }
-      terminal_load "$term" 2>/dev/null && { terminal_doctor || true; }
-      unset -f report
-    fi
+    # shellcheck source=core/cmd/doctor.sh
+    source "$NEKOSHELL_ROOT/core/cmd/doctor.sh"
+    # shellcheck disable=SC2119 # deliberately no args: the full doctor block
+    cmd_doctor || true
     local any=0 notes enabled_name
     for enabled_name in $(plugin_enabled_all); do
       notes="$(_install_after_notes "$enabled_name")"
@@ -283,7 +307,8 @@ cmd_install() {
       fi
     done
     [[ "$any" == 0 ]] && log_info "no extra human steps"
+    log_ok "installed"
+  else
+    log_info "dry run: nothing was changed"
   fi
-
-  log_ok "installed"
 }
