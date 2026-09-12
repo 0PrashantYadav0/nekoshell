@@ -19,6 +19,9 @@ teardown() { teardown_tmp_home; }
 @test "log_head prints a blank line then a heading" {
   run bash -c "source '$REPO_ROOT/core/lib/log.sh'; log_head 'demo: A fixture plugin'"
   [ "$status" -eq 0 ]
+  # The output leads with a blank line, then the "::" marker and the text.
+  [ "${output:0:1}" = $'\n' ]
+  assert_contains "$output" "::"
   assert_contains "$output" "demo: A fixture plugin"
 }
 

@@ -24,7 +24,7 @@ teardown() { teardown_tmp_home; }
 # instead.
 
 @test "plugin_all lists fixture plugins sorted; plugin_meta reads toml" {
-  [ "$(plugin_all | tr '\n' ' ')" = "clash demo kitty-only needs-demo " ]
+  [ "$(plugin_all | tr '\n' ' ')" = "broken clash demo kitty-only needs-demo " ]
   [ "$(plugin_meta demo summary)" = "A fixture plugin" ]
   [ "$(plugin_meta_list demo requires)" = "eza" ]
   plugin_exists demo; ! plugin_exists nope
@@ -70,6 +70,21 @@ teardown() { teardown_tmp_home; }
   output="$(plugin_add nope 2>&1)" || status=$?
   [ "$status" -eq 1 ]; assert_contains "$output" "no plugin named nope"
 }
+@test "plugin_add fails and does not record the plugin when brew install fails" {
+  export FAKE_BREW_FAIL=1
+  status=0
+  output="$(plugin_add demo 2>&1)" || status=$?
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "Homebrew install failed"
+  [ -z "$(config_list plugins)" ]
+}
+@test "plugin_add fails and does not record a plugin whose install hook fails" {
+  status=0
+  output="$(plugin_add broken 2>&1)" || status=$?
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "broken install"
+  [ -z "$(config_list plugins)" ]
+}
 @test "plugin_remove runs the hook, unlinks, keeps copies, drops the record" {
   plugin_add demo >/dev/null
   status=0
@@ -87,6 +102,15 @@ teardown() { teardown_tmp_home; }
   status=0
   output="$(plugin_remove demo purge 2>&1)" || status=$?
   assert_contains "$output" "brew uninstall eza"
+}
+@test "plugin_remove on a never-enabled plugin is a no-op, even with purge" {
+  export FAKE_BREW_INSTALLED="eza"
+  status=0
+  output="$(plugin_remove demo purge 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "not enabled"
+  assert_not_contains "$output" "brew uninstall"
+  [ ! -f "$NEKOSHELL_CACHE/hooks.log" ] || ! grep -q "demo uninstall" "$NEKOSHELL_CACHE/hooks.log"
 }
 @test "plugin_remove refuses while a dependant is enabled" {
   plugin_add needs-demo >/dev/null

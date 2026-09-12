@@ -1,0 +1,9 @@
+name = "broken"
+summary = "A fixture plugin whose install hook always fails"
+requires = []
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]

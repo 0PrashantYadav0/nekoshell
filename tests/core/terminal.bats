@@ -7,6 +7,9 @@ setup() {
   for l in paths log config terminal; do source "$REPO_ROOT/core/lib/$l.sh"; done
   mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE"
   unset TERM_PROGRAM KITTY_WINDOW_ID GHOSTTY_RESOURCES_DIR WEZTERM_EXECUTABLE
+  # Pin TERM so terminal_detect_env's xterm-kitty check does not pick up
+  # whatever terminal this test happens to be run from (e.g. TERM=xterm-kitty).
+  export TERM=xterm-256color
 }
 teardown() { teardown_tmp_home; }
 

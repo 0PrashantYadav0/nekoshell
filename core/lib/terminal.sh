@@ -8,6 +8,7 @@ terminal_all() {
   for d in "$NEKOSHELL_TERMINALS_DIR"/*/; do
     [[ -f "$d/adapter.sh" ]] && basename "$d"
   done
+  return 0
 }
 
 # terminal_detect_env: the id of the terminal this shell runs in, from env. Status 1 when unknown.
