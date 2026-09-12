@@ -19,7 +19,7 @@ nekoshell_root_from() {
 
 # NEKOSHELL_ROOT: the checkout. Prefer the recorded root, else derive from this file.
 if [[ -z "${NEKOSHELL_ROOT:-}" ]]; then
-  if [[ -r "$NEKOSHELL_TOML" ]] && grep -q '^root' "$NEKOSHELL_TOML"; then
+  if [[ -r "$NEKOSHELL_TOML" ]] && grep -q '^root[[:space:]]*=' "$NEKOSHELL_TOML"; then
     NEKOSHELL_ROOT="$(sed -n 's/^root *= *"\(.*\)"/\1/p' "$NEKOSHELL_TOML" | head -1)"
   elif [[ -r "$NEKOSHELL_CONFIG/root" ]]; then
     NEKOSHELL_ROOT="$(cat "$NEKOSHELL_CONFIG/root")"
