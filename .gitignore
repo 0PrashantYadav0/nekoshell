@@ -5,3 +5,6 @@
 tests/tmp/
 stow/config/.config/nekoshell/zsh/local.zsh
 /backup/
+
+# Local planning notes (specs, plans, ledgers). Never committed.
+.planning/
