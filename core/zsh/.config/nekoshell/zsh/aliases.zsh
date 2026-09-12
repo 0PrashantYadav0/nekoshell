@@ -1,0 +1,6 @@
+alias g='git'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias doctor='nekoshell doctor'
+alias greet='nekoshell greet'
+alias music='nekoshell music'

@@ -1,0 +1,11 @@
+truecolor
+modern-cli
+greet
+fzf
+atuin
+lazygit
+btop
+nvim
+tmux
+statusbar
+recommend

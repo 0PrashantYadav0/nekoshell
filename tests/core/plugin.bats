@@ -125,3 +125,10 @@ teardown() { teardown_tmp_home; }
 @test "plugin_run_hook on a missing hook returns 0" {
   plugin_run_hook clash install
 }
+@test "plugin_add survives a doctor hook that ends on a guarded, legitimately-false check" {
+  status=0
+  output="$(plugin_add flaky-doctor 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  [ "$(config_list plugins)" = "flaky-doctor" ]
+  assert_contains "$output" "ok   flaky"
+}
