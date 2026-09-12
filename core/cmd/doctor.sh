@@ -28,15 +28,19 @@ cmd_doctor() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --json) json=1; shift ;;
-      --plugin) only_plugin="${2:-}"; shift 2 ;;
+      --plugin) [[ -n "${2:-}" ]] || { usage_doctor; return 2; }; only_plugin="$2"; shift 2 ;;
       -h|--help|help) usage_doctor; return 0 ;;
       *) usage_doctor; return 2 ;;
     esac
   done
 
   _doctor_rows_file="$(mktemp "${TMPDIR:-/tmp}/nekoshell-doctor.XXXXXX")"
+  # A RETURN trap can be skipped when `set -e` unwinds the function instead of
+  # letting it reach its own `return`; EXIT always fires, and cmd_doctor is
+  # the last thing bin/nekoshell runs before its own `exit`, so this is the
+  # only cleanup the whole process needs.
   # shellcheck disable=SC2064 # _doctor_rows_file is meant to expand now
-  trap "rm -f '$_doctor_rows_file'" RETURN
+  trap "rm -f '$_doctor_rows_file'" EXIT
 
   if [[ -n "$only_plugin" ]]; then
     _doctor_plugin_block "$only_plugin"
@@ -76,7 +80,7 @@ PY
   [[ "$fails" -eq 0 ]]
 }
 
-have() { command -v "$1" >/dev/null 2>&1; }
+_doctor_have() { command -v "$1" >/dev/null 2>&1; }
 
 # _doctor_font_file: the first JetBrainsMono Nerd Font file found, or nothing.
 _doctor_font_file() {
@@ -90,35 +94,62 @@ _doctor_font_file() {
 # _doctor_font_glyphs FONTFILE: does the font's cmap carry Nerd Fonts v3 icons
 # (checked via U+F00BA, one of the glyphs eza uses)? Parses the TrueType cmap
 # table by hand: no Python font library is guaranteed to be installed.
+#
+# The parser distinguishes "the font was read and the glyph is missing" (a
+# real fail) from "this file could not be parsed as a TrueType/OpenType font"
+# (a warn, not a fail: a .ttc collection, a corrupt download, or anything
+# else struct.unpack chokes on is not evidence the Nerd Font is missing, only
+# that this simple hand-rolled parser could not read it). Exit codes: 0 =
+# glyph present, 1 = parsed fine, glyph absent, 2 = could not parse.
 _doctor_font_glyphs() {
-  local fontfile="$1"
-  if python3 - "$fontfile" <<'EOF'
+  local fontfile="$1" rc
+  if ! command -v python3 >/dev/null 2>&1; then
+    report warn "font glyphs" "python3 missing; glyph check skipped"
+    return 0
+  fi
+  if python3 - "$fontfile" 2>/dev/null <<'EOF'
 import struct, sys
-data = open(sys.argv[1], 'rb').read()
-n = struct.unpack('>H', data[4:6])[0]
-for i in range(n):
-    tag, _, off, ln = struct.unpack('>4sIII', data[12+16*i:28+16*i])
-    if tag == b'cmap':
-        cmap = data[off:off+ln]; sub = struct.unpack('>H', cmap[2:4])[0]
-        for j in range(sub):
-            pid, eid, o = struct.unpack('>HHI', cmap[4+8*j:12+8*j])
-            fmt = struct.unpack('>H', cmap[o:o+2])[0]
-            if fmt == 12:
-                ngroups = struct.unpack('>I', cmap[o+12:o+16])[0]
-                for g in range(ngroups):
-                    s, e, _ = struct.unpack('>III', cmap[o+16+12*g:o+28+12*g])
-                    if s <= 0xF00BA <= e: sys.exit(0)
-sys.exit(1)
+try:
+    data = open(sys.argv[1], 'rb').read()
+    n = struct.unpack('>H', data[4:6])[0]
+    found = False
+    for i in range(n):
+        tag, _, off, ln = struct.unpack('>4sIII', data[12+16*i:28+16*i])
+        if tag == b'cmap':
+            cmap = data[off:off+ln]
+            sub = struct.unpack('>H', cmap[2:4])[0]
+            for j in range(sub):
+                pid, eid, o = struct.unpack('>HHI', cmap[4+8*j:12+8*j])
+                fmt = struct.unpack('>H', cmap[o:o+2])[0]
+                if fmt == 12:
+                    ngroups = struct.unpack('>I', cmap[o+12:o+16])[0]
+                    for g in range(ngroups):
+                        s, e, _ = struct.unpack('>III', cmap[o+16+12*g:o+28+12*g])
+                        if s <= 0xF00BA <= e:
+                            found = True
+                            break
+                if found:
+                    break
+        if found:
+            break
+except Exception:
+    sys.exit(2)
+sys.exit(0 if found else 1)
 EOF
   then
-    report ok "font glyphs" "Nerd Fonts v3 (U+F00BA present)"
+    rc=0
   else
-    report fail "font glyphs" "font lacks Nerd Fonts v3 icons; eza icons will show as boxes"
+    rc=$?
   fi
+  case "$rc" in
+    0) report ok "font glyphs" "Nerd Fonts v3 (U+F00BA present)" ;;
+    1) report fail "font glyphs" "font lacks Nerd Fonts v3 icons; eza icons will show as boxes" ;;
+    *) report warn "font glyphs" "could not read the font file" ;;
+  esac
 }
 
 _doctor_core_block() {
-  if have brew; then report ok "homebrew" "$(brew --version | head -1)"; else report fail "homebrew" "not on PATH"; fi
+  if _doctor_have brew; then report ok "homebrew" "$(brew --version | head -1)"; else report fail "homebrew" "not on PATH"; fi
 
   if [[ -L "$HOME/.zshrc" ]] && [[ "$HOME/.zshrc" -ef "$NEKOSHELL_ROOT/core/zsh/.zshrc" ]]; then
     report ok "zshrc" "linked to $NEKOSHELL_ROOT"
@@ -132,7 +163,7 @@ _doctor_core_block() {
     report fail "config" "stale root (run: nekoshell install)"
   fi
 
-  if have starship; then report ok "starship" "$(command -v starship)"; else report fail "starship" "missing (brew bundle)"; fi
+  if _doctor_have starship; then report ok "starship" "$(command -v starship)"; else report fail "starship" "missing (brew bundle)"; fi
 
   local fontfile=""
   fontfile="$(_doctor_font_file || true)"
@@ -160,7 +191,12 @@ _doctor_terminal_block() {
     return 0
   fi
   if terminal_load "$term"; then
-    terminal_doctor
+    # A terminal_doctor whose last command is a guarded, legitimately-false
+    # check (e.g. `[[ -e some/optional/file ]] && report ...`) would
+    # otherwise exit non-zero and, under bin/nekoshell's `set -e`, take the
+    # rest of the doctor down with it. One bad adapter must not silence
+    # every other row.
+    terminal_doctor || report warn "$term" "terminal doctor hook failed"
   else
     report fail "terminal" "no adapter named $term"
   fi
@@ -169,5 +205,7 @@ _doctor_terminal_block() {
 _doctor_plugin_block() {
   local name="$1"
   plugin_exists "$name" || { report fail "$name" "no such plugin"; return 0; }
-  plugin_run_hook "$name" doctor
+  # Same reasoning as terminal_doctor above: a plugin's doctor.sh ending on a
+  # guarded, legitimately-false check must warn, not abort every other block.
+  plugin_run_hook "$name" doctor || report warn "$name" "doctor hook failed"
 }

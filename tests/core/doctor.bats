@@ -32,3 +32,32 @@ teardown() { teardown_tmp_home; }
 @test "doctor --plugin runs one plugin block only" {
   run "$NK" doctor --plugin demo; assert_matches "$output" 'ok +demo'; assert_not_contains "$output" "homebrew"
 }
+@test "doctor --plugin without a name exits 2 with usage, not a silent 1" {
+  run "$NK" doctor --plugin
+  [ "$status" -eq 2 ]
+  assert_contains "$output" "usage: nekoshell doctor"
+}
+# A plugin doctor.sh (or a terminal's terminal_doctor) whose last command is a
+# guarded, legitimately-false check (`[[ -e optional ]] && report ...`) exits
+# non-zero even though nothing is actually wrong. Under bin/nekoshell's
+# `set -e` that used to take the whole doctor run down with it: no output,
+# exit 1, and the rows temp file leaked. It must instead warn for that one
+# block and keep printing everything else.
+@test "doctor keeps going and reports every other row when a plugin's doctor hook ends on a guarded false check" {
+  printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = ["demo", "flaky-doctor"]\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" doctor
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +homebrew'
+  assert_matches "$output" 'ok +zshrc'
+  assert_matches "$output" 'ok +demo +fine'
+  assert_matches "$output" 'ok +flaky +row one'
+  assert_not_contains "$output" "flaky extra"
+}
+@test "font glyph check warns rather than fails when the font file cannot be parsed" {
+  mkdir -p "$HOME/Library/Fonts"
+  printf 'not a real font, just garbage bytes' > "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
+  run "$NK" doctor
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +font +.*JetBrainsMonoNerdFont'
+  assert_matches "$output" 'warn +font glyphs +could not read the font file'
+}

@@ -38,8 +38,10 @@ for role in sys.argv[3:]: print(p[role])' "$NEKOSHELL_ROOT/core/theme/palettes.j
 }
 
 # theme_render_template SRC DST FLAVOR: copy SRC to DST with the @@...@@
-# placeholders replaced by FLAVOR's values. render.py writes the whole file at
-# once, so a failure part way through cannot leave half a config behind.
+# placeholders replaced by FLAVOR's values. render.py builds the whole file in
+# memory and writes it to a temp file next to DST before renaming it into
+# place, so a failure part way through (a bad placeholder, a full disk) can
+# never leave DST holding a half-written config.
 theme_render_template() {
   python3 "$NEKOSHELL_ROOT/core/theme/render.py" "$NEKOSHELL_ROOT/core/theme/palettes.json" "$1" "$2" "$3"
 }

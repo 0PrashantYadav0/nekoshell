@@ -1,0 +1,9 @@
+name = "flaky-doctor"
+summary = "A fixture plugin whose doctor hook ends on a guarded, legitimately-false check"
+requires = []
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
