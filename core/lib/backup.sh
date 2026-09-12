@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backups of files the installer replaces. Requires lib/log.sh and lib/paths.sh.
+# Backups of files the installer replaces. Requires core/lib/log.sh and core/lib/paths.sh.
 # Source this file; do not execute it.
 
 # backup_root_inside_checkout: true when the backup root sits inside the
