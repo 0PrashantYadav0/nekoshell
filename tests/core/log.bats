@@ -16,6 +16,12 @@ teardown() { teardown_tmp_home; }
   assert_contains "$output" "missing brew"
 }
 
+@test "log_head prints a blank line then a heading" {
+  run bash -c "source '$REPO_ROOT/core/lib/log.sh'; log_head 'demo: A fixture plugin'"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "demo: A fixture plugin"
+}
+
 @test "run executes the command when not in dry-run" {
   run bash -c "source '$REPO_ROOT/core/lib/log.sh'; run touch '$HOME/made'"
   [ "$status" -eq 0 ]

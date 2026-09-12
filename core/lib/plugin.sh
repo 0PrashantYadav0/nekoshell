@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# Plugin discovery, enable and disable. Needs paths, log, backup, config, link,
+# brew, terminal. Source this file; do not execute it.
+NEKOSHELL_PLUGINS_DIR="${NEKOSHELL_PLUGINS_DIR:-$NEKOSHELL_ROOT/plugins}"
+NEKOSHELL_CORE_ANTIDOTE="${NEKOSHELL_CORE_ANTIDOTE:-$NEKOSHELL_ROOT/core/zsh/.config/nekoshell/zsh/plugins.txt}"
+export NEKOSHELL_PLUGINS_DIR NEKOSHELL_CORE_ANTIDOTE
+
+plugin_dir()       { printf '%s/%s\n' "$NEKOSHELL_PLUGINS_DIR" "$1"; }
+plugin_exists()    { [[ -f "$(plugin_dir "$1")/plugin.toml" ]]; }
+plugin_all()       { local d; for d in "$NEKOSHELL_PLUGINS_DIR"/*/; do [[ -f "$d/plugin.toml" ]] && basename "$d"; done; return 0; }
+plugin_meta()      { toml_get "$(plugin_dir "$1")/plugin.toml" "$2"; }
+plugin_meta_list() { toml_list "$(plugin_dir "$1")/plugin.toml" "$2"; }
+plugin_enabled()   { config_list plugins | grep -qx "$1"; }
+plugin_enabled_all() { config_list plugins; }
+
+plugin_supports_terminal() {
+  local t
+  for t in $(plugin_meta_list "$1" terminals); do
+    [[ "$t" == "any" || "$t" == "$2" ]] && return 0
+  done
+  return 1
+}
+
+plugin_env() {
+  PLUGIN_NAME="$1"; PLUGIN_DIR="$(plugin_dir "$1")"
+  FLAVOR="$(config_get theme_resolved 2>/dev/null || echo mocha)"
+  export PLUGIN_NAME PLUGIN_DIR FLAVOR
+}
+
+# plugin_run_hook NAME HOOK: run plugins/NAME/HOOK.sh in a subshell with the libs loaded.
+plugin_run_hook() {
+  local hook
+  hook="$(plugin_dir "$1")/$2.sh"
+  [[ -f "$hook" ]] || return 0
+  (
+    plugin_env "$1"
+    set -euo pipefail
+    # shellcheck source=/dev/null
+    source "$hook"
+  )
+}
+
+# plugin_regen_antidote: core plugins.txt + every enabled plugin's antidote.txt.
+plugin_regen_antidote() {
+  local out="$NEKOSHELL_CONFIG/antidote.txt" p f
+  mkdir -p "$NEKOSHELL_CONFIG"
+  { [[ -r "$NEKOSHELL_CORE_ANTIDOTE" ]] && cat "$NEKOSHELL_CORE_ANTIDOTE"
+    for p in $(plugin_enabled_all); do f="$(plugin_dir "$p")/antidote.txt"; [[ -r "$f" ]] && cat "$f"; done
+    true; } > "$out.tmp" && mv "$out.tmp" "$out"
+}
+
+plugin_providing_cmd() {
+  local d
+  for d in "$NEKOSHELL_PLUGINS_DIR"/*/; do
+    [[ -f "$d/cmd/$1.sh" ]] && { basename "$d"; return 0; }
+  done
+  return 0
+}
+
+_plugin_doctor_rows() {
+  local hook
+  hook="$(plugin_dir "$1")/doctor.sh"
+  [[ -f "$hook" ]] || return 0
+  ( plugin_env "$1"
+    # shellcheck disable=SC2329 # invoked indirectly by the sourced doctor.sh
+    report() { printf '%-4s %-28s %s\n' "$1" "$2" "$3"; }
+    # shellcheck source=/dev/null
+    source "$hook" )
+}
+
+plugin_add() {
+  local name="$1" term dep c t
+  plugin_exists "$name" || { log_fail "no plugin named $name (nekoshell plugin list)"; return 1; }
+  term="$(terminal_current || true)"
+  if [[ -n "$term" ]] && ! plugin_supports_terminal "$name" "$term"; then
+    log_fail "$name works on: $(plugin_meta_list "$name" terminals | tr '\n' ' ')(you use $term)"; return 1
+  fi
+  for c in $(plugin_meta_list "$name" conflicts); do
+    plugin_enabled "$c" && { log_fail "$name conflicts with $c; remove it first"; return 1; }
+  done
+  for dep in $(plugin_meta_list "$name" requires_plugins); do
+    plugin_enabled "$dep" || { log_info "$name needs $dep; adding it first"; plugin_add "$dep" || return 1; }
+  done
+  log_head "$name: $(plugin_meta "$name" summary)"
+  for t in $(plugin_meta_list "$name" taps); do brew_tap "$t"; done
+  local formulas=() casks=() f
+  while IFS= read -r f; do [[ -n "$f" ]] && formulas+=("$f"); done < <(plugin_meta_list "$name" requires)
+  while IFS= read -r f; do [[ -n "$f" ]] && casks+=("$f"); done < <(plugin_meta_list "$name" casks)
+  [[ ${#formulas[@]} -gt 0 ]] && brew_install "${formulas[@]}"
+  [[ ${#casks[@]} -gt 0 ]] && brew_cask_install "${casks[@]}"
+  link_tree "$(plugin_dir "$name")/files/link" "$HOME"
+  copy_once "$(plugin_dir "$name")/files/copy" "$HOME"
+  plugin_run_hook "$name" install || return 1
+  plugin_run_hook "$name" theme || return 1
+  config_list_add plugins "$name"
+  plugin_regen_antidote
+  _plugin_doctor_rows "$name"
+  log_ok "$name enabled"
+}
+
+# plugin_remove NAME [purge]
+plugin_remove() {
+  local name="$1" purge="${2:-}" other f
+  plugin_exists "$name" || { log_fail "no plugin named $name"; return 1; }
+  for other in $(plugin_enabled_all); do
+    [[ "$other" == "$name" ]] && continue
+    plugin_meta_list "$other" requires_plugins | grep -qx "$name" && { log_fail "$other needs $name; remove $other first"; return 1; }
+  done
+  plugin_run_hook "$name" uninstall || return 1
+  unlink_tree "$(plugin_dir "$name")/files/link" "$HOME"
+  config_list_remove plugins "$name"
+  plugin_regen_antidote
+  if [[ "$purge" == "purge" ]]; then
+    for f in $(plugin_meta_list "$name" requires); do
+      _plugin_formula_needed_elsewhere "$f" && continue
+      brew_has "$f" && run brew uninstall "$f"
+    done
+  fi
+  log_ok "$name removed (its copied configs are still yours)"
+}
+
+_plugin_formula_needed_elsewhere() {
+  local p
+  for p in $(plugin_enabled_all); do plugin_meta_list "$p" requires | grep -qx "$1" && return 0; done
+  return 1
+}
