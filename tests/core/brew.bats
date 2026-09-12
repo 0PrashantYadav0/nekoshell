@@ -14,18 +14,30 @@ teardown() { teardown_tmp_home; }
 }
 # Not `run`: log.sh (sourced above) defines its own run(), which shadows
 # bats' run() for the rest of each test process and would leave $output
-# empty. Plain command substitution captures the functions' stdout instead.
+# empty. Plain command substitution captures stdout/stderr and exit status
+# instead.
 @test "brew_install only installs what is missing, in one call" {
-  output="$(brew_install eza fzf zoxide)"
+  status=0
+  output="$(brew_install eza fzf zoxide 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
   assert_contains "$output" "brew install fzf zoxide"
   assert_not_contains "$output" "install eza"
 }
 @test "brew_install with nothing missing runs nothing" {
-  output="$(brew_install eza bat)"
+  status=0
+  output="$(brew_install eza bat 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
   assert_not_contains "$output" "brew install"
 }
 @test "brew_cask_install and brew_tap" {
   export FAKE_BREW_CASKS="iterm2"
-  output="$(brew_cask_install iterm2 kitty)"; assert_contains "$output" "brew install --cask kitty"; assert_not_contains "$output" "cask iterm2"
-  output="$(brew_tap nikitabobko/tap)"; assert_contains "$output" "brew tap nikitabobko/tap"
+  status=0
+  output="$(brew_cask_install iterm2 kitty 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "brew install --cask kitty"; assert_not_contains "$output" "cask iterm2"
+  status=0
+  output="$(brew_tap nikitabobko/tap 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "brew tap nikitabobko/tap"
 }

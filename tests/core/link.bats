@@ -41,8 +41,11 @@ teardown() { teardown_tmp_home; }
   echo mine > "$DEST/.zshrc"
   # Not `run`: log.sh (sourced above) defines its own run(), which shadows
   # bats' run() for the rest of this test process and would leave $output
-  # empty. Plain command substitution captures copy_once's stdout instead.
-  output="$(copy_once "$SRC" "$DEST")"
+  # empty. Plain command substitution captures stdout/stderr and exit status
+  # instead.
+  status=0
+  output="$(copy_once "$SRC" "$DEST" 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
   [ "$(cat "$DEST/.zshrc")" = "mine" ]
   [ "$(cat "$DEST/.config/app/conf")" = "two" ]; [ ! -L "$DEST/.config/app/conf" ]
   assert_contains "$output" "kept .zshrc"
@@ -50,4 +53,32 @@ teardown() { teardown_tmp_home; }
 @test "link_tree and copy_once on a missing SRC are no-ops" {
   link_tree "$HOME/nope" "$DEST"; copy_once "$HOME/nope" "$DEST"
   [ -z "$(ls -A "$DEST")" ]
+}
+@test "link_tree in dry-run creates nothing, skips the backup, and reports what it would do" {
+  echo mine > "$DEST/.zshrc"
+  NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN
+  status=0
+  output="$(link_tree "$SRC" "$DEST" 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "would link .zshrc"
+  [ "$(cat "$DEST/.zshrc")" = "mine" ]
+  [ ! -e "$DEST/.config/app/conf" ]
+  [ -z "$(find "$NEKOSHELL_BACKUP_ROOT" -name '.zshrc' 2>/dev/null)" ]
+}
+@test "copy_once in dry-run creates nothing and reports what it would do" {
+  NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN
+  status=0
+  output="$(copy_once "$SRC" "$DEST" 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "would copy .zshrc"
+  [ -z "$(ls -A "$DEST")" ]
+}
+@test "unlink_tree in dry-run leaves the links in place and reports what it would do" {
+  link_tree "$SRC" "$DEST"
+  NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN
+  status=0
+  output="$(unlink_tree "$SRC" "$DEST" 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "would unlink .zshrc"
+  [ -L "$DEST/.zshrc" ]; [ -L "$DEST/.config/app/conf" ]
 }
