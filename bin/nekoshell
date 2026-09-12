@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# nekoshell: the one command. `nekoshell help` lists what it can do.
+set -euo pipefail
+_self="${BASH_SOURCE[0]}"
+[[ -L "$_self" ]] && _self="$(readlink "$_self")"
+NEKOSHELL_ROOT="$(cd "$(dirname "$_self")/.." && pwd -P)"
+export NEKOSHELL_ROOT
+for _lib in log paths backup config link brew terminal plugin theme; do
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_ROOT/core/lib/$_lib.sh"
+done
+# The libraries only define functions on source (no side effects); the
+# dispatcher is what actually runs, so it is what bootstraps the directories
+# hooks and commands assume are already there.
+mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE" "$NEKOSHELL_DATA"
+sub="${1:-help}"; [[ $# -gt 0 ]] && shift
+case "$sub" in -h|--help) sub=help ;; -v|--version) sub=version ;; esac
+if [[ -f "$NEKOSHELL_ROOT/core/cmd/$sub.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_ROOT/core/cmd/$sub.sh"
+  "cmd_$sub" "$@"; exit $?
+fi
+owner="$(plugin_providing_cmd "$sub")"
+if [[ -n "$owner" ]]; then
+  if plugin_enabled "$owner"; then
+    plugin_env "$owner"
+    # shellcheck source=/dev/null
+    source "$(plugin_dir "$owner")/cmd/$sub.sh"
+    "cmd_$sub" "$@"; exit $?
+  fi
+  log_fail "'nekoshell $sub' is provided by the $owner plugin, which is not enabled. Run: nekoshell plugin add $owner"
+  exit 2
+fi
+log_fail "unknown command: $sub"
+# shellcheck source=/dev/null
+source "$NEKOSHELL_ROOT/core/cmd/help.sh"; cmd_help >&2
+exit 2

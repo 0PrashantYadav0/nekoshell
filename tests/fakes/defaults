@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
 # Fake `defaults`: records the call, and reports no stored value for reads.
+# `defaults read -g AppleInterfaceStyle` is special-cased: it prints
+# $FAKE_DEFAULTS_APPEARANCE and exits 1 when that variable is empty or unset
+# (macOS behaviour: the key is absent in light mode), without echoing the call
+# first, so a caller that captures its stdout gets exactly the appearance
+# string. Every other invocation keeps the old behaviour.
+if [[ "${1:-}" == "read" && "${2:-}" == "-g" && "${3:-}" == "AppleInterfaceStyle" ]]; then
+  if [[ -n "${FAKE_DEFAULTS_APPEARANCE:-}" ]]; then
+    printf '%s\n' "$FAKE_DEFAULTS_APPEARANCE"
+    exit 0
+  fi
+  exit 1
+fi
 echo "defaults $*"
 if [[ "${1:-}" == "read" ]]; then
   echo "NONE"

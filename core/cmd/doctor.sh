@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# doctor: one line per check; exit 1 iff any check fails
+usage_doctor() { cat <<'EOF'
+usage: nekoshell doctor [--json] [--plugin NAME]
+EOF
+}
+
+# report STATUS NAME DETAIL: shared with terminal adapters (terminal_doctor)
+# and plugin doctor.sh hooks, which call it directly — it is defined here, in
+# cmd_doctor, and inherited by every function and subshell run underneath it
+# (plugin_run_hook's subshell included), so there is exactly one row format
+# and one place rows are collected.
+_doctor_rows_file=""
+
+report() {
+  # Rows land in a file, not an in-memory array: plugin hooks run inside
+  # plugin_run_hook's `( ... )` subshell, and a subshell's variable changes
+  # never reach back out to the parent shell, but a file write does. Detail
+  # is flattened to one line first: a tab or newline in it would otherwise be
+  # mistaken for a field or row separator when the file is read back.
+  local detail="${3//$'\t'/ }"
+  detail="${detail//$'\n'/ }"
+  printf '%s\t%s\t%s\n' "$1" "$2" "$detail" >> "$_doctor_rows_file"
+}
+
+cmd_doctor() {
+  local json=0 only_plugin=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --json) json=1; shift ;;
+      --plugin) only_plugin="${2:-}"; shift 2 ;;
+      -h|--help|help) usage_doctor; return 0 ;;
+      *) usage_doctor; return 2 ;;
+    esac
+  done
+
+  _doctor_rows_file="$(mktemp "${TMPDIR:-/tmp}/nekoshell-doctor.XXXXXX")"
+  # shellcheck disable=SC2064 # _doctor_rows_file is meant to expand now
+  trap "rm -f '$_doctor_rows_file'" RETURN
+
+  if [[ -n "$only_plugin" ]]; then
+    _doctor_plugin_block "$only_plugin"
+  else
+    _doctor_core_block
+    _doctor_terminal_block
+    local p
+    for p in $(plugin_enabled_all); do
+      _doctor_plugin_block "$p"
+    done
+  fi
+
+  local fails=0 status check detail
+  while IFS=$'\t' read -r status check detail; do
+    [[ "$status" == "fail" ]] && fails=$((fails + 1))
+  done < "$_doctor_rows_file"
+
+  if [[ "$json" == 1 ]]; then
+    python3 - "$_doctor_rows_file" <<'PY'
+import json, sys
+rows = []
+with open(sys.argv[1], encoding="utf-8") as f:
+    for line in f:
+        line = line.rstrip("\n")
+        if not line:
+            continue
+        status, check, detail = line.split("\t", 2)
+        rows.append({"status": status, "check": check, "detail": detail})
+print(json.dumps(rows))
+PY
+  else
+    while IFS=$'\t' read -r status check detail; do
+      printf '%-4s %-28s %s\n' "$status" "$check" "$detail"
+    done < "$_doctor_rows_file"
+  fi
+
+  [[ "$fails" -eq 0 ]]
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# _doctor_font_file: the first JetBrainsMono Nerd Font file found, or nothing.
+_doctor_font_file() {
+  local f
+  for f in "$HOME"/Library/Fonts/JetBrainsMonoNerdFont* /Library/Fonts/JetBrainsMonoNerdFont*; do
+    [[ -e "$f" ]] && { printf '%s\n' "$f"; return 0; }
+  done
+  return 1
+}
+
+# _doctor_font_glyphs FONTFILE: does the font's cmap carry Nerd Fonts v3 icons
+# (checked via U+F00BA, one of the glyphs eza uses)? Parses the TrueType cmap
+# table by hand: no Python font library is guaranteed to be installed.
+_doctor_font_glyphs() {
+  local fontfile="$1"
+  if python3 - "$fontfile" <<'EOF'
+import struct, sys
+data = open(sys.argv[1], 'rb').read()
+n = struct.unpack('>H', data[4:6])[0]
+for i in range(n):
+    tag, _, off, ln = struct.unpack('>4sIII', data[12+16*i:28+16*i])
+    if tag == b'cmap':
+        cmap = data[off:off+ln]; sub = struct.unpack('>H', cmap[2:4])[0]
+        for j in range(sub):
+            pid, eid, o = struct.unpack('>HHI', cmap[4+8*j:12+8*j])
+            fmt = struct.unpack('>H', cmap[o:o+2])[0]
+            if fmt == 12:
+                ngroups = struct.unpack('>I', cmap[o+12:o+16])[0]
+                for g in range(ngroups):
+                    s, e, _ = struct.unpack('>III', cmap[o+16+12*g:o+28+12*g])
+                    if s <= 0xF00BA <= e: sys.exit(0)
+sys.exit(1)
+EOF
+  then
+    report ok "font glyphs" "Nerd Fonts v3 (U+F00BA present)"
+  else
+    report fail "font glyphs" "font lacks Nerd Fonts v3 icons; eza icons will show as boxes"
+  fi
+}
+
+_doctor_core_block() {
+  if have brew; then report ok "homebrew" "$(brew --version | head -1)"; else report fail "homebrew" "not on PATH"; fi
+
+  if [[ -L "$HOME/.zshrc" ]] && [[ "$HOME/.zshrc" -ef "$NEKOSHELL_ROOT/core/zsh/.zshrc" ]]; then
+    report ok "zshrc" "linked to $NEKOSHELL_ROOT"
+  else
+    report fail "zshrc" "not a nekoshell symlink (run: nekoshell install)"
+  fi
+
+  if [[ -r "$NEKOSHELL_TOML" ]] && [[ "$(config_get root 2>/dev/null || true)" == "$NEKOSHELL_ROOT" ]]; then
+    report ok "config" "$NEKOSHELL_TOML"
+  else
+    report fail "config" "stale root (run: nekoshell install)"
+  fi
+
+  if have starship; then report ok "starship" "$(command -v starship)"; else report fail "starship" "missing (brew bundle)"; fi
+
+  local fontfile=""
+  fontfile="$(_doctor_font_file || true)"
+  if [[ -n "$fontfile" ]]; then
+    report ok "font" "$fontfile"
+    _doctor_font_glyphs "$fontfile"
+  else
+    report warn "font" "not installed (brew install --cask font-jetbrains-mono-nerd-font)"
+  fi
+
+  report ok "theme" "$(theme_current)"
+
+  if [[ -r "$NEKOSHELL_CONFIG/antidote.txt" ]]; then
+    report ok "antidote" "$NEKOSHELL_CONFIG/antidote.txt"
+  else
+    report warn "antidote" "not generated yet (run: nekoshell plugin add ...)"
+  fi
+}
+
+_doctor_terminal_block() {
+  local term
+  term="$(terminal_current 2>/dev/null || true)"
+  if [[ -z "$term" ]]; then
+    report warn "terminal" "none configured"
+    return 0
+  fi
+  if terminal_load "$term"; then
+    terminal_doctor
+  else
+    report fail "terminal" "no adapter named $term"
+  fi
+}
+
+_doctor_plugin_block() {
+  local name="$1"
+  plugin_exists "$name" || { report fail "$name" "no such plugin"; return 0; }
+  plugin_run_hook "$name" doctor
+}
