@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """render.py PALETTES SRC DST FLAVOR: substitute @@FLAVOR@@, @@TITLE@@,
 @@hex:ROLE@@, @@HEX:ROLE@@, @@sgr:ROLE@@, @@rgb:ROLE@@ from the flavour's palette."""
-import json, re, sys
+import json, os, re, sys
 palettes, src, dst, flavor = sys.argv[1:5]
 p = json.load(open(palettes))[flavor]
 def rgb(role): h = p[role]; return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
@@ -15,4 +15,10 @@ def repl(m):
 text = open(src, encoding="utf-8").read()
 text = text.replace("@@FLAVOR@@", flavor).replace("@@TITLE@@", flavor.capitalize())
 text = re.sub(r"@@(hex|HEX|sgr|rgb):([a-z0-9]+)@@", repl, text)
-open(dst, "w", encoding="utf-8").write(text)
+# Written to a temp file next to dst, then renamed into place: os.replace is
+# atomic on the same filesystem, so a crash or a full disk mid-write can
+# never leave dst holding a half-written config.
+tmp = dst + ".tmp"
+with open(tmp, "w", encoding="utf-8") as f:
+    f.write(text)
+os.replace(tmp, dst)

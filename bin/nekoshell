@@ -15,6 +15,16 @@ done
 mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE" "$NEKOSHELL_DATA"
 sub="${1:-help}"; [[ $# -gt 0 ]] && shift
 case "$sub" in -h|--help) sub=help ;; -v|--version) sub=version ;; esac
+# A sub containing a "/" is never a real command name (core/cmd/*.sh and
+# plugin cmd/*.sh names are both single path segments); treat it as unknown
+# rather than letting it walk `core/cmd/$sub.sh` or a plugin's cmd/ lookup
+# outside the directory they are meant to stay in.
+if [[ "$sub" == */* ]]; then
+  log_fail "unknown command: $sub"
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_ROOT/core/cmd/help.sh"; cmd_help >&2
+  exit 2
+fi
 if [[ -f "$NEKOSHELL_ROOT/core/cmd/$sub.sh" ]]; then
   # shellcheck source=/dev/null
   source "$NEKOSHELL_ROOT/core/cmd/$sub.sh"
