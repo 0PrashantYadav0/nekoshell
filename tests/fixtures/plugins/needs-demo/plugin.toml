@@ -1,0 +1,9 @@
+name = "needs-demo"
+summary = "A fixture plugin"
+requires = []
+casks = []
+taps = []
+requires_plugins = ["demo"]
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]

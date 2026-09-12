@@ -20,6 +20,7 @@ log_ok()   { printf '%sok%s   %s\n' "$_NK_GREEN" "$_NK_RESET" "$*"; }
 log_warn() { printf '%swarn%s %s\n' "$_NK_YELLOW" "$_NK_RESET" "$*"; }
 log_fail() { printf '%sfail%s %s\n' "$_NK_RED" "$_NK_RESET" "$*" >&2; }
 log_step() { printf '\n%s[%s/%s]%s %s\n' "$_NK_MAUVE" "$1" "$2" "$_NK_RESET" "$3"; }
+log_head() { printf '\n%s::%s %s\n' "$_NK_MAUVE" "$_NK_RESET" "$*"; }
 
 # run CMD ARGS...: print the command, then execute it unless NEKOSHELL_DRY_RUN=1.
 run() {

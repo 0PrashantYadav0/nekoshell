@@ -1,0 +1,9 @@
+name = "kitty-only"
+summary = "A fixture plugin"
+requires = []
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["kitty"]
+conflicts = []
+tags = ["shell"]

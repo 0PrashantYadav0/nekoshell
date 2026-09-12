@@ -1,0 +1,9 @@
+name = "demo"
+summary = "A fixture plugin"
+requires = ["eza"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]

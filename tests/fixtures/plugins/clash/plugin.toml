@@ -1,0 +1,9 @@
+name = "clash"
+summary = "A fixture plugin"
+requires = []
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = ["demo"]
+tags = ["shell"]
