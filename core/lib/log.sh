@@ -42,3 +42,14 @@ run_quiet() {
   fi
   "$@" >/dev/null
 }
+
+# confirm PROMPT: a y/N read from stdin, shared by install.sh and
+# uninstall.sh. A closed or absent stdin reads as empty, which this treats
+# as "no": nothing that calls confirm is destructive enough to default the
+# other way.
+confirm() {
+  printf '%s [y/N] ' "$1"
+  local reply=""
+  read -r reply || true
+  [[ "$reply" == y* || "$reply" == Y* ]]
+}

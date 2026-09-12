@@ -7,6 +7,7 @@ setup() {
   export NEKOSHELL_TERMINALS_DIR="$REPO_ROOT/tests/fixtures/terminals"
   export NEKOSHELL_PROFILES_DIR="$HOME/profiles"; mkdir -p "$NEKOSHELL_PROFILES_DIR"
   echo demo > "$NEKOSHELL_PROFILES_DIR/minimal.txt"; printf 'demo\nneeds-demo\n' > "$NEKOSHELL_PROFILES_DIR/full.txt"
+  : > "$NEKOSHELL_PROFILES_DIR/empty.txt"
   export NEKOSHELL_SKIP_PREFLIGHT=1 FAKE_TERM=1
   NK="$REPO_ROOT/bin/nekoshell"
 }
@@ -33,9 +34,16 @@ teardown() { teardown_tmp_home; }
 }
 @test "install --with and --without adjust the profile" {
   run "$NK" install --yes --profile full --without needs-demo
+  [ "$status" -eq 0 ]
   grep -q '^plugins = \["demo"\]' "$HOME/.config/nekoshell/nekoshell.toml"
   run "$NK" install --yes --profile minimal --with needs-demo
+  [ "$status" -eq 0 ]
   grep -q '^plugins = \["demo", "needs-demo"\]' "$HOME/.config/nekoshell/nekoshell.toml"
+}
+@test "install with an empty profile succeeds and records plugins = []" {
+  run "$NK" install --yes --profile empty
+  [ "$status" -eq 0 ]
+  grep -q '^plugins = \[\]' "$HOME/.config/nekoshell/nekoshell.toml"
 }
 @test "install --check changes nothing and exits 0" {
   run "$NK" install --check --profile minimal
@@ -68,4 +76,23 @@ teardown() { teardown_tmp_home; }
   [ ! -L "$HOME/.zshrc" ]; grep -q 'alias k=kubectl' "$HOME/.zshrc"
   [ -f "$HOME/.config/nekoshell/zsh/local.zsh" ]
   [ ! -e "$HOME/.config/demo/conf" ]
+  [ -f "$HOME/.config/demo/mine.conf" ]
+}
+@test "install migrates and backs up a foreign zshrc symlink; uninstall restores it" {
+  mkdir -p "$HOME/dotfiles"
+  printf 'alias k=kubectl\n' > "$HOME/dotfiles/zshrc"
+  ln -s "$HOME/dotfiles/zshrc" "$HOME/.zshrc"
+  run "$NK" install --yes --profile minimal
+  [ "$status" -eq 0 ]
+  [ -L "$HOME/.zshrc" ]; [ "$(readlink "$HOME/.zshrc")" = "$REPO_ROOT/core/zsh/.zshrc" ]
+  grep -q 'alias k=kubectl' "$HOME/.config/nekoshell/zsh/local.zsh"
+  local backup_dir
+  backup_dir="$(find "$HOME/.local/share/nekoshell/backup" -mindepth 1 -maxdepth 1 -type d | head -1)"
+  [ -n "$backup_dir" ]
+  [ -L "$backup_dir/.zshrc" ]
+  [ "$(readlink "$backup_dir/.zshrc")" = "$HOME/dotfiles/zshrc" ]
+  run "$NK" uninstall --yes
+  [ "$status" -eq 0 ]
+  [ -L "$HOME/.zshrc" ]
+  [ "$(readlink "$HOME/.zshrc")" = "$HOME/dotfiles/zshrc" ]
 }

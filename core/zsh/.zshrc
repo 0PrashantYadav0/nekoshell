@@ -11,17 +11,20 @@ path=("$NEKOSHELL_ROOT/bin" "$HOME/.local/bin" $path)
 # Enabled plugins and the theme setting, read from nekoshell.toml with no
 # external process.
 _nk_plugins=()
-_nk_theme_line=""
+_nk_theme=""
 if [[ -r "$NEKOSHELL_CONFIG/nekoshell.toml" ]]; then
   _nk_line=${${(M)${(f)"$(<"$NEKOSHELL_CONFIG/nekoshell.toml")"}:#plugins\ =*}[1]}
   _nk_plugins=(${(s:,:)${${_nk_line#*\[}%\]*}//[\" ]/})
   _nk_theme_line=${${(M)${(f)"$(<"$NEKOSHELL_CONFIG/nekoshell.toml")"}:#theme\ =*}[1]}
+  # Strip "theme = " and any quotes/spaces, leaving just the value, so this
+  # does not depend on the exact spacing toml_set happens to write.
+  _nk_theme=${${_nk_theme_line#*=}//[\" ]/}
 fi
 
 # theme = "auto" is resolved by `nekoshell theme --resolve`, which only
 # writes when the resolved flavour actually changed. Run in the background so
 # the prompt is not delayed; the next shell picks up the change.
-if [[ -o interactive ]] && [[ "$_nk_theme_line" == 'theme = "auto"' ]]; then
+if [[ -o interactive ]] && [[ "$_nk_theme" == "auto" ]]; then
   (nekoshell theme --resolve >/dev/null 2>&1 &)
 fi
 
@@ -56,6 +59,6 @@ done
 for _p in $_nk_plugins; do
   [[ -r "$NEKOSHELL_PLUGINS_DIR/$_p/late.zsh" ]] && source "$NEKOSHELL_PLUGINS_DIR/$_p/late.zsh"
 done
-unset _p _nk_line _nk_theme_line
+unset _p _nk_line _nk_theme_line _nk_theme
 
 [[ -r "$NEKOSHELL_CONFIG/zsh/local.zsh" ]] && source "$NEKOSHELL_CONFIG/zsh/local.zsh"

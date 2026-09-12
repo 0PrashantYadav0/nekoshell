@@ -6,13 +6,6 @@ usage: nekoshell uninstall [--yes] [--purge]
 EOF
 }
 
-_uninstall_confirm() {
-  printf '%s [y/N] ' "$1"
-  local reply=""
-  read -r reply || true
-  [[ "$reply" == y* || "$reply" == Y* ]]
-}
-
 cmd_uninstall() {
   local YES=0 PURGE=""
   while [[ $# -gt 0 ]]; do
@@ -25,7 +18,7 @@ cmd_uninstall() {
   done
 
   if [[ "$YES" != 1 ]]; then
-    _uninstall_confirm "Remove nekoshell links and restore your previous files?" || { log_warn "aborted"; return 1; }
+    confirm "Remove nekoshell links and restore your previous files?" || { log_warn "aborted"; return 1; }
   fi
 
   # Reverse order: plugin_add enables a dependency before its dependent, so
