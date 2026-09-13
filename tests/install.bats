@@ -148,6 +148,30 @@ teardown() { teardown_tmp_home; }
   [ "$(cat "$HOME/.config/nekoshell/greet.conf")" = "POKEMON_SHARE=0" ]
 }
 
+# A machine that ran an older nekoshell has greet.conf as a stow symlink whose
+# target moved to templates/ in a later commit. `-e` sees the dangling link as
+# absent, and a plain `cp` then writes THROUGH it into the checkout instead of
+# at $HOME. The link has to be cleared, the same way theme_clear_stale_link
+# already clears starship.toml and the fastfetch config, before the copy runs.
+@test "a stale stow link at greet.conf is cleared before the template is copied" {
+  mkdir -p "$HOME/.config/nekoshell"
+  # ~/.config/nekoshell/greet.conf -> ../../<checkout>/stow/config/.config/nekoshell/greet.conf
+  ln -s "$(relpath "$REPO_ROOT/stow/config/.config/nekoshell/greet.conf" "$HOME/.config/nekoshell")" \
+    "$HOME/.config/nekoshell/greet.conf"
+  [ -L "$HOME/.config/nekoshell/greet.conf" ]
+  [ ! -e "$HOME/.config/nekoshell/greet.conf" ]
+
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+
+  [ -f "$HOME/.config/nekoshell/greet.conf" ]
+  [ ! -L "$HOME/.config/nekoshell/greet.conf" ]
+  diff -q "$HOME/.config/nekoshell/greet.conf" "$REPO_ROOT/templates/greet.conf"
+  run real_git -C "$REPO_ROOT" status --porcelain stow/
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
 # A dotfiles user's ~/.zshrc is a symlink. The aliases are at the far end of it,
 # and the link has to be resolved before the backup moves it out of the way.
 @test "a symlinked .zshrc is migrated from its target" {

@@ -9,12 +9,6 @@ setup() {
 }
 teardown() { teardown_tmp_home; }
 
-# relpath TARGET FROM_DIR: TARGET as a path relative to FROM_DIR, the shape stow
-# writes its links in.
-relpath() {
-  python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$1" "$2"
-}
-
 @test "palettes.json has four flavours with the known bases" {
   run python3 -c "
 import json; d=json.load(open('$REPO_ROOT/data/palettes.json'))

@@ -217,15 +217,19 @@ install_tpm() {
 #
 # Nothing here is ever backed up, because nothing here is ever replaced.
 install_user_configs() {
+  theme_clear_stale_link "$NEKOSHELL_CONFIG/greet.conf"
   if [[ ! -e "$NEKOSHELL_CONFIG/greet.conf" ]]; then
     run cp "$NEKOSHELL_ROOT/templates/greet.conf" "$NEKOSHELL_CONFIG/greet.conf"
   fi
+  theme_clear_stale_link "$NVIM_DIR/init.lua"
+  theme_clear_stale_link "$NVIM_DIR/init.vim"
   if [[ -e "$NVIM_DIR/init.lua" || -e "$NVIM_DIR/init.vim" ]]; then
     log_warn "existing Neovim config found at ~/.config/nvim; leaving it alone (nekoshell's is in templates/nvim)"
   else
     run mkdir -p "$NVIM_DIR"
     run cp -R "$NEKOSHELL_ROOT/templates/nvim/." "$NVIM_DIR/"
   fi
+  theme_clear_stale_link "$TMUX_DIR/tmux.conf"
   if [[ -e "$HOME/.tmux.conf" || -e "$TMUX_DIR/tmux.conf" ]]; then
     log_warn "existing tmux config found; leaving it alone (nekoshell's is in templates/tmux/tmux.conf)"
   else
