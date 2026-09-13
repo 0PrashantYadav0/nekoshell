@@ -10,12 +10,12 @@ bt_conf="$HOME/.config/btop/btop.conf"
 mkdir -p "$HOME/.config/btop"
 
 if [[ ! -f "$bt_conf" ]]; then
-  printf '#? Config file for btop v. 1.x, written by nekoshell.\ncolor_theme = "catppuccin_%s"\n' "$FLAVOR" > "$bt_conf"
+  printf '#? Config file for btop v. 1.x, written by nekoshell.\ncolor_theme = "catppuccin_%s"\n' "$FLAVOR" >"$bt_conf"
 elif grep -q '^color_theme' "$bt_conf"; then
   bt_tmp="$bt_conf.nekoshell.tmp"
-  sed "s|^color_theme.*|color_theme = \"catppuccin_$FLAVOR\"|" "$bt_conf" > "$bt_tmp" && mv "$bt_tmp" "$bt_conf"
+  sed "s|^color_theme.*|color_theme = \"catppuccin_$FLAVOR\"|" "$bt_conf" >"$bt_tmp" && mv "$bt_tmp" "$bt_conf"
 else
-  printf 'color_theme = "catppuccin_%s"\n' "$FLAVOR" >> "$bt_conf"
+  printf 'color_theme = "catppuccin_%s"\n' "$FLAVOR" >>"$bt_conf"
 fi
 
 true

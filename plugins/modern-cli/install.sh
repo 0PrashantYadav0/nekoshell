@@ -20,9 +20,9 @@ else
   # A file that does not end in a newline would otherwise take the marker onto
   # the end of its last line.
   if [[ -s "$MC_GITCONFIG" ]] && [[ -n "$(tail -c 1 "$MC_GITCONFIG")" ]]; then
-    printf '\n' >> "$MC_GITCONFIG"
+    printf '\n' >>"$MC_GITCONFIG"
   fi
-  printf '%s\n[include]\n\tpath = %s\n%s\n' "$MC_BEGIN" "$MC_INCLUDE" "$MC_END" >> "$MC_GITCONFIG"
+  printf '%s\n[include]\n\tpath = %s\n%s\n' "$MC_BEGIN" "$MC_INCLUDE" "$MC_END" >>"$MC_GITCONFIG"
   log_ok "delta include added to ~/.gitconfig"
 fi
 

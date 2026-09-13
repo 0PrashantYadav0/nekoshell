@@ -15,15 +15,15 @@ zsh_migrate_aliases() {
     echo "# Edit freely; nekoshell never overwrites this file."
     while IFS= read -r line; do
       case "$line" in
-        alias\ *|export\ *)
+        alias\ * | export\ *)
           case "$line" in
-            *oh-my-zsh*|*ZSH=*|*p10k*|*POWERLEVEL*) continue ;;
+            *oh-my-zsh* | *ZSH=* | *p10k* | *POWERLEVEL*) continue ;;
           esac
           printf '%s\n' "$line"
           count=$((count + 1))
           ;;
       esac
-    done < "$old"
-  } > "$dest"
+    done <"$old"
+  } >"$dest"
   echo "$count"
 }

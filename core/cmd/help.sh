@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # help: list core and plugin commands
-usage_help() { cat <<'EOF'
+usage_help() {
+  cat <<'EOF'
 usage: nekoshell help
 EOF
 }

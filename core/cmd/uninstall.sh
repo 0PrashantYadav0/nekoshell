@@ -2,7 +2,8 @@
 # uninstall: remove plugins, unlink the zshrc, restore your files from backup
 # Keeps zsh/local.zsh, the backup dir, the configs plugins rendered or copied
 # into place, and the pokemon-colorscripts checkout; the closing lines say so.
-usage_uninstall() { cat <<'EOF'
+usage_uninstall() {
+  cat <<'EOF'
 usage: nekoshell uninstall [--yes] [--purge]
 EOF
 }
@@ -11,15 +12,30 @@ cmd_uninstall() {
   local YES=0 PURGE=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --yes) YES=1; shift ;;
-      --purge) PURGE=purge; shift ;;
-      -h|--help|help) usage_uninstall; return 0 ;;
-      *) usage_uninstall; return 2 ;;
+      --yes)
+        YES=1
+        shift
+        ;;
+      --purge)
+        PURGE=purge
+        shift
+        ;;
+      -h | --help | help)
+        usage_uninstall
+        return 0
+        ;;
+      *)
+        usage_uninstall
+        return 2
+        ;;
     esac
   done
 
   if [[ "$YES" != 1 ]]; then
-    confirm "Remove nekoshell links and restore your previous files?" || { log_warn "aborted"; return 1; }
+    confirm "Remove nekoshell links and restore your previous files?" || {
+      log_warn "aborted"
+      return 1
+    }
   fi
 
   # Reverse order: plugin_add enables a dependency before its dependent, so
@@ -29,7 +45,7 @@ cmd_uninstall() {
   while IFS= read -r p; do [[ -n "$p" ]] && enabled+=("$p"); done < <(plugin_enabled_all)
   if [[ ${#enabled[@]} -gt 0 ]]; then
     local i
-    for (( i = ${#enabled[@]} - 1; i >= 0; i-- )); do
+    for ((i = ${#enabled[@]} - 1; i >= 0; i--)); do
       # A plugin hook that fails must not strand the uninstall half done, with
       # the zshrc still linked and the backup unrestored: warn and carry on.
       plugin_remove "${enabled[$i]}" "$PURGE" || log_warn "${enabled[$i]}: could not be removed cleanly; carrying on"

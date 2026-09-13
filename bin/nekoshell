@@ -9,7 +9,7 @@ if [[ -L "$_self" ]]; then
   _target="$(readlink "$_self")"
   case "$_target" in
     /*) _self="$_target" ;;
-    *)  _self="$(cd "$(dirname "$_self")" && pwd -P)/$_target" ;;
+    *) _self="$(cd "$(dirname "$_self")" && pwd -P)/$_target" ;;
   esac
 fi
 NEKOSHELL_ROOT="$(cd "$(dirname "$_self")/.." && pwd -P)"
@@ -22,8 +22,9 @@ done
 # dispatcher is what actually runs, so it is what bootstraps the directories
 # hooks and commands assume are already there.
 mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE" "$NEKOSHELL_DATA"
-sub="${1:-help}"; [[ $# -gt 0 ]] && shift
-case "$sub" in -h|--help) sub=help ;; -v|--version) sub=version ;; esac
+sub="${1:-help}"
+[[ $# -gt 0 ]] && shift
+case "$sub" in -h | --help) sub=help ;; -v | --version) sub=version ;; esac
 # A sub containing a "/" is never a real command name (core/cmd/*.sh and
 # plugin cmd/*.sh names are both single path segments); treat it as unknown
 # rather than letting it walk `core/cmd/$sub.sh` or a plugin's cmd/ lookup
@@ -31,13 +32,15 @@ case "$sub" in -h|--help) sub=help ;; -v|--version) sub=version ;; esac
 if [[ "$sub" == */* ]]; then
   log_fail "unknown command: $sub"
   # shellcheck source=/dev/null
-  source "$NEKOSHELL_ROOT/core/cmd/help.sh"; cmd_help >&2
+  source "$NEKOSHELL_ROOT/core/cmd/help.sh"
+  cmd_help >&2
   exit 2
 fi
 if [[ -f "$NEKOSHELL_ROOT/core/cmd/$sub.sh" ]]; then
   # shellcheck source=/dev/null
   source "$NEKOSHELL_ROOT/core/cmd/$sub.sh"
-  "cmd_$sub" "$@"; exit $?
+  "cmd_$sub" "$@"
+  exit $?
 fi
 owner="$(plugin_providing_cmd "$sub")"
 if [[ -n "$owner" ]]; then
@@ -45,12 +48,14 @@ if [[ -n "$owner" ]]; then
     plugin_env "$owner"
     # shellcheck source=/dev/null
     source "$(plugin_dir "$owner")/cmd/$sub.sh"
-    "cmd_$sub" "$@"; exit $?
+    "cmd_$sub" "$@"
+    exit $?
   fi
   log_fail "'nekoshell $sub' is provided by the $owner plugin, which is not enabled. Run: nekoshell plugin add $owner"
   exit 2
 fi
 log_fail "unknown command: $sub"
 # shellcheck source=/dev/null
-source "$NEKOSHELL_ROOT/core/cmd/help.sh"; cmd_help >&2
+source "$NEKOSHELL_ROOT/core/cmd/help.sh"
+cmd_help >&2
 exit 2

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # doctor: one line per check; exit 1 iff any check fails
-usage_doctor() { cat <<'EOF'
+usage_doctor() {
+  cat <<'EOF'
 usage: nekoshell doctor [--json] [--plugin NAME]
 EOF
 }
@@ -20,17 +21,33 @@ report() {
   # mistaken for a field or row separator when the file is read back.
   local detail="${3//$'\t'/ }"
   detail="${detail//$'\n'/ }"
-  printf '%s\t%s\t%s\n' "$1" "$2" "$detail" >> "$_doctor_rows_file"
+  printf '%s\t%s\t%s\n' "$1" "$2" "$detail" >>"$_doctor_rows_file"
 }
 
 cmd_doctor() {
   local json=0 only_plugin=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --json) json=1; shift ;;
-      --plugin) [[ -n "${2:-}" ]] || { usage_doctor; return 2; }; only_plugin="$2"; shift 2 ;;
-      -h|--help|help) usage_doctor; return 0 ;;
-      *) usage_doctor; return 2 ;;
+      --json)
+        json=1
+        shift
+        ;;
+      --plugin)
+        [[ -n "${2:-}" ]] || {
+          usage_doctor
+          return 2
+        }
+        only_plugin="$2"
+        shift 2
+        ;;
+      -h | --help | help)
+        usage_doctor
+        return 0
+        ;;
+      *)
+        usage_doctor
+        return 2
+        ;;
     esac
   done
 
@@ -56,7 +73,7 @@ cmd_doctor() {
   local fails=0 status check detail
   while IFS=$'\t' read -r status check detail; do
     [[ "$status" == "fail" ]] && fails=$((fails + 1))
-  done < "$_doctor_rows_file"
+  done <"$_doctor_rows_file"
 
   if [[ "$json" == 1 ]]; then
     python3 - "$_doctor_rows_file" <<'PY'
@@ -74,7 +91,7 @@ PY
   else
     while IFS=$'\t' read -r status check detail; do
       printf '%-4s %-28s %s\n' "$status" "$check" "$detail"
-    done < "$_doctor_rows_file"
+    done <"$_doctor_rows_file"
   fi
 
   [[ "$fails" -eq 0 ]]
@@ -86,7 +103,10 @@ _doctor_have() { command -v "$1" >/dev/null 2>&1; }
 _doctor_font_file() {
   local f
   for f in "$HOME"/Library/Fonts/JetBrainsMonoNerdFont* /Library/Fonts/JetBrainsMonoNerdFont*; do
-    [[ -e "$f" ]] && { printf '%s\n' "$f"; return 0; }
+    [[ -e "$f" ]] && {
+      printf '%s\n' "$f"
+      return 0
+    }
   done
   return 1
 }
@@ -204,7 +224,10 @@ _doctor_terminal_block() {
 
 _doctor_plugin_block() {
   local name="$1"
-  plugin_exists "$name" || { report fail "$name" "no such plugin"; return 0; }
+  plugin_exists "$name" || {
+    report fail "$name" "no such plugin"
+    return 0
+  }
   # Same reasoning as terminal_doctor above: a plugin's doctor.sh ending on a
   # guarded, legitimately-false check must warn, not abort every other block.
   plugin_run_hook "$name" doctor || report warn "$name" "doctor hook failed"

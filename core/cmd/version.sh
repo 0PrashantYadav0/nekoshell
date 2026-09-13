@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # version: print nekoshell's version
-usage_version() { cat <<'EOF'
+usage_version() {
+  cat <<'EOF'
 usage: nekoshell version
 EOF
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # theme: switch or inspect the colour theme
-usage_theme() { cat <<'EOF'
+usage_theme() {
+  cat <<'EOF'
 usage: nekoshell theme list | current | auto | --resolve | FLAVOUR
 EOF
 }
@@ -26,9 +27,12 @@ cmd_theme() {
       [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]] || config_set theme auto
       theme_apply "$(theme_resolve)"
       ;;
-    -h|--help|help) usage_theme ;;
+    -h | --help | help) usage_theme ;;
     *)
-      theme_is_flavor "$action" || { log_fail "unknown flavour: $action"; return 1; }
+      theme_is_flavor "$action" || {
+        log_fail "unknown flavour: $action"
+        return 1
+      }
       [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]] || config_set theme "$action"
       theme_apply "$action"
       ;;

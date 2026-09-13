@@ -10,13 +10,18 @@ if [[ -t 1 ]]; then
   _NK_DIM=$'\033[38;2;108;112;134m'
   _NK_RESET=$'\033[0m'
 else
-  _NK_MAUVE=""; _NK_GREEN=""; _NK_YELLOW=""; _NK_RED=""; _NK_DIM=""; _NK_RESET=""
+  _NK_MAUVE=""
+  _NK_GREEN=""
+  _NK_YELLOW=""
+  _NK_RED=""
+  _NK_DIM=""
+  _NK_RESET=""
 fi
 
 NEKOSHELL_DRY_RUN="${NEKOSHELL_DRY_RUN:-0}"
 
 log_info() { printf '%s..%s %s\n' "$_NK_DIM" "$_NK_RESET" "$*"; }
-log_ok()   { printf '%sok%s   %s\n' "$_NK_GREEN" "$_NK_RESET" "$*"; }
+log_ok() { printf '%sok%s   %s\n' "$_NK_GREEN" "$_NK_RESET" "$*"; }
 log_warn() { printf '%swarn%s %s\n' "$_NK_YELLOW" "$_NK_RESET" "$*"; }
 log_fail() { printf '%sfail%s %s\n' "$_NK_RED" "$_NK_RESET" "$*" >&2; }
 log_step() { printf '\n%s[%s/%s]%s %s\n' "$_NK_MAUVE" "$1" "$2" "$_NK_RESET" "$3"; }

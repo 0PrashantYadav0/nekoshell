@@ -16,7 +16,7 @@ if [[ -f "$MC_GITCONFIG" ]] && grep -qF "$MC_BEGIN" "$MC_GITCONFIG"; then
       /^# nekoshell:modern-cli begin$/ { skip = 1 }
       skip != 1 { print }
       /^# nekoshell:modern-cli end$/   { skip = 0 }
-    ' "$MC_GITCONFIG" > "$mc_tmp" && mv "$mc_tmp" "$MC_GITCONFIG"
+    ' "$MC_GITCONFIG" >"$mc_tmp" && mv "$mc_tmp" "$MC_GITCONFIG"
     log_ok "delta include removed from ~/.gitconfig"
   fi
 fi

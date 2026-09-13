@@ -14,18 +14,21 @@
 #   terminal_doctor                     report rows (report is defined by the doctor)
 # Needs log.sh. Source this file; do not execute it.
 
-_terminal_unsupported() { log_fail "$1 is not supported by $(terminal_name)"; return 1; }
-terminal_name()         { echo "unknown"; }
-terminal_detect()       { return 1; }
-terminal_installed()    { return 1; }
+_terminal_unsupported() {
+  log_fail "$1 is not supported by $(terminal_name)"
+  return 1
+}
+terminal_name() { echo "unknown"; }
+terminal_detect() { return 1; }
+terminal_installed() { return 1; }
 terminal_capabilities() { :; }
-terminal_font_name()    { echo "JetBrainsMono NF"; }
-terminal_apply()        { _terminal_unsupported "theme"; }
-terminal_background()   { _terminal_unsupported "background"; }
+terminal_font_name() { echo "JetBrainsMono NF"; }
+terminal_apply() { _terminal_unsupported "theme"; }
+terminal_background() { _terminal_unsupported "background"; }
 # Nothing by default: an adapter that only reads the terminal's config has
 # nothing to take back out.
-terminal_remove()       { :; }
-terminal_doctor()       { :; }
+terminal_remove() { :; }
+terminal_doctor() { :; }
 # Inside tmux a popup works everywhere; outside, run the command in this window.
 # The body lives in terminal_panel_default so an adapter that overrides
 # terminal_panel can still reach the fallback for the half it does not replace.

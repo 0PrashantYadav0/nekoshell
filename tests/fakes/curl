@@ -7,5 +7,5 @@ for arg in "$@"; do
   [[ "$prev" == "-o" ]] && dest="$arg"
   prev="$arg"
 done
-[[ -n "$dest" ]] && printf '# fake iTerm2 shell integration\n' > "$dest"
+[[ -n "$dest" ]] && printf '# fake iTerm2 shell integration\n' >"$dest"
 exit 0
