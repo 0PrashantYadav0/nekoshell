@@ -247,6 +247,35 @@ PY
   [ "$(profile_backgrounds)" = "$HOME/wall.png 0.5 | $HOME/wall.png 0.5" ]
 }
 
+@test "terminal_background makes a relative path absolute" {
+  load_adapter
+  printf 'png\n' > "$HOME/wall.png"
+  cd "$HOME"
+  status=0; output="$(terminal_background wall.png 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  # iTerm2 resolves the profile's path against its own working directory, so a
+  # relative one would point at nothing.
+  [ "$(profile_backgrounds)" = "$HOME/wall.png 0.15 | $HOME/wall.png 0.15" ]
+}
+
+@test "terminal_background refuses an opacity that is not between 0 and 1" {
+  load_adapter
+  local before
+  terminal_background none >/dev/null 2>&1
+  before="$(profile_backgrounds)"
+  status=0; output="$(terminal_background "$HOME/wall.png" 1.5 2>&1)" || status=$?
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "opacity must be between 0 and 1"
+  status=0; output="$(terminal_background "$HOME/wall.png" abc 2>&1)" || status=$?
+  [ "$status" -eq 1 ]
+  # Refused before anything was written.
+  [ "$(profile_backgrounds)" = "$before" ]
+  status=0; output="$(terminal_background "$HOME/wall.png" 1 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  # A fully opaque image is Blend 0: none of the background colour over it.
+  [ "$(profile_backgrounds)" = "$HOME/wall.png 0.0 | $HOME/wall.png 0.0" ]
+}
+
 @test "terminal_background none clears the image and blend" {
   load_adapter
   terminal_background "$HOME/wall.png" >/dev/null 2>&1
@@ -268,6 +297,16 @@ PY
   status=0; output="$(terminal_background none 2>&1)" || status=$?
   assert_contains "$output" "]1337;SetBackgroundImageFile="
   assert_not_contains "$output" "$b64"
+}
+
+@test "a dry run writes no profiles and sends no escape" {
+  load_adapter
+  export TERM_PROGRAM=iTerm.app NEKOSHELL_DRY_RUN=1
+  status=0; output="$(terminal_background "$HOME/wall.png" 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_not_contains "$output" "SetBackgroundImageFile"
+  assert_contains "$output" "build-profiles.py"
+  [ ! -f "$PROF" ]
 }
 
 # --- terminal_panel ----------------------------------------------------------
@@ -293,6 +332,21 @@ PY
   assert_matches "$output" 'fail +iterm2 profiles'
   assert_matches "$output" 'warn +iterm2 prefs +pending'
   assert_matches "$output" 'warn +iterm2 shell integration'
+  assert_matches "$output" 'warn +iterm2 font +no font to read'
+}
+
+@test "doctor fails the font row when the profile uses another font" {
+  export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
+  mkdir -p "$(dirname "$PROF")"
+  python3 - "$PROF" <<'PY'
+import json, sys
+p = {"Name": "nekoshell", "Normal Font": "Menlo 12"}
+json.dump({"Profiles": [p, dict(p)]}, open(sys.argv[1], "w"))
+PY
+  run "$NK" doctor
+  [ "$status" -eq 1 ]
+  assert_matches "$output" 'ok +iterm2 profiles'
+  assert_matches "$output" 'fail +iterm2 font +Menlo 12'
 }
 
 @test "doctor reports the profiles, prefs, shell integration and font rows after an apply" {
