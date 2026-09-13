@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# music: open the music player, in a terminal panel or right here
+# music: open the music player in this window, or in the terminal's panel
 usage_music() {
   cat <<'EOF'
-usage: nekoshell music [PLAYER] [--here]
+usage: nekoshell music [PLAYER] [--panel]
 
-PLAYER defaults to the `music_player` setting in nekoshell.toml, which itself
-defaults to "auto": the first enabled plugin tagged `media`, in the order the
-plugins are enabled.
+The player runs in this window. --panel opens it in whatever panel the
+running terminal has instead (a hotkey window, a quick terminal, a popup
+inside tmux, a new window where nothing better exists). PLAYER defaults to
+the `music_player` setting in nekoshell.toml, which itself defaults to
+"auto": the first enabled plugin tagged `media`, in the order the plugins
+are enabled.
 EOF
 }
 
@@ -40,11 +43,17 @@ _music_binary() {
 }
 
 cmd_music() {
-  local here=0 player="" bin term
+  local panel=0 player="" bin term
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --panel)
+        panel=1
+        shift
+        ;;
+      # This window is the default now; the flag stays so the hotkey panels
+      # every terminal adapter writes (`nekoshell music --here`) keep working.
       --here)
-        here=1
+        panel=0
         shift
         ;;
       -h | --help | help)
@@ -84,7 +93,7 @@ cmd_music() {
     return 1
   }
 
-  if [[ "$here" -eq 1 ]]; then
+  if [[ "$panel" -eq 0 ]]; then
     "$bin"
     return $?
   fi

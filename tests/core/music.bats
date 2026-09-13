@@ -27,19 +27,27 @@ teardown() { teardown_tmp_home; }
   assert_not_contains "$output" "fake panel:"
 }
 
-@test "music without --here goes through the terminal adapter's panel" {
+@test "music with no flag runs the player in this window" {
   "$NK" plugin add fakeplayer >/dev/null
   run "$NK" music
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "fakeplayer running"
+  assert_not_contains "$output" "fake panel:"
+}
+
+@test "music --panel goes through the terminal adapter's panel" {
+  "$NK" plugin add fakeplayer >/dev/null
+  run "$NK" music --panel
   [ "$status" -eq 0 ]
   assert_contains "$output" "fake panel:"
   assert_contains "$output" "fakeplayer running"
 }
 
-@test "music warns and runs here when the configured terminal has no adapter" {
+@test "music --panel warns and runs here when the configured terminal has no adapter" {
   "$NK" plugin add fakeplayer >/dev/null
   sed 's/^terminal = .*/terminal = "nope"/' "$HOME/.config/nekoshell/nekoshell.toml" > "$HOME/t.toml"
   mv "$HOME/t.toml" "$HOME/.config/nekoshell/nekoshell.toml"
-  run "$NK" music
+  run "$NK" music --panel
   [ "$status" -eq 0 ]
   assert_contains "$output" "terminal nope not available; running the player here"
   assert_contains "$output" "fakeplayer running"
