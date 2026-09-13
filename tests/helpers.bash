@@ -16,6 +16,12 @@ setup_tmp_home() {
   export HOME
   export XDG_CONFIG_HOME="$HOME/.config"
   mkdir -p "$HOME/.config" "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/bin"
+  # The terminal bats happens to run in must not leak into the test: the
+  # running terminal wins terminal_current, so a suite run from kitty would
+  # otherwise see kitty where the toml says fake. Tests that want a terminal
+  # set these themselves.
+  unset TERM_PROGRAM KITTY_WINDOW_ID GHOSTTY_RESOURCES_DIR GHOSTTY_QUICK_TERMINAL WEZTERM_EXECUTABLE
+  export TERM=xterm-256color
 }
 
 teardown_tmp_home() {

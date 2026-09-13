@@ -7,7 +7,6 @@ setup() {
   mkdir -p "$HOME/.config/nekoshell/zsh"
   printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = ["demo"]\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
   ln -s "$REPO_ROOT/core/zsh/.zshrc" "$HOME/.zshrc"
-  echo 'echo late-marker' > "$HOME/late.zsh"
 }
 teardown() { teardown_tmp_home; }
 
@@ -54,6 +53,17 @@ teardown() { teardown_tmp_home; }
   run zsh -o NO_GLOBAL_RCS -ic 'if (( $+functions[iterm2_marker] )); then echo LOADED; else echo NOT-LOADED; fi'
   [ "$status" -eq 0 ]
   assert_contains "$output" "NOT-LOADED"
+}
+@test "zshrc sources the running terminal's zsh hook and nothing for another terminal" {
+  mkdir -p "$HOME/terminals/ghostty"
+  echo 'echo ghostty-hook' > "$HOME/terminals/ghostty/zsh.zsh"
+  export NEKOSHELL_TERMINALS_DIR="$HOME/terminals"
+  GHOSTTY_RESOURCES_DIR=/x run zsh -o NO_GLOBAL_RCS -ic 'exit 0'
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "ghostty-hook"
+  TERM_PROGRAM=iTerm.app run zsh -o NO_GLOBAL_RCS -ic 'exit 0'
+  [ "$status" -eq 0 ]
+  assert_not_contains "$output" "ghostty-hook"
 }
 @test "zshrc reads a toml written with unusual spacing around the equals sign" {
   printf 'root="%s"\nterminal="fake"\ntheme   =   "mocha"\nplugins=["demo"]\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"

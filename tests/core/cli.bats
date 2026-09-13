@@ -45,3 +45,45 @@ teardown() { teardown_tmp_home; }
   run "$NK" terminal capabilities; [ "$output" = "truecolor images background panel" ]
   TERM_PROGRAM=iTerm.app run "$NK" terminal detect; [ "$output" = "iterm2" ]
 }
+
+# One machine, several terminals: `use` takes a list, records every one of
+# them, and themes each; `apply` and `remove` walk and edit the same list.
+@test "terminal use records several terminals, marks them in list, and remove forgets one" {
+  run "$NK" terminal use fake,bare
+  [ "$status" -eq 0 ]
+  grep -q '^terminals = \["fake", "bare"\]' "$HOME/.config/nekoshell/nekoshell.toml"
+  grep -q '^terminal = "fake"' "$HOME/.config/nekoshell/nekoshell.toml"
+  # bare has no terminal_apply of its own, so use warns about it and carries on.
+  assert_contains "$output" "terminal bare: theme not applied"
+  grep -q 'fake apply mocha' "$HOME/.cache/nekoshell/hooks.log"
+  run "$NK" terminal list
+  assert_matches "$output" 'fake +installed \*'
+  assert_matches "$output" 'bare +not installed \*'
+  run "$NK" terminal remove fake
+  [ "$status" -eq 0 ]
+  grep -q '^terminals = \["bare"\]' "$HOME/.config/nekoshell/nekoshell.toml"
+  grep -q '^terminal = "bare"' "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" terminal use all
+  grep -q '^terminals = \["bare", "fake"\]' "$HOME/.config/nekoshell/nekoshell.toml"
+}
+@test "terminal apply re-renders every configured terminal and fails with none" {
+  printf 'root = "%s"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = []\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" terminal apply
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "no terminal configured"
+  "$NK" terminal use fake >/dev/null
+  : > "$HOME/.cache/nekoshell/hooks.log"
+  run "$NK" terminal apply
+  [ "$status" -eq 0 ]
+  grep -q 'fake apply mocha' "$HOME/.cache/nekoshell/hooks.log"
+}
+@test "terminal background reaches every configured terminal that can draw one" {
+  run "$NK" terminal background
+  [ "$status" -eq 2 ]
+  "$NK" terminal use fake,bare >/dev/null
+  : > "$HOME/.cache/nekoshell/hooks.log"
+  run "$NK" terminal background /pic.png 0.7
+  [ "$status" -eq 0 ]
+  grep -q 'fake background /pic.png 0.7' "$HOME/.cache/nekoshell/hooks.log"
+  assert_contains "$output" "bare cannot draw a background image; skipped"
+}

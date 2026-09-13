@@ -198,8 +198,8 @@ theme_current() {
   theme_resolve
 }
 
-# theme_apply FLAVOR: the whole render — core targets, the current terminal's
-# adapter, then every enabled plugin's theme hook. A terminal or plugin hook
+# theme_apply FLAVOR: the whole render — core targets, every configured
+# terminal's adapter, then every enabled plugin's theme hook. A terminal or plugin hook
 # that fails only warns: it must not take the prompt and shell colours down
 # with it.
 theme_apply() {
@@ -221,8 +221,9 @@ theme_apply() {
   theme_render_template "$NEKOSHELL_ROOT/core/starship/starship.toml.tmpl" "$HOME/.config/starship.toml" "$flavor"
   theme_write_zsh "$flavor"
   config_set theme_resolved "$flavor"
-  term="$(terminal_current || true)"
-  if [[ -n "$term" ]] && terminal_load "$term"; then terminal_apply "$flavor" || log_warn "terminal $term: theme not applied"; fi
+  for term in $(terminal_configured_all); do
+    if terminal_load "$term"; then terminal_apply "$flavor" || log_warn "terminal $term: theme not applied"; fi
+  done
   for p in $(plugin_enabled_all); do plugin_run_hook "$p" theme || log_warn "$p: theme hook failed"; done
   log_ok "theme: $flavor"
 }

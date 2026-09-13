@@ -12,6 +12,7 @@ EOF
 # (plugin_run_hook's subshell included), so there is exactly one row format
 # and one place rows are collected.
 _doctor_rows_file=""
+_doctor_tmp_files=()
 
 report() {
   # Rows land in a file, not an in-memory array: plugin hooks run inside
@@ -53,11 +54,12 @@ cmd_doctor() {
 
   _doctor_rows_file="$(mktemp "${TMPDIR:-/tmp}/nekoshell-doctor.XXXXXX")"
   # A RETURN trap can be skipped when `set -e` unwinds the function instead of
-  # letting it reach its own `return`; EXIT always fires, and cmd_doctor is
-  # the last thing bin/nekoshell runs before its own `exit`, so this is the
-  # only cleanup the whole process needs.
-  # shellcheck disable=SC2064 # _doctor_rows_file is meant to expand now
-  trap "rm -f '$_doctor_rows_file'" EXIT
+  # letting it reach its own `return`; EXIT always fires. The trap removes
+  # every file this process's doctors made, not just the latest: install runs
+  # cmd_doctor inside its own process, and a second trap would otherwise
+  # replace the first and leak its file.
+  _doctor_tmp_files+=("$_doctor_rows_file")
+  trap '_doctor_cleanup' EXIT
 
   if [[ -n "$only_plugin" ]]; then
     _doctor_plugin_block "$only_plugin"
@@ -95,6 +97,11 @@ PY
   fi
 
   [[ "$fails" -eq 0 ]]
+}
+
+_doctor_cleanup() {
+  [[ ${#_doctor_tmp_files[@]} -gt 0 ]] && rm -f "${_doctor_tmp_files[@]}"
+  return 0
 }
 
 _doctor_have() { command -v "$1" >/dev/null 2>&1; }
@@ -203,23 +210,25 @@ _doctor_core_block() {
   fi
 }
 
+# One block per configured terminal, so a machine that uses several sees
+# every one of them checked, not only the one this doctor happens to run in.
 _doctor_terminal_block() {
-  local term
-  term="$(terminal_current 2>/dev/null || true)"
-  if [[ -z "$term" ]]; then
-    report warn "terminal" "none configured"
-    return 0
-  fi
-  if terminal_load "$term"; then
-    # A terminal_doctor whose last command is a guarded, legitimately-false
-    # check (e.g. `[[ -e some/optional/file ]] && report ...`) would
-    # otherwise exit non-zero and, under bin/nekoshell's `set -e`, take the
-    # rest of the doctor down with it. One bad adapter must not silence
-    # every other row.
-    terminal_doctor || report warn "$term" "terminal doctor hook failed"
-  else
-    report fail "terminal" "no adapter named $term"
-  fi
+  local term any=0
+  for term in $(terminal_configured_all); do
+    any=1
+    if terminal_load "$term"; then
+      # A terminal_doctor whose last command is a guarded, legitimately-false
+      # check (e.g. `[[ -e some/optional/file ]] && report ...`) would
+      # otherwise exit non-zero and, under bin/nekoshell's `set -e`, take the
+      # rest of the doctor down with it. One bad adapter must not silence
+      # every other row.
+      terminal_doctor || report warn "$term" "terminal doctor hook failed"
+    else
+      report fail "terminal" "no adapter named $term"
+    fi
+  done
+  [[ "$any" == 1 ]] || report warn "terminal" "none configured (run: nekoshell terminal use <id>)"
+  return 0
 }
 
 _doctor_plugin_block() {

@@ -32,6 +32,8 @@ teardown() { teardown_tmp_home; }
   [ "$output" = "ghostty" ]
   status=0; output="$(TERM_PROGRAM=Apple_Terminal terminal_detect_env)" || status=$?
   [ "$output" = "terminal-app" ]
+  status=0; output="$(TERM_PROGRAM=WarpTerminal terminal_detect_env)" || status=$?
+  [ "$output" = "warp" ]
   status=0; output="$(WEZTERM_EXECUTABLE=/x terminal_detect_env)" || status=$?
   [ "$output" = "wezterm" ]
   status=0; output="$(TERM_PROGRAM=WezTerm terminal_detect_env)" || status=$?
@@ -43,16 +45,52 @@ teardown() { teardown_tmp_home; }
   terminal_load fake
   [ "$(terminal_name)" = "fake" ]
   [ "$(terminal_capabilities)" = "truecolor images background panel" ]
+  terminal_load bare
   status=0; output="$(terminal_background /x.png 2>&1)" || status=$?
-  [ "$status" -eq 1 ]; assert_contains "$output" "not supported by fake"
-  [ "$(terminal_font_name)" = "JetBrainsMono NF" ]
+  [ "$status" -eq 1 ]; assert_contains "$output" "not supported by bare"
+  [ "$(terminal_font_name)" = "JetBrainsMono Nerd Font" ]
   status=0; output="$(terminal_load nope 2>&1)" || status=$?
   [ "$status" -eq 1 ]
 }
-@test "terminal_current prefers the config then the env" {
+# The running terminal wins when an adapter exists for it: the greeting
+# draws into, and the panel opens from, the window in front of the user. A
+# terminal with no adapter (iterm2, in the fixtures directory) falls through
+# to the primary key, then to the first of the list, then to the env alone.
+@test "terminal_current prefers the running terminal with an adapter, then the config, then the env" {
   [ -z "$(terminal_current)" ]
   TERM_PROGRAM=iTerm.app; [ "$(terminal_current)" = "iterm2" ]
   toml_set "$NEKOSHELL_TOML" terminal kitty; [ "$(terminal_current)" = "kitty" ]
+  toml_set_list "$NEKOSHELL_TOML" terminals bare fake
+  [ "$(terminal_current)" = "kitty" ]
+  toml_set "$NEKOSHELL_TOML" terminal ""; [ "$(terminal_current)" = "bare" ]
+  FAKE_TERM=1 KITTY_WINDOW_ID=1; [ "$(terminal_current)" = "bare" ]
+  # A terminal the fixtures do have an adapter for, detected by env, wins over
+  # the primary key even when it is not configured.
+  cp -R "$REPO_ROOT/tests/fixtures/terminals/fake" "$HOME/kitty-adapter"
+  mkdir -p "$HOME/terminals"; cp -R "$REPO_ROOT/tests/fixtures/terminals/." "$HOME/terminals/"
+  mv "$HOME/kitty-adapter" "$HOME/terminals/kitty"
+  NEKOSHELL_TERMINALS_DIR="$HOME/terminals"
+  toml_set "$NEKOSHELL_TOML" terminal fake
+  [ "$(terminal_current)" = "kitty" ]
+}
+@test "terminal_configured_all reads the list, or the single key an older install wrote" {
+  [ -z "$(terminal_configured_all)" ]
+  toml_set "$NEKOSHELL_TOML" terminal fake
+  [ "$(terminal_configured_all | tr '\n' ' ')" = "fake " ]
+  toml_set_list "$NEKOSHELL_TOML" terminals bare fake
+  [ "$(terminal_configured_all | tr '\n' ' ')" = "bare fake " ]
+  terminal_is_configured bare
+  status=0; terminal_is_configured kitty || status=$?
+  [ "$status" -eq 1 ]
+}
+@test "terminal_expand_ids understands ids, comma lists, all and installed" {
+  [ "$(terminal_expand_ids fake | tr '\n' ' ')" = "fake " ]
+  [ "$(terminal_expand_ids fake,bare fake | tr '\n' ' ')" = "fake bare " ]
+  [ "$(terminal_expand_ids all | tr '\n' ' ')" = "bare fake " ]
+  [ "$(FAKE_TERM_INSTALLED=1 terminal_expand_ids installed | tr '\n' ' ')" = "fake " ]
+  status=0; output="$(terminal_expand_ids fake,nope 2>&1)" || status=$?
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "no terminal adapter named nope"
 }
 # Through `bare`, not `fake`: fake overrides terminal_panel so that the music
 # tests can tell the panel path from the inline one, and an adapter that
