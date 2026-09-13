@@ -1,0 +1,9 @@
+name = "spotify"
+summary = "Spotify in a terminal panel, streaming on its own or driving the desktop app"
+requires = ["spotify_player", "shpotify"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["media"]
