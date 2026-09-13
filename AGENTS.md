@@ -39,7 +39,7 @@ The line is safe to run again: it updates an existing checkout, links nothing tw
 nekoshell doctor --json
 ```
 
-Exit code 0 is success. The output is a JSON array of `{"status", "check", "detail"}` rows; only a `fail` row makes the exit code 1, and its detail names the fix. `warn` rows are expected on a fresh machine and are for the human: `iterm2 prefs` (quit iTerm2, run `nekoshell terminal apply`), `terminal-app default` (quit and reopen Terminal.app), `ghostty hotkey` (Accessibility), `spotify login` (`spotify_player authenticate`), `greet time` (over its 150 ms budget; report the number). Do not proceed with a `fail` row present.
+Exit code 0 is success. The output is a JSON array of `{"status", "check", "detail"}` rows; only a `fail` row makes the exit code 1, and its detail names the fix. `warn` rows are expected on a fresh machine and are for the human: `iterm2 prefs` (quit iTerm2, run `nekoshell terminal apply`), `terminal-app default` (quit and reopen Terminal.app), `ghostty hotkey` (Accessibility), `spotify login` (`nekoshell spotify login`), `spotify client id` (`nekoshell spotify client-id <id>`, needs a Spotify app the human registers), `greet time` (over its 150 ms budget; report the number). Do not proceed with a `fail` row present.
 
 ### 4. Hand off
 
@@ -49,7 +49,7 @@ Give the human the steps that apply, then stop. The installer prints them as wel
 2. Terminal.app: quit and reopen it.
 3. Ghostty: System Settings, Privacy & Security, Accessibility, turn Ghostty on; then restart Ghostty once.
 4. Warp: sign in.
-5. Run `spotify_player authenticate` (needs Spotify Premium).
+5. Run `nekoshell spotify login` (needs Spotify Premium), and register a Spotify app for `nekoshell spotify client-id <id>`.
 6. Run `tmux` and press `C-a I` once to fetch the tmux plugins. Do not start a tmux session yourself.
 7. Open `nvim` once so lazy.nvim fetches its plugins.
 
@@ -66,8 +66,9 @@ The installer moves every file it replaces into `~/.local/share/nekoshell/backup
 - `plugin.toml`, with the nine keys `tests/core/repo.bats` requires, every one present even when empty: `name`, `summary`, `requires` (Homebrew formulas), `casks`, `taps`, `requires_plugins` (enabled first), `terminals` (`["any"]` or adapter ids), `conflicts`, `tags` (`media` is what `nekoshell music` looks for). `copy_guard` is optional: paths under `$HOME` whose presence skips the whole copy.
 - Hooks, each optional, run by `core/lib/plugin.sh` with `PLUGIN_NAME`, `PLUGIN_DIR` and `FLAVOR` set: `install.sh` and `uninstall.sh` on add and remove, `theme.sh` on every theme switch, `doctor.sh` reporting rows with `report ok|warn|fail "check" "detail"`.
 - `files/link/`, symlinked into `$HOME`, and `files/copy/`, copied once and then the user's.
-- `plugin.zsh` and `late.zsh`, sourced by the core zshrc before and after Starship; `antidote.txt`, zsh plugins appended to the generated bundle; `bin/`, put on `PATH`; `cmd/<name>.sh`, defining `cmd_<name>` and `usage_<name>`, which becomes `nekoshell <name>`.
+- `early.zsh`, `plugin.zsh` and `late.zsh`, sourced by the core zshrc first of all (before anything prints), before the prompt, and after it; a plugin.zsh that sets `NEKOSHELL_PROMPT` takes the prompt over from Starship; `antidote.txt`, zsh plugins appended to the generated bundle; `bin/`, put on `PATH`; `cmd/<name>.sh`, defining `cmd_<name>` and `usage_<name>`, which becomes `nekoshell <name>`.
 - `README.md` with exactly these headings: `## What it does`, `## Installs`, `## Files`, `## After install`, `## Remove`. The installer prints the "After install" section at the end of a run.
+- A user page, `docs/plugins/<name>.md`, with the headings `## What you get`, `## Using it`, `## Files`, `## Theme`, `## Turning it off`, and a row in the table in [docs/plugins/README.md](docs/plugins/README.md). Facts from the code only: no key or flag that is not in a config or a script.
 
 Add `tests/plugins/<name>.bats`, and a fake under `tests/fakes/` for any tool the hooks call.
 

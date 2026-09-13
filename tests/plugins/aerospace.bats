@@ -107,3 +107,11 @@ print('ok')
   [ -f "$HOME/.config/aerospace/aerospace.toml" ]
   [ "$(grep '^plugins' "$HOME/.config/nekoshell/nekoshell.toml")" = 'plugins = []' ]
 }
+
+# --purge takes the cask with it, unless another enabled plugin lists it.
+@test "remove --purge uninstalls the aerospace cask when nothing else needs it" {
+  FAKE_BREW_CASKS="aerospace" "$NK" plugin add aerospace >/dev/null
+  FAKE_BREW_CASKS="aerospace" run "$NK" plugin remove --purge aerospace
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "brew uninstall --cask aerospace"
+}

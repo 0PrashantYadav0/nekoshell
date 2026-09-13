@@ -44,10 +44,11 @@ The installer prints the ones that apply. By terminal:
 
 By plugin, when enabled:
 
-- **spotify.** Run `spotify_player authenticate`; it opens a browser and needs a Spotify Premium account. Without spotify_player the panel becomes a keyboard remote for the desktop app.
+- **spotify.** Run `nekoshell spotify login`; it opens a browser and needs a Spotify Premium account. Register a Spotify app of your own and run `nekoshell spotify client-id <id>`, or start-up waits on Spotify's rate limit for the shared id. Without spotify_player the player becomes a keyboard remote for the desktop app.
 - **tmux.** Start `tmux` and press `C-a I` once. TPM then fetches the plugins, including the Catppuccin status line.
 - **nvim.** Open `nvim` once; lazy.nvim fetches its plugins on the first start.
 - **aerospace.** Not in any profile. If you add it, open AeroSpace once and grant it Accessibility.
+- **p10k, omz.** Not in any profile either. p10k replaces Starship with Powerlevel10k on the next shell; omz makes the first new shell wait a few seconds while antidote clones oh-my-zsh.
 
 Then open a new terminal window: the prompt, the greeting and the shell colours are read when a shell starts.
 
@@ -85,7 +86,7 @@ nekoshell terminal background ~/Pictures/bg.jpg 0.85
 nekoshell terminal background none
 ```
 
-A machine can configure several terminals. The greeting and the panel always act on the terminal the shell is running in; the theme, the doctor and uninstall walk every configured one. What each adapter writes, how its panel opens and what it cannot do is in `terminals/<id>/README.md`.
+A machine can configure several terminals. `nekoshell music` runs the player in the current window; `nekoshell music --panel` opens the running terminal's panel. The greeting and the panel always act on the terminal the shell is running in; the theme, the doctor and uninstall walk every configured one. What each adapter writes, how its panel opens and what it cannot do is in `terminals/<id>/README.md`.
 
 ## 7. Plugins
 
@@ -96,7 +97,7 @@ nekoshell plugin add aerospace
 nekoshell plugin remove --purge btop   # --purge also uninstalls formulas no other plugin needs
 ```
 
-Each plugin's README (`nekoshell plugin info NAME` prints it) says what it installs, which files it links or copies, and what removing it leaves behind.
+Twelve plugins ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify, aerospace, p10k and omz. Each plugin's README (`nekoshell plugin info NAME` prints it) says what it installs, which files it links or copies, and what removing it leaves behind. [docs/plugins/README.md](plugins/README.md) is the manual: what each one does day to day, its keys, commands and aliases, the files you may edit, how it follows the theme, and how to turn it off.
 
 ## Upgrading
 
@@ -134,7 +135,7 @@ Start with `nekoshell doctor`. Every row that is not `ok` names the check and, w
 
 **No greeting.** `nekoshell greet` prints it on demand and shows any error. It is silent on purpose inside tmux, inside the panel, over SSH (unless `NEKOSHELL_GREET_SSH=1`), when stdout is not a terminal, and under Claude Code. The `greet time` row warns when the greeting takes longer than 150 ms.
 
-**The panel does not open.** iTerm2: the hotkey window is in the dynamic profile; the `iterm2 profiles` row says whether it is there, and `nekoshell terminal apply` rewrites it. Ghostty: the `ghostty hotkey` row stays a warning until Accessibility is granted, which the doctor cannot see. kitty: alt+m works from inside a kitty window only. Warp and Terminal.app have no key; `nekoshell music` opens a window.
+**The panel does not open.** iTerm2: the hotkey window is in the dynamic profile; the `iterm2 profiles` row says whether it is there, and `nekoshell terminal apply` rewrites it. Ghostty: the `ghostty hotkey` row stays a warning until Accessibility is granted, which the doctor cannot see. kitty: alt+m works from inside a kitty window only. Warp and Terminal.app have no key; `nekoshell music --panel` opens a window there, and `nekoshell music` on its own runs the player in the current window everywhere.
 
 **A terminal shows the old colours.** iTerm2 re-reads its dynamic profile within seconds. kitty needs a new window or ctrl+shift+f5. Ghostty needs ⌘⇧, (comma) or a restart. Warp watches its theme directory but can take a while to notice a new one; restart it. Terminal.app reads profiles at launch; quit and reopen it.
 
@@ -142,4 +143,4 @@ Start with `nekoshell doctor`. Every row that is not `ok` names the check and, w
 
 **Neovim has no plugins.** The first `nvim` clones lazy.nvim and the plugins, which needs the network. Quit and start it again when it finishes.
 
-**Spotify does not play.** The `spotify login` row warns until `spotify_player authenticate` has run. Without Premium, `nekoshell-spotify --remote` drives the desktop app instead.
+**Spotify does not play.** The `spotify login` row warns until `nekoshell spotify login` (or `spotify_player authenticate`) has run. Without Premium, `nekoshell-spotify --remote` drives the desktop app instead. A window that sits empty for the first 12 to 14 seconds is Spotify rate-limiting spotify_player's shared client id: the `spotify client id` row warns until `nekoshell spotify client-id <id>` has given it one of your own.

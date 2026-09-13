@@ -1,0 +1,47 @@
+# ~/.config/spotify-player/app.toml — yours. nekoshell copied it here once
+# (nekoshell plugin add spotify) and never writes over it. Two lines are
+# edited in place, and nothing else is touched:
+#   theme     by `nekoshell theme <flavour>`, to match the rendered theme.toml
+#   client_id by `nekoshell spotify client-id <id>`
+# Every key: https://github.com/aome510/spotify-player/blob/master/docs/config.md
+theme = "catppuccin_mocha"
+enable_media_control = false
+enable_notify = false
+playback_window_position = "Top"
+playback_window_height = 6
+# The port the running app listens on for its own CLI (`spotify_player get`,
+# `spotify_player playback`). It has nothing to do with logging in.
+client_port = 8080
+# Where Spotify sends the browser back to after you approve the login. This is
+# spotify_player's default, written out so the exact text is here to copy.
+login_redirect_uri = "http://127.0.0.1:8989/login"
+
+# client_id: your own Spotify application. Spotify rate-limits per application,
+# not per account, and spotify_player's built-in id (ncspot's,
+# d420a117a32841c2b3474932e49fb54b) is shared by everyone who has not set one.
+# On that id the seven requests spotify_player makes at start-up (liked tracks,
+# albums, playlists, shows, artists, you, the player) all come back 429, and the
+# window sits empty for the 12-14 s Spotify says to wait. An id of your own has
+# a quota of its own. It is free:
+#   1. Open https://developer.spotify.com/dashboard and log in with your
+#      Spotify account.
+#   2. Create an app. Name and description are yours to pick. Under
+#      "Redirect URIs" add exactly
+#          http://127.0.0.1:8989/login
+#      (the login_redirect_uri above), and choose "Web API" as what it uses.
+#      Save.
+#   3. On the app's page open Settings and copy its Client ID: 32 hex characters.
+#   4. Run:  nekoshell spotify client-id <that id>   (writes the line below)
+#      then: nekoshell spotify login                 (logs in through it)
+# Endpoints a new app is not allowed to use fall back to the shared id on their
+# own. `nekoshell doctor` warns until this line is set.
+# client_id = "0123456789abcdef0123456789abcdef"
+
+[device]
+name = "nekoshell"
+device_type = "computer"
+volume = 70
+bitrate = 320
+audio_cache = false
+normalization = false
+autoplay = false

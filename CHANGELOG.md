@@ -6,10 +6,13 @@ A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`,
 
 ### Plugins and profiles
 
-- Everything past the shell and the prompt is a plugin under `plugins/<name>/`: a `plugin.toml` with nine keys, optional install, uninstall, theme and doctor hooks, files to link or copy, zsh to source, and commands the plugin adds to `nekoshell`. Ten ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify and aerospace.
+- Everything past the shell and the prompt is a plugin under `plugins/<name>/`: a `plugin.toml` with nine keys, optional install, uninstall, theme and doctor hooks, files to link or copy, zsh to source, and commands the plugin adds to `nekoshell`. Twelve ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify, aerospace, p10k and omz. `docs/plugins/` has a user page for each.
 - Profiles name plugins: `minimal`, `dev` and `full`, or `pick` to choose by hand; `--with` and `--without` adjust the list.
 - Copied configs (Neovim, tmux, AeroSpace, greet.conf) are the user's after the first install; a config already at a guarded path skips the whole copy and says so.
-- `nekoshell music` opens the first enabled plugin tagged `media`, or the `music_player` setting, in the running terminal's panel.
+- `nekoshell music` runs the first enabled plugin tagged `media`, or the `music_player` setting, in the current window; `--panel` opens it in the running terminal's panel instead (`--here` is kept for the hotkey panels the adapters write).
+- p10k plugin: Powerlevel10k as the prompt in place of Starship, with a `~/.p10k.zsh` copied once and a colours file rendered per flavour; instant prompt is off when greet is enabled.
+- omz plugin: oh-my-zsh's `git` and `web-search` plugins through antidote, without installing oh-my-zsh.
+- spotify rework: `app.toml` is copied once and is the user's, with `nekoshell spotify client-id` for a personal Spotify client id (the shared one is rate-limited at start-up), `nekoshell spotify login|logout` for the cached login, and `theme.toml` rendered per flavour with the `theme` line of `app.toml` pointed at it.
 
 ### Five terminals
 
@@ -20,6 +23,7 @@ A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`,
 
 ### Repository
 
+- `actions/checkout` bumped to v7 in the workflows.
 - One linter, `scripts/lint.sh` (shellcheck, shfmt, the repository shape rules, actionlint, yamllint, markdownlint), conventional commit messages checked by `scripts/check-commit-msg.sh`, git hooks installed by `make hooks`, and four required CI jobs: lint, test, install (once per terminal adapter) and commits.
 - `tests/core/repo.bats` guards the plugin and adapter contracts and keeps code off the v0.1 layout. Every shell file is formatted with `shfmt -i 2 -ci -bn`.
 
