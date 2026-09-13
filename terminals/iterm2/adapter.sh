@@ -119,3 +119,72 @@ terminal_apply() {
   fi
   return 0
 }
+
+# terminal_background PATH|none [OPACITY]: the profile keys for the next window,
+# and the OSC 1337 escape for this one.
+terminal_background() {
+  local path="${1:-}" opacity="${2:-0.85}" flavor b64=""
+  [[ -n "$path" ]] || { log_fail "usage: nekoshell terminal background PATH|none [OPACITY]"; return 1; }
+  flavor="$(_iterm_flavor)"
+  if [[ "$path" == "none" ]]; then
+    iterm_write_profiles "$flavor" --background ""
+  else
+    [[ -e "$path" ]] || log_warn "$path does not exist yet; writing it into the profiles anyway"
+    iterm_write_profiles "$flavor" --background "$path" --blend "$(_iterm_blend "$opacity")"
+    b64="$(printf %s "$path" | base64)"
+  fi
+  # The escape changes the window this ran in, so the new background shows up
+  # without waiting for a new one. iTerm2 asks the first time a program does it.
+  if [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then
+    log_info "iTerm2 asks you to confirm the first time a program sets the background image"
+    printf '\033]1337;SetBackgroundImageFile=%s\a' "$b64"
+  fi
+  return 0
+}
+
+# terminal_panel CMD...: the hotkey profile is already a panel, so outside tmux
+# there is nothing to open — say which key opens it and run the command here.
+terminal_panel() {
+  if [[ -n "${TMUX:-}" ]]; then
+    tmux display-popup -E -w 80% -h 80% "$*"
+  else
+    log_info "press ⌥M to toggle the panel; running here"
+    "$@"
+  fi
+}
+
+terminal_doctor() {
+  local prof="$ITERM_DYNAMIC_DIR/nekoshell.json" font=""
+  if [[ ! -f "$prof" ]]; then
+    report fail "iterm2 profiles" "missing (run: nekoshell terminal apply)"
+  elif font="$(python3 - "$prof" 2>/dev/null <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1], encoding="utf-8"))
+profiles = d["Profiles"]
+assert len(profiles) == 2, len(profiles)
+print(profiles[0]["Normal Font"])
+PY
+  )"; then
+    report ok "iterm2 profiles" "$prof"
+  else
+    report fail "iterm2 profiles" "unreadable: re-run: nekoshell terminal apply"
+  fi
+
+  if iterm_prefs_pending; then
+    report warn "iterm2 prefs" "pending: quit iTerm2, run: nekoshell terminal apply"
+  else
+    report ok "iterm2 prefs" "default profile is nekoshell"
+  fi
+
+  if [[ -f "$ITERM_SHELL_INTEGRATION" ]]; then
+    report ok "iterm2 shell integration" "$ITERM_SHELL_INTEGRATION"
+  else
+    report warn "iterm2 shell integration" "missing; run: nekoshell terminal apply"
+  fi
+
+  case "$font" in
+    JetBrainsMonoNF*) report ok "iterm2 font" "$font" ;;
+    "")               report warn "iterm2 font" "no profile to read the font from" ;;
+    *)                report fail "iterm2 font" "$font is not a JetBrainsMono Nerd Font" ;;
+  esac
+}
