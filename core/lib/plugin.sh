@@ -206,8 +206,27 @@ plugin_remove() {
       _plugin_formula_needed_elsewhere "$f" && continue
       brew_has "$f" && run brew uninstall "$f"
     done
+    # Casks the same way: the plugin's README promises --purge takes the app
+    # with it, and an app nothing else enabled asked for has no reason to stay.
+    for f in $(plugin_meta_list "$name" casks); do
+      _plugin_cask_needed_elsewhere "$f" && continue
+      brew_cask_has "$f" && run brew uninstall --cask "$f"
+    done
   fi
   log_ok "$name removed (its copied configs are still yours)"
+}
+
+# _plugin_cask_needed_elsewhere CASK: true when another enabled plugin lists
+# CASK. Called after the plugin being removed has left the enabled list, so
+# it never counts itself.
+_plugin_cask_needed_elsewhere() {
+  local other c
+  for other in $(plugin_enabled_all); do
+    for c in $(plugin_meta_list "$other" casks); do
+      [[ "$c" == "$1" ]] && return 0
+    done
+  done
+  return 1
 }
 
 _plugin_formula_needed_elsewhere() {

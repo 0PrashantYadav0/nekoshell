@@ -240,6 +240,7 @@ set_flavour() {
 @test "the config sets the C-a prefix and vim-style panes" {
   grep -q '^set -g prefix C-a$' "$CONF"
   grep -q '^bind C-a send-prefix$' "$CONF"
+  grep -q '^set -g prefix2 C-b$' "$CONF"
   grep -q '^bind | split-window -h -c "#{pane_current_path}"$' "$CONF"
   grep -q '^bind h select-pane -L$' "$CONF"
   grep -q '^setw -g mode-keys vi$' "$CONF"
