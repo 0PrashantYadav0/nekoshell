@@ -1,2 +1,8 @@
 #!/usr/bin/env bash
+# Fake fzf: `--zsh` prints the key bindings, which a zsh can source without
+# side effects here.
+if [[ "${1:-}" == "--zsh" ]]; then
+  echo ': fzf key bindings'
+  exit 0
+fi
 echo "fzf $*"

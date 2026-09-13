@@ -1,0 +1,9 @@
+name = "modern-cli"
+summary = "eza, bat, fd, ripgrep, zoxide and delta, themed to match the shell"
+requires = ["eza", "bat", "fd", "ripgrep", "zoxide", "git-delta"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
