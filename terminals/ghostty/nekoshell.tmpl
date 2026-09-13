@@ -1,0 +1,49 @@
+# nekoshell Ghostty config (@@FLAVOR@@). Rendered by `nekoshell terminal apply`
+# from terminals/ghostty/nekoshell.tmpl; ~/.config/ghostty/config reads it
+# through its `config-file = nekoshell` line. Edits here are lost on the next
+# theme switch. Your own settings go in ~/.config/ghostty/config below that
+# line, where they override these. Ghostty picks changes up on ⌘⇧, or restart.
+
+# The face every nekoshell terminal uses. The adapter fills the name in from
+# terminal_font_name, so this file and the doctor agree on the spelling.
+font-family = @@FONT@@
+font-size = 15
+
+# Catppuccin @@TITLE@@, from core/theme/palettes.json. ANSI 0..15 follow the
+# same roles as the iTerm2 profiles.
+foreground = @@HEX:text@@
+background = @@HEX:base@@
+cursor-color = @@HEX:rosewater@@
+cursor-text = @@HEX:base@@
+selection-background = @@HEX:surface2@@
+selection-foreground = @@HEX:text@@
+palette = 0=@@HEX:surface1@@
+palette = 1=@@HEX:red@@
+palette = 2=@@HEX:green@@
+palette = 3=@@HEX:yellow@@
+palette = 4=@@HEX:blue@@
+palette = 5=@@HEX:pink@@
+palette = 6=@@HEX:teal@@
+palette = 7=@@HEX:subtext1@@
+palette = 8=@@HEX:surface2@@
+palette = 9=@@HEX:red@@
+palette = 10=@@HEX:green@@
+palette = 11=@@HEX:yellow@@
+palette = 12=@@HEX:blue@@
+palette = 13=@@HEX:pink@@
+palette = 14=@@HEX:teal@@
+palette = 15=@@HEX:subtext0@@
+
+# Window.
+window-padding-x = 12
+window-padding-y = 12
+macos-option-as-alt = true
+
+# The panel. ⌥M toggles Ghostty's quick terminal from anywhere on the Mac,
+# docked on the right; terminals/ghostty/zsh.zsh starts the music player in
+# it. A global keybind needs Accessibility permission for Ghostty (System
+# Settings > Privacy & Security > Accessibility); Ghostty asks on launch.
+keybind = global:alt+m=toggle_quick_terminal
+quick-terminal-position = right
+quick-terminal-autohide = true
+quick-terminal-screen = main
