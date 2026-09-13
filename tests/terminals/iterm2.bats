@@ -11,7 +11,7 @@ setup() {
   # under test. Unset rather than pointed at terminals/, so core/lib/terminal.sh
   # derives it the way a real run does.
   unset NEKOSHELL_TERMINALS_DIR
-  unset NEKOSHELL_PANEL TMUX TERM_PROGRAM FAKE_ITERM_RUNNING
+  unset NEKOSHELL_PANEL TMUX TERM_PROGRAM FAKE_ITERM_RUNNING FAKE_ITERM_DEFAULT_GUID
   export TERM=xterm-256color
   mkdir -p "$HOME/.config/nekoshell" "$HOME/.cache/nekoshell"
   printf 'root = "%s"\nterminal = "iterm2"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = []\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
@@ -359,6 +359,20 @@ PY
   assert_matches "$output" 'warn +iterm2 prefs +pending: quit iTerm2, run: nekoshell terminal apply'
   assert_matches "$output" 'ok +iterm2 shell integration'
   assert_matches "$output" 'ok +iterm2 font +JetBrainsMonoNF'
+}
+
+@test "doctor passes the prefs row once the default profile guid is nekoshell's" {
+  export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
+  ln -s "$REPO_ROOT/core/zsh/.zshrc" "$HOME/.zshrc"
+  "$NK" terminal apply >/dev/null 2>&1
+  # What a machine where the prefs were applied and iTerm2 restarted reads
+  # back: the guid the adapter writes, which is what iterm_prefs_pending
+  # compares against.
+  export FAKE_ITERM_DEFAULT_GUID="4E4B4F53-4845-4C4C-0001-000000000001"
+  run "$NK" doctor
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +iterm2 prefs +default profile is nekoshell'
+  assert_not_contains "$output" "iterm2 prefs  pending"
 }
 
 @test "doctor fails the profiles row when the file is not JSON" {
