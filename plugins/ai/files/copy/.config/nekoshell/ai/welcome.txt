@@ -1,0 +1,2 @@
+Welcome to @@TOOL@@. You are in @@PROJECT@@ on @@BRANCH@@.
+Last commit @@COMMIT@@ "@@SUBJECT@@" @@WHEN@@.

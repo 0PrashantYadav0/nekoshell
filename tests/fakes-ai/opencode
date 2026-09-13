@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Fake OpenCode: a version, and an echo of its arguments otherwise.
+if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
+  echo "1.18.30"
+  exit 0
+fi
+echo "opencode $*"

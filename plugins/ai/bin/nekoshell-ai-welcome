@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# nekoshell-ai-welcome TOOL: the banner a tool plugin prints before it starts
+# the tool: which tool, which project and branch, the last commit. Never
+# fails a launch: every problem exits 0 quietly.
+#
+# Silent unless stdout is a terminal (a tool started from a script or a pipe
+# gets no banner in its input), or NEKOSHELL_AI_WELCOME_FORCE=1 asked for it
+# (`nekoshell ai welcome`, the tests). NEKOSHELL_AI_WELCOME=0 switches it
+# off. Colours only on a terminal.
+set -uo pipefail
+tool="${1:-}"
+[[ -n "$tool" ]] || exit 0
+[[ "${NEKOSHELL_AI_WELCOME:-1}" == 0 ]] && exit 0
+tty=0
+[[ -t 1 ]] && tty=1
+[[ "$tty" == 1 || -n "${NEKOSHELL_AI_WELCOME_FORCE:-}" ]] || exit 0
+
+case "$tool" in
+  claude-code) pretty="Claude Code" ;;
+  opencode) pretty="OpenCode" ;;
+  codex) pretty="Codex" ;;
+  aider) pretty="Aider" ;;
+  *) pretty="$tool" ;;
+esac
+
+cfg="$HOME/.config/nekoshell/ai"
+NK_AI_ACCENT=""
+NK_AI_TEXT=""
+NK_AI_RESET=""
+if [[ "$tty" == 1 && -r "$cfg/colors.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$cfg/colors.sh"
+fi
+
+# paint VALUE: the accent colour around a value, then back to the text colour.
+paint() { printf '%s%s%s' "$NK_AI_ACCENT" "$1" "$NK_AI_TEXT"; }
+
+# The tilde through a variable: in a bash 3.2 pattern substitution a literal
+# one has to be escaped, and the escape then ends up in the output.
+tilde='~'
+dir="${PWD/#$HOME/$tilde}"
+project=""
+branch=""
+commit=""
+subject=""
+when=""
+if top="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+  project="$(basename "$top")"
+  branch="$(git branch --show-current 2>/dev/null)"
+  [[ -n "$branch" ]] || branch="detached at $(git rev-parse --short HEAD 2>/dev/null || echo '?')"
+  IFS=$'\t' read -r commit subject when < <(git log -1 --format='%h%x09%s%x09%cr' 2>/dev/null) || true
+  if [[ -z "$commit" ]]; then
+    commit="none"
+    subject="no commits yet"
+    when="ever"
+  fi
+  tmpl="$cfg/welcome.$tool.txt"
+  [[ -r "$tmpl" ]] || tmpl="$cfg/welcome.txt"
+  if [[ -r "$tmpl" ]]; then
+    text="$(cat "$tmpl")"
+  else
+    text=$'Welcome to @@TOOL@@. You are in @@PROJECT@@ on @@BRANCH@@.\nLast commit @@COMMIT@@ "@@SUBJECT@@" @@WHEN@@.'
+  fi
+else
+  tmpl="$cfg/welcome-norepo.$tool.txt"
+  [[ -r "$tmpl" ]] || tmpl="$cfg/welcome-norepo.txt"
+  if [[ -r "$tmpl" ]]; then
+    text="$(cat "$tmpl")"
+  else
+    text='Welcome to @@TOOL@@. You are in @@DIR@@, not a git repository.'
+  fi
+fi
+
+text="${text//@@TOOL@@/$(paint "$pretty")}"
+text="${text//@@PROJECT@@/$(paint "$project")}"
+text="${text//@@BRANCH@@/$(paint "$branch")}"
+text="${text//@@COMMIT@@/$(paint "$commit")}"
+text="${text//@@SUBJECT@@/$(paint "$subject")}"
+text="${text//@@WHEN@@/$(paint "$when")}"
+text="${text//@@DIR@@/$(paint "$dir")}"
+printf '%s%s%s\n' "$NK_AI_TEXT" "$text" "$NK_AI_RESET"
+exit 0
