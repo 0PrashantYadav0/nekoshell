@@ -109,6 +109,16 @@ plugin_add() {
     copy_once "$(plugin_dir "$name")/files/copy" "$HOME" || { log_fail "$name: copying files failed"; return 1; }
   fi
   plugin_run_hook "$name" install || return 1
+  # A dry run stops here. Everything above reports through run() and changes
+  # nothing; everything below writes straight to disk - the theme hooks render
+  # their files themselves, and config_list_add and plugin_regen_antidote would
+  # leave the toml and antidote.txt claiming a plugin that was never installed.
+  # The doctor rows go with them: they would report on something that is not
+  # there.
+  if [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]]; then
+    log_info "would enable $name"
+    return 0
+  fi
   plugin_run_hook "$name" theme || return 1
   config_list_add plugins "$name"
   plugin_regen_antidote
@@ -130,6 +140,13 @@ plugin_remove() {
   done
   plugin_run_hook "$name" uninstall || return 1
   unlink_tree "$(plugin_dir "$name")/files/link" "$HOME"
+  # As in plugin_add: the writes below are not gated by run(), and under a dry
+  # run the plugin is still recorded as enabled, so the purge pass would find
+  # every formula still needed by "itself" and report nothing useful.
+  if [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]]; then
+    log_info "would remove $name"
+    return 0
+  fi
   config_list_remove plugins "$name"
   plugin_regen_antidote
   if [[ "$purge" == "purge" ]]; then

@@ -150,3 +150,23 @@ teardown() { teardown_tmp_home; }
   [ "$(config_list plugins)" = "flaky-doctor" ]
   assert_contains "$output" "ok   flaky"
 }
+
+# A dry run used to record the plugin as enabled without installing it: the
+# brew, link and copy steps were gated, the two writes that follow were not.
+@test "a dry-run plugin add reports what it would do and records nothing" {
+  local st=0 out=""
+  out="$(NEKOSHELL_DRY_RUN=1 "$REPO_ROOT/bin/nekoshell" plugin add demo 2>&1)" || st=$?
+  [ "$st" -eq 0 ]
+  assert_contains "$out" "would enable demo"
+  [ "$(config_list plugins | tr -d '\n')" = "" ]
+  [ ! -e "$NEKOSHELL_CONFIG/antidote.txt" ]
+  [ ! -e "$HOME/.config/demo/conf" ]
+}
+@test "a dry-run plugin remove reports what it would do and records nothing" {
+  plugin_add demo >/dev/null 2>&1
+  local st=0 out=""
+  out="$(NEKOSHELL_DRY_RUN=1 "$REPO_ROOT/bin/nekoshell" plugin remove demo 2>&1)" || st=$?
+  [ "$st" -eq 0 ]
+  assert_contains "$out" "would remove demo"
+  [ "$(config_list plugins | tr -d '\n')" = "demo" ]
+}

@@ -76,3 +76,16 @@ teardown() { teardown_tmp_home; }
     STARSHIP_CONFIG="$HOME/s-$f.toml" starship print-config >/dev/null
   done
 }
+
+# theme_apply renders and records straight to disk - none of it goes through
+# run() - so the dry-run gate has to be in theme_apply itself.
+@test "a dry-run theme switch renders nothing and records nothing" {
+  local st=0 out=""
+  out="$(NEKOSHELL_DRY_RUN=1 "$NK" theme latte 2>&1)" || st=$?
+  [ "$st" -eq 0 ]
+  assert_contains "$out" "would render latte"
+  [ "$(config_get theme_resolved)" = "mocha" ]
+  [ "$(config_get theme)" = "auto" ]
+  [ ! -e "$HOME/.config/starship.toml" ]
+  [ ! -e "$NEKOSHELL_CONFIG/theme.zsh" ]
+}
