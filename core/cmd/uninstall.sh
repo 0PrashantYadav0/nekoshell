@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # uninstall: remove plugins, unlink the zshrc, restore your files from backup
-# Keeps zsh/local.zsh, the backup dir, and anything files/copy put in place.
+# Keeps zsh/local.zsh, the backup dir, the configs plugins rendered or copied
+# into place, and the pokemon-colorscripts checkout; the closing lines say so.
 usage_uninstall() { cat <<'EOF'
 usage: nekoshell uninstall [--yes] [--purge]
 EOF
@@ -29,7 +30,9 @@ cmd_uninstall() {
   if [[ ${#enabled[@]} -gt 0 ]]; then
     local i
     for (( i = ${#enabled[@]} - 1; i >= 0; i-- )); do
-      plugin_remove "${enabled[$i]}" "$PURGE" || return 1
+      # A plugin hook that fails must not strand the uninstall half done, with
+      # the zshrc still linked and the backup unrestored: warn and carry on.
+      plugin_remove "${enabled[$i]}" "$PURGE" || log_warn "${enabled[$i]}: could not be removed cleanly; carrying on"
     done
   fi
 
@@ -41,7 +44,14 @@ cmd_uninstall() {
   if [[ -f "$HOME/.config/starship.toml" ]] && grep -qF 'nekoshell Starship config' "$HOME/.config/starship.toml" 2>/dev/null; then
     run rm -f "$HOME/.config/starship.toml"
   fi
+  # The terminal's own config, while the toml still says which terminal it is.
+  local term=""
+  term="$(terminal_current 2>/dev/null || true)"
+  if [[ -n "$term" ]] && terminal_load "$term" 2>/dev/null; then
+    terminal_remove || log_warn "terminal $term: could not remove its config"
+  fi
   run rm -f "$NEKOSHELL_CONFIG/theme.zsh" "$NEKOSHELL_CONFIG/antidote.txt" "$NEKOSHELL_TOML"
 
-  log_ok "nekoshell removed. Left in place: ~/.config/nekoshell/zsh/local.zsh, files plugins copied, and the backup at $NEKOSHELL_BACKUP_ROOT"
+  log_ok "nekoshell removed."
+  log_info "Left in place: ~/.config/nekoshell/zsh/local.zsh, ~/.config/fastfetch/config.jsonc, ~/.config/tmux/nekoshell-theme.conf, ~/.config/btop/btop.conf, ~/.local/share/pokemon-colorscripts (and its ~/.local/bin symlink), anything a plugin copied, and the backup at $NEKOSHELL_BACKUP_ROOT"
 }

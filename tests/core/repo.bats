@@ -10,7 +10,7 @@ load ../helpers
 # documents; tests/fixtures/plugins/demo is the copyable example.
 PLUGIN_KEYS="name summary requires casks taps requires_plugins terminals conflicts tags"
 PLUGIN_SECTIONS="What it does:Installs:Files:After install:Remove"
-ADAPTER_FUNCS="terminal_name terminal_detect terminal_installed terminal_capabilities terminal_font_name terminal_apply terminal_background terminal_panel terminal_doctor"
+ADAPTER_FUNCS="terminal_name terminal_detect terminal_installed terminal_capabilities terminal_font_name terminal_apply terminal_background terminal_remove terminal_panel terminal_doctor"
 
 @test "every plugin has the nine plugin.toml keys and the five README sections" {
   local bad="" toml dir name key section
@@ -33,7 +33,7 @@ $name/README.md: missing section '## $section'"
   if [[ -n "$bad" ]]; then echo "plugin contract violations:$bad" >&2; false; fi
 }
 
-@test "every terminal adapter defines the nine adapter functions" {
+@test "every terminal adapter defines the ten adapter functions" {
   local bad="" adapter id fn
   for adapter in "$REPO_ROOT"/terminals/*/adapter.sh; do
     id="$(basename "$(dirname "$adapter")")"

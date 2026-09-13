@@ -372,7 +372,10 @@ PY
   run "$NK" doctor
   [ "$status" -eq 0 ]
   assert_matches "$output" 'ok +iterm2 prefs +default profile is nekoshell'
-  assert_not_contains "$output" "iterm2 prefs  pending"
+  # A regex, not a literal: the column padding is a run of spaces of a width
+  # this test cannot know, so a literal "iterm2 prefs  pending" never matches
+  # and the assertion never fails.
+  assert_not_matches "$output" 'warn +iterm2 prefs' 
 }
 
 @test "doctor fails the profiles row when the file is not JSON" {
@@ -405,4 +408,27 @@ bg=p['Background Color']
 print(round(bg['Red Component']*255), round(bg['Green Component']*255), round(bg['Blue Component']*255))
 PY
   [ "${lines[0]}" = "239 241 245" ]
+}
+
+# Uninstall used to leave the dynamic profile behind, so iTerm2 kept opening
+# nekoshell's profile on a machine with nekoshell removed.
+@test "terminal_remove deletes the dynamic profile and prints the prefs hint" {
+  "$NK" terminal apply >/dev/null 2>&1
+  [ -f "$PROF" ]
+  load_adapter
+  local rc=0 out=""
+  out="$(terminal_remove 2>&1)" || rc=$?
+  [ "$rc" -eq 0 ]
+  [ ! -f "$PROF" ]
+  assert_contains "$out" "defaults delete com.googlecode.iterm2 'Default Bookmark Guid'"
+}
+@test "uninstall removes the iTerm2 dynamic profile" {
+  export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
+  ln -s "$REPO_ROOT/core/zsh/.zshrc" "$HOME/.zshrc"
+  "$NK" terminal apply >/dev/null 2>&1
+  [ -f "$PROF" ]
+  run "$NK" uninstall --yes
+  [ "$status" -eq 0 ]
+  [ ! -f "$PROF" ]
+  assert_contains "$output" "defaults delete com.googlecode.iterm2"
 }
