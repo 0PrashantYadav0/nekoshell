@@ -1,24 +1,32 @@
 #!/usr/bin/env bats
 load ../helpers
 
-# The greeting: a Pokémon or a picture from your art pack, next to the machine
-# stats fastfetch prints. It runs on every new interactive shell, so the whole
-# thing is built around never costing anything and never failing one: every
-# problem exits 0 quietly.
+# The greeting: a sprite from an enabled art provider plugin, or a picture
+# from your art pack, next to the machine stats fastfetch prints. It runs on
+# every new interactive shell, so the whole thing is built around never
+# costing anything and never failing one: every problem exits 0 quietly.
 
 setup() {
   setup_tmp_home
   export PATH="$REPO_ROOT/tests/fakes:$PATH"
   export NEKOSHELL_TERMINALS_DIR="$REPO_ROOT/tests/fixtures/terminals"
   export FAKE_BREW_INSTALLED=""
-  unset CLAUDECODE TMUX NEKOSHELL_PANEL SSH_CONNECTION NEKOSHELL_NO_GREET NEKOSHELL_GREET_SSH NEKOSHELL_GREET_MODE
+  unset CLAUDECODE TMUX NEKOSHELL_PANEL SSH_CONNECTION NEKOSHELL_NO_GREET NEKOSHELL_GREET_SSH NEKOSHELL_GREET_MODE NEKOSHELL_GREET_ART FAKEART_FAIL FAKEART2_FAIL
   # A developer running the tests from a nekoshell shell has NEKOSHELL_ROOT
   # exported, pointing at their own checkout. The greeting prefers it over the
   # recorded root, so it has to go: these tests are about this checkout, and
   # the run below is what proves the recorded root is found without it.
   unset NEKOSHELL_ROOT
+  # The engine looks for providers among the enabled plugins under
+  # NEKOSHELL_PLUGINS_DIR. A directory of links carries the real greet plugin
+  # next to the two fixture providers.
+  export NEKOSHELL_PLUGINS_DIR="$HOME/plugins"
+  mkdir -p "$NEKOSHELL_PLUGINS_DIR"
+  ln -s "$REPO_ROOT/plugins/greet" "$NEKOSHELL_PLUGINS_DIR/greet"
+  ln -s "$REPO_ROOT/tests/fixtures/plugins/fakeart" "$NEKOSHELL_PLUGINS_DIR/fakeart"
+  ln -s "$REPO_ROOT/tests/fixtures/plugins/fakeart2" "$NEKOSHELL_PLUGINS_DIR/fakeart2"
   mkdir -p "$HOME/.config/nekoshell/art" "$HOME/.cache/nekoshell"
-  printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = []\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
+  printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = ["greet", "fakeart"]\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
   NK="$REPO_ROOT/bin/nekoshell"
   P="$REPO_ROOT/plugins/greet"
 }
@@ -46,6 +54,12 @@ set_flavour() {
   mv "$HOME/t.toml" "$HOME/.config/nekoshell/nekoshell.toml"
 }
 
+# set_plugins LIST: rewrite the enabled list, e.g. set_plugins '"greet", "fakeart"'.
+set_plugins() {
+  sed "s/^plugins = .*/plugins = [$1]/" "$HOME/.config/nekoshell/nekoshell.toml" > "$HOME/t.toml"
+  mv "$HOME/t.toml" "$HOME/.config/nekoshell/nekoshell.toml"
+}
+
 # rendered_rows: the module list and the two colours out of the rendered config.
 rendered_rows() {
   sed -e 's://[^"]*$::' "$HOME/.config/fastfetch/config.jsonc" | python3 -c '
@@ -66,77 +80,24 @@ print(d["display"]["color"]["title"])'
   done
 }
 
-@test "add installs fastfetch, copies greet.conf and renders the fastfetch config" {
+@test "add installs fastfetch, clones nothing, copies greet.conf and renders the fastfetch config" {
   run "$NK" plugin add greet
   [ "$status" -eq 0 ]
   assert_contains "$output" "brew install fastfetch"
+  assert_not_contains "$output" "git clone"
   [ -f "$HOME/.config/nekoshell/greet.conf" ]
   [ ! -L "$HOME/.config/nekoshell/greet.conf" ]
-  grep -q 'POKEMON_SHARE' "$HOME/.config/nekoshell/greet.conf"
+  grep -q '^ART=auto' "$HOME/.config/nekoshell/greet.conf"
+  grep -q '^SPRITE_SHARE=70' "$HOME/.config/nekoshell/greet.conf"
   [ -f "$HOME/.config/fastfetch/config.jsonc" ]
   [ ! -L "$HOME/.config/fastfetch/config.jsonc" ]
 }
 
-@test "add clones pokemon-colorscripts at the pinned commit and links it onto PATH" {
-  sha="$(sed -n 's/^POKEMON_SHA="\([0-9a-f]*\)".*/\1/p' "$P/install.sh")"
-  printf '%s\n' "$sha" | grep -q '^[0-9a-f]\{40\}$'
-  run "$NK" plugin add greet
-  [ "$status" -eq 0 ]
-  [ -d "$HOME/.local/share/pokemon-colorscripts" ]
-  [ -L "$HOME/.local/bin/pokemon-colorscripts" ]
-  assert_contains "$output" "$sha"
-}
-
-@test "a second add does not clone pokemon-colorscripts again" {
-  "$NK" plugin add greet >/dev/null
-  run "$NK" plugin add greet
-  [ "$status" -eq 0 ]
-  assert_not_contains "$output" "clone --quiet https://gitlab.com/phoneybadger/pokemon-colorscripts.git"
-  [ -L "$HOME/.local/bin/pokemon-colorscripts" ]
-}
-
-@test "a checkout that already holds the pinned commit is not fetched" {
-  "$NK" plugin add greet >/dev/null
-  run env FAKE_GIT_HAS_COMMIT=1 "$NK" plugin add greet
-  [ "$status" -eq 0 ]
-  # the precise flag, not the bare word: "fastfetch" contains "fetch"
-  assert_not_contains "$output" "fetch --quiet"
-}
-
-# Offline is not broken: an older set of sprites is still a greeting.
-@test "a fetch that fails warns and the add still succeeds" {
-  "$NK" plugin add greet >/dev/null
-  run env FAKE_GIT_FAIL_FETCH=1 "$NK" plugin add greet
-  [ "$status" -eq 0 ]
-  assert_contains "$output" "greet: could not fetch pokemon-colorscripts; keeping what is there"
-  assert_contains "$output" "greet enabled"
-  [ -L "$HOME/.local/bin/pokemon-colorscripts" ]
-}
-
-# A directory that is there but is not a checkout fails every git command that
-# reaches into it — the probe, the fetch and the checkout — and has no script
-# to make executable either. All four are notes: the greeting drops the sprite
-# and everything else about the plugin still works.
-@test "a pokemon directory that is not a checkout warns and the add still succeeds" {
-  mkdir -p "$HOME/.local/share/pokemon-colorscripts"
-  echo 'not a checkout' > "$HOME/.local/share/pokemon-colorscripts/notes.txt"
-  run env FAKE_GIT_NOT_REPO=1 "$NK" plugin add greet
-  [ "$status" -eq 0 ]
-  assert_contains "$output" "greet: could not fetch pokemon-colorscripts; keeping what is there"
-  assert_contains "$output" "greet: could not check out pokemon-colorscripts at"
-  assert_contains "$output" "greet: pokemon-colorscripts.py is missing"
-  assert_contains "$output" "greet enabled"
-  assert_not_contains "$output" "clone --quiet"
-  [ "$(cat "$HOME/.local/share/pokemon-colorscripts/notes.txt")" = "not a checkout" ]
-  [ -f "$HOME/.config/fastfetch/config.jsonc" ]
-  [ "$(grep '^plugins' "$HOME/.config/nekoshell/nekoshell.toml")" = 'plugins = ["greet"]' ]
-}
-
 @test "greet.conf is yours: a second add keeps your edit" {
   "$NK" plugin add greet >/dev/null
-  printf 'POKEMON_SHARE=5\n' >> "$HOME/.config/nekoshell/greet.conf"
+  printf 'SPRITE_SHARE=5\n' >> "$HOME/.config/nekoshell/greet.conf"
   "$NK" plugin add greet >/dev/null
-  grep -q 'POKEMON_SHARE=5' "$HOME/.config/nekoshell/greet.conf"
+  grep -q 'SPRITE_SHARE=5' "$HOME/.config/nekoshell/greet.conf"
 }
 
 @test "the rendered fastfetch config is valid JSONC with the expected rows in order" {
@@ -241,37 +202,100 @@ print(d["display"]["color"]["title"])'
   [ -z "$output" ]
 }
 
-@test "the pokemon path pipes the sprite into fastfetch and caches the name" {
-  "$NK" plugin add greet >/dev/null
+# --- art providers ----------------------------------------------------------
+# A provider is an enabled plugin with an executable greet-art: caption on
+# the first line, sprite after it. The fixtures under tests/fixtures/plugins
+# stand in for pokemon, anime and the rest.
+
+@test "a provider's sprite goes into fastfetch and its caption into the cache" {
   NEKOSHELL_SEED=1 run greet
   [ "$status" -eq 0 ]
   assert_contains "$output" "--file-raw - stdin=3"
-  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Pikachu · #025 · Electric · Gen 1" ]
+  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Art · one" ]
 }
 
-@test "shiny odds of 1 always passes -s" {
-  "$NK" plugin add greet >/dev/null
-  echo 'SHINY_ODDS=1' > "$HOME/.config/nekoshell/greet.conf"
+@test "ART=auto picks among the enabled providers with equal odds" {
+  set_plugins '"greet", "fakeart", "fakeart2"'
+  local seen="" seed
+  for seed in 1 2 3 4 5 6 7 8; do
+    NEKOSHELL_SEED=$seed NEKOSHELL_GREET_MODE=text greet >/dev/null
+    seen="$seen $(cat "$HOME/.cache/nekoshell/art-name")"
+  done
+  assert_contains "$seen" "Fake Art · one"
+  assert_contains "$seen" "Fake Art · two"
+}
+
+@test "ART weights: a zero weight never draws, a name that is not enabled is skipped" {
+  set_plugins '"greet", "fakeart", "fakeart2"'
+  printf 'ART="fakeart:0,fakeart2:5,nothere:9"\n' > "$HOME/.config/nekoshell/greet.conf"
+  local seed
+  for seed in 1 2 3 4 5; do
+    NEKOSHELL_SEED=$seed NEKOSHELL_GREET_MODE=text greet >/dev/null
+    [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Art · two" ]
+  done
+}
+
+@test "a plugin that is enabled but is not a provider is not drawn from" {
+  set_plugins '"greet", "fakeart2"'
+  printf 'ART="greet,fakeart2"\n' > "$HOME/.config/nekoshell/greet.conf"
+  NEKOSHELL_SEED=3 NEKOSHELL_GREET_MODE=text run greet
+  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Art · two" ]
+}
+
+@test "a provider that draws nothing gives way to the stats alone" {
+  FAKEART_FAIL=1 NEKOSHELL_SEED=1 run greet
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "--logo none"
+  assert_not_contains "$output" "--file-raw"
+  [ ! -s "$HOME/.cache/nekoshell/art-name" ]
+}
+
+@test "no provider enabled: the stats alone" {
+  set_plugins '"greet"'
   NEKOSHELL_SEED=1 run greet
-  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Pikachu · #025 · Electric · Gen 1 ✦ shiny" ]
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "--logo none"
 }
 
+@test "NEKOSHELL_GREET_ART forces a provider" {
+  set_plugins '"greet", "fakeart", "fakeart2"'
+  NEKOSHELL_GREET_ART=fakeart2 NEKOSHELL_SEED=1 run greet
+  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Art · two" ]
+}
+
+@test "greet.conf keys reach the provider" {
+  printf 'FAKEART_FAIL=1\n' > "$HOME/.config/nekoshell/greet.conf"
+  NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--logo none"
+}
+
+# --- the image branch -------------------------------------------------------
 # The image branch is a question about the terminal, not about TERM_PROGRAM: it
 # is taken only when the adapter says it can draw images. The `fake` fixture
 # can; `bare` (the contract's own defaults) cannot.
+
 @test "the image branch is taken on a terminal whose capabilities include images" {
   "$NK" plugin add greet >/dev/null
   cp "$P/art/neko.png" "$HOME/.config/nekoshell/art/"
-  echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
+  echo 'SPRITE_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   NEKOSHELL_SEED=1 run greet
   assert_contains "$output" "--kitty $HOME/.config/nekoshell/art/neko.png --logo-width 28 --logo-height 14"
   [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "neko.png" ]
 }
 
-@test "a terminal that cannot draw images falls back to the pokemon" {
-  "$NK" plugin add greet >/dev/null
+@test "the old POKEMON_SHARE key still sets the sprite share" {
   cp "$P/art/neko.png" "$HOME/.config/nekoshell/art/"
   echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
+  NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--kitty"
+  echo 'POKEMON_SHARE=100' > "$HOME/.config/nekoshell/greet.conf"
+  NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--file-raw -"
+}
+
+@test "a terminal that cannot draw images falls back to the sprite" {
+  cp "$P/art/neko.png" "$HOME/.config/nekoshell/art/"
+  echo 'SPRITE_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   set_terminal bare
   NEKOSHELL_SEED=1 run greet
   assert_contains "$output" "--file-raw -"
@@ -282,9 +306,8 @@ print(d["display"]["color"]["title"])'
 # iTerm2 draws its own inline images with a protocol of its own; everything
 # else that can draw images speaks kitty's.
 @test "an image-capable iterm2 gets --iterm rather than --kitty" {
-  "$NK" plugin add greet >/dev/null
   cp "$P/art/neko.png" "$HOME/.config/nekoshell/art/"
-  echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
+  echo 'SPRITE_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   mkdir -p "$HOME/terms/iterm2"
   printf 'terminal_name() { echo iterm2; }\nterminal_capabilities() { echo "truecolor images"; }\n' \
     > "$HOME/terms/iterm2/adapter.sh"
@@ -293,21 +316,19 @@ print(d["display"]["color"]["title"])'
   assert_contains "$output" "--iterm $HOME/.config/nekoshell/art/neko.png"
 }
 
-@test "falls back to the pokemon when the art pack is empty" {
-  "$NK" plugin add greet >/dev/null
-  echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
+@test "falls back to the sprite when the art pack is empty" {
+  echo 'SPRITE_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   NEKOSHELL_SEED=1 run greet
   assert_contains "$output" "--file-raw -"
 }
 
 @test "NEKOSHELL_GREET_MODE forces either branch" {
-  "$NK" plugin add greet >/dev/null
   cp "$P/art/neko.png" "$HOME/.config/nekoshell/art/"
   # share 100 means the roll can never choose the image on its own
-  echo 'POKEMON_SHARE=100' > "$HOME/.config/nekoshell/greet.conf"
+  echo 'SPRITE_SHARE=100' > "$HOME/.config/nekoshell/greet.conf"
   NEKOSHELL_GREET_MODE=image NEKOSHELL_SEED=1 run greet
   assert_contains "$output" "--kitty"
-  echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
+  echo 'SPRITE_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   NEKOSHELL_GREET_MODE=text NEKOSHELL_SEED=1 run greet
   assert_contains "$output" "--file-raw -"
   assert_not_contains "$output" "--kitty"
@@ -321,15 +342,28 @@ print(d["display"]["color"]["title"])'
   assert_matches "$last" '^greet: [0-9]+ ms$'
 }
 
+# --- the command ------------------------------------------------------------
+
 @test "nekoshell greet --text and --image reach the two branches" {
   "$NK" plugin add greet >/dev/null
   cp "$P/art/neko.png" "$HOME/.config/nekoshell/art/"
-  echo 'POKEMON_SHARE=100' > "$HOME/.config/nekoshell/greet.conf"
+  echo 'SPRITE_SHARE=100' > "$HOME/.config/nekoshell/greet.conf"
   run script -q /dev/null "$NK" greet --image < /dev/null
   assert_contains "$output" "--kitty"
-  echo 'POKEMON_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
+  echo 'SPRITE_SHARE=0' > "$HOME/.config/nekoshell/greet.conf"
   run script -q /dev/null "$NK" greet --text < /dev/null
   assert_contains "$output" "--file-raw -"
+}
+
+@test "nekoshell greet --art forces a provider and refuses one that is not enabled" {
+  set_plugins '"greet", "fakeart", "fakeart2"'
+  run script -q /dev/null "$NK" greet --art fakeart2 < /dev/null
+  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Art · two" ]
+  run "$NK" greet --art nothere
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "nothere is not an enabled art provider"
+  run "$NK" greet --art
+  [ "$status" -eq 2 ]
 }
 
 @test "nekoshell art lists, adds and copies the samples" {
@@ -353,6 +387,8 @@ print(d["display"]["color"]["title"])'
   run "$NK" art add "$HOME/nope.png"
   [ "$status" -ne 0 ]
 }
+
+# --- late.zsh ---------------------------------------------------------------
 
 @test "late.zsh greets an interactive shell that owns a tty" {
   mkdir -p "$HOME/bin"
@@ -381,14 +417,29 @@ print(d["display"]["color"]["title"])'
   assert_not_contains "$output" "command not found"
 }
 
-@test "doctor reports fastfetch, pokemon-colorscripts and the greet budget" {
+# --- doctor -----------------------------------------------------------------
+
+@test "doctor reports fastfetch, one row per enabled provider and the greet budget" {
   "$NK" plugin add greet >/dev/null
+  set_plugins '"greet", "fakeart", "fakeart2"'
   run "$NK" doctor --plugin greet
   [ "$status" -eq 0 ]
   assert_matches "$output" 'ok +tool: fastfetch'
-  assert_matches "$output" 'ok +pokemon-colorscripts'
+  assert_matches "$output" 'ok +art: fakeart +draws'
+  assert_matches "$output" 'ok +art: fakeart2 +draws'
   assert_matches "$output" 'greet time +[0-9]+ ms'
   assert_not_contains "$output" "could not measure"
+  FAKEART_FAIL=1 run "$NK" doctor --plugin greet
+  [ "$status" -eq 1 ]
+  assert_matches "$output" 'fail +art: fakeart +nothing to draw \(nekoshell plugin add fakeart\)'
+}
+
+@test "doctor warns when no provider is enabled" {
+  "$NK" plugin add greet >/dev/null
+  set_plugins '"greet"'
+  run "$NK" doctor --plugin greet
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'warn +art +no art provider enabled \(run: nekoshell plugin add pokemon\)'
 }
 
 # The doctor is run from a real shell, and that shell may be over SSH, inside
@@ -412,41 +463,12 @@ print(d["display"]["color"]["title"])'
 }
 
 @test "remove drops the plugin and leaves your greet.conf and art alone" {
+  set_plugins ''
   "$NK" plugin add greet >/dev/null
   run "$NK" plugin remove greet
   [ "$status" -eq 0 ]
   [ -f "$HOME/.config/nekoshell/greet.conf" ]
   [ "$(grep '^plugins' "$HOME/.config/nekoshell/nekoshell.toml")" = 'plugins = []' ]
-}
-
-@test "pokemon.tsv has the header and well-known rows" {
-  run head -1 "$P/data/pokemon.tsv"
-  [ "$output" = $'name\tdex\ttypes\tgen\theight_m\tweight_kg' ]
-  run awk -F'\t' '$1=="pikachu"{print $2, $3, $4}' "$P/data/pokemon.tsv"
-  [ "$output" = "25 Electric 1" ]
-  run awk -F'\t' '$1=="bulbasaur"{print $2, $3, $4}' "$P/data/pokemon.tsv"
-  [ "$output" = "1 Grass/Poison 1" ]
-  run awk -F'\t' '$1=="mr-mime"{print $2}' "$P/data/pokemon.tsv"
-  [ "$output" = "122" ]
-  run bash -c "wc -l < '$P/data/pokemon.tsv' | tr -d ' '"
-  [ "$output" -gt 900 ]
-}
-
-@test "pokemon_facts formats a known and an unknown name" {
-  # Extract via a temp file rather than `source <(...)`: on this machine's
-  # bash 3.2.57, sourcing a process substitution from inside `bash -c`
-  # silently reads zero bytes, so the function never gets defined.
-  run bash -c "
-    tmpf=\$(mktemp)
-    sed -n '/^pokemon_facts()/,/^}/p' '$P/bin/nekoshell-greet' > \"\$tmpf\"
-    PLUGIN_DIR='$P'
-    source \"\$tmpf\"
-    rm -f \"\$tmpf\"
-    pokemon_facts pikachu
-    pokemon_facts missingno
-  "
-  [ "${lines[0]}" = "Pikachu · #025 · Electric · Gen 1" ]
-  [ "${lines[1]}" = "Missingno" ]
 }
 
 @test "the sample art files are valid PNGs" {
