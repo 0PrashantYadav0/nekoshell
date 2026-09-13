@@ -25,12 +25,12 @@ The installer asks for a profile, or takes `--profile`:
 
 | Profile | Plugins |
 | --- | --- |
-| `minimal` | modern-cli, greet |
+| `minimal` | modern-cli, greet, pokemon |
 | `dev` | minimal plus fzf, atuin, lazygit, btop, nvim, tmux |
 | `full` | dev plus spotify |
 | `pick` | a menu that toggles plugins one by one |
 
-`--with a,b` and `--without c` adjust any of them. aerospace, p10k and omz are in no profile: add them by hand.
+`--with a,b` and `--without c` adjust any of them. anime, minecraft, colorscripts, aerospace, p10k and omz are in no profile: add them by hand.
 
 ## What a plugin puts in your home
 
@@ -41,18 +41,22 @@ The installer asks for a profile, or takes `--profile`:
 
 ## Hooks you may notice
 
-- `install.sh` runs on add: modern-cli edits `~/.gitconfig`, greet clones pokemon-colorscripts, tmux clones TPM, spotify replaces an old symlinked `app.toml` with a copy.
+- `install.sh` runs on add: modern-cli edits `~/.gitconfig`, pokemon, minecraft and colorscripts clone their sprite packs at a pinned commit and anime downloads its release tarball, tmux clones TPM, spotify replaces an old symlinked `app.toml` with a copy.
 - `theme.sh` runs on add and on every theme switch and writes the rendered files above; btop rewrites its one line, modern-cli rebuilds bat's theme cache.
 - `uninstall.sh` runs on remove and takes back what the install hook did.
 - `doctor.sh` adds rows to `nekoshell doctor`; `--plugin NAME` shows one plugin's rows.
-- `early.zsh`, `plugin.zsh` and `late.zsh` are sourced by the zshrc at the very start of the shell, after the antidote bundle, and after the prompt is set up. `bin/` goes on `PATH`, `antidote.txt` lines join the shell plugin bundle, and `cmd/<name>.sh` becomes `nekoshell <name>`; `nekoshell help` lists those under "Plugin commands".
+- `early.zsh`, `plugin.zsh` and `late.zsh` are sourced by the zshrc at the very start of the shell, after the antidote bundle, and after the prompt is set up. `bin/` goes on `PATH`, `antidote.txt` lines join the shell plugin bundle, `greet-art` makes the plugin an art provider for the greeting, and `cmd/<name>.sh` becomes `nekoshell <name>`; `nekoshell help` lists those under "Plugin commands".
 
 ## The plugins
 
 | Plugin | What it is | Tags | Needs |
 | --- | --- | --- | --- |
 | [modern-cli](modern-cli.md) | eza, bat, fd, ripgrep, zoxide and delta in place of ls, cat, cd and the git pager | shell | eza, bat, fd, ripgrep, zoxide, git-delta |
-| [greet](greet.md) | a Pokémon or your own pixel art next to fastfetch's machine stats on every new shell | look | fastfetch; pokemon-colorscripts, cloned |
+| [greet](greet.md) | a sprite from an art provider or your own pixel art next to fastfetch's machine stats on every new shell | look | fastfetch |
+| [pokemon](pokemon.md) | a random Pokémon in the greeting, with its number, type and generation | look | pokemon-colorscripts, cloned |
+| [anime](anime.md) | a random anime character in the greeting | look | anime-colorscripts, a release tarball |
+| [minecraft](minecraft.md) | a random Minecraft block in the greeting | look | minecraft-colorscripts, cloned |
+| [colorscripts](colorscripts.md) | an ANSI pattern in the terminal's palette in the greeting | look | theamallalgi/colorscripts, cloned |
 | [fzf](fzf.md) | Ctrl-T, Alt-C and Ctrl-R with previews | shell | fzf |
 | [atuin](atuin.md) | searchable shell history on Ctrl-R, kept on this machine | shell | atuin |
 | [lazygit](lazygit.md) | a terminal UI for git, on `lg` | shell | lazygit |

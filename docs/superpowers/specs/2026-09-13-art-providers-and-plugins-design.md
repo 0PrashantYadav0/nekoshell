@@ -77,8 +77,8 @@ used, because the anime one needs GNU coreutils on macOS and none of them is
 needed to pick a file. All four have `requires_plugins = ["greet"]`,
 `tags = ["look"]`, an `install.sh` that fetches and pins (warning, never
 failing, offline), a `doctor.sh` with one row that proves a draw works, and
-`uninstall.sh` that leaves the fetched data in place (as greet does today;
-`--purge` removes it).
+no uninstall hook: the fetched data stays in place (as greet's did), and the
+plugin's page gives the `rm -rf` line.
 
 Considered and left out: ponysay (Homebrew formula, but a python start-up
 that alone spends the 150 ms budget) and krabby (not in Homebrew; Pokémon
@@ -89,9 +89,8 @@ again).
 `pokemon` joins the `minimal`, `dev` and `full` profiles right after `greet`,
 so an installation shows Pokémon unless asked otherwise; the other three are
 added by hand (`nekoshell plugin add anime`). The install picker lists them
-like any plugin. A machine that already has greet enabled and the Pokémon
-checkout in place gets `pokemon` enabled by greet's install hook the next
-time `nekoshell install` runs, so nothing changes for it.
+like any plugin. The profiles carry `pokemon`, so the next `nekoshell install` on an
+existing machine enables it; `nekoshell doctor` warns until then.
 
 ### Tests
 

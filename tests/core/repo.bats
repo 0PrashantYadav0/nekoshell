@@ -62,3 +62,18 @@ $id/adapter.sh: missing $fn()"
     false
   fi
 }
+
+# An art provider is a plugin with an executable greet-art; the greeting runs
+# it on every shell, so it has to be runnable and has to depend on greet.
+@test "every art provider is executable and requires greet" {
+  local bad="" art dir name
+  for art in "$REPO_ROOT"/plugins/*/greet-art; do
+    [[ -e "$art" ]] || continue
+    dir="$(dirname "$art")"; name="$(basename "$dir")"
+    [[ -x "$art" ]] || bad="$bad
+$name/greet-art: not executable"
+    grep -qE '^requires_plugins *= *\[.*"greet".*\]' "$dir/plugin.toml" || bad="$bad
+$name/plugin.toml: an art provider must list greet in requires_plugins"
+  done
+  if [[ -n "$bad" ]]; then echo "art provider contract violations:$bad" >&2; false; fi
+}
