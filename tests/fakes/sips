@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Fake sips: writes a stub wherever --out points instead of converting an
+# image, and echoes the invocation so a test can see the conversion happen.
+# FAKE_SIPS_FAILS=1 makes it fail the way sips does on a file it cannot read.
+[[ "${FAKE_SIPS_FAILS:-0}" == "1" ]] && exit 1
+dest=""
+prev=""
+for arg in "$@"; do
+  [[ "$prev" == "--out" ]] && dest="$arg"
+  prev="$arg"
+done
+[[ -n "$dest" ]] && printf 'fake png\n' >"$dest"
+echo "sips $*"
+exit 0

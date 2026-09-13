@@ -1,0 +1,23 @@
+# nekoshell music panel for kitty's quick-access terminal, flavour @@FLAVOR@@.
+# Rendered from terminals/kitty/nekoshell-panel.conf.tmpl by `nekoshell
+# terminal apply`; edits here are lost on the next render. Used as
+#   kitten quick-access-terminal --config THIS_FILE
+# by the alt+m mapping in nekoshell.conf and by `nekoshell music`.
+
+# A 60-column strip down the right edge of the screen.
+edge    right
+columns 60
+
+# Shown as soon as it is asked for, hidden again when focus leaves it.
+start_as_hidden    no
+hide_on_focus_loss yes
+background_opacity 0.95
+
+# The panel is its own kitty instance, so it reads the main config to get the
+# font, colours and the alt+m mapping. The background colour is set again
+# here so the panel is themed even when the include line is not in place.
+kitty_conf     @@KITTY_CONF@@
+kitty_override background=@@HEX:base@@
+# Its own socket (kitty appends its pid: /tmp/kitty-nekoshell-panel-<pid>), so
+# `kitten @` can reach the panel rather than the window that opened it.
+kitty_override listen_on=unix:/tmp/kitty-nekoshell-panel
