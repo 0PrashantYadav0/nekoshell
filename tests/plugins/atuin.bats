@@ -30,12 +30,25 @@ marker() { printf '%s\n' "$output" | sed -n "s/^$1=//p"; }
   [ -L "$HOME/.config/atuin/config.toml" ]
 }
 
-@test "the config is valid TOML and stays offline" {
+@test "the config stays offline and searches this session first" {
+  CFG="$P/files/link/.config/atuin/config.toml"
+  grep -q '^auto_sync = false' "$CFG"
+  grep -q '^update_check = false' "$CFG"
+  grep -q '^search_mode = "fuzzy"' "$CFG"
+  grep -q '^filter_mode_shell_up_key_binding = "session"' "$CFG"
+}
+
+@test "the config is valid TOML" {
   run python3 -c "
-import tomllib
+import sys
+try:
+    import tomllib
+except ImportError:
+    sys.exit(9)
 d = tomllib.load(open('$P/files/link/.config/atuin/config.toml','rb'))
 print(d['auto_sync'], d['update_check'])
 print(d['style'], d['inline_height'], d['search_mode'], d['filter_mode_shell_up_key_binding'])"
+  if [ "$status" -eq 9 ]; then skip "tomllib needs Python 3.11+"; fi
   [ "$status" -eq 0 ]
   [ "${lines[0]}" = "False False" ]
   [ "${lines[1]}" = "compact 20 fuzzy session" ]

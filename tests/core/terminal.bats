@@ -18,7 +18,7 @@ teardown() { teardown_tmp_home; }
 # empty. Plain command substitution captures stdout/stderr and exit status
 # instead.
 
-@test "terminal_all lists adapters" { [ "$(terminal_all)" = "fake" ]; }
+@test "terminal_all lists adapters" { [ "$(terminal_all | tr '\n' ' ')" = "bare fake " ]; }
 @test "terminal_detect_env maps env vars to ids" {
   status=0; output="$(TERM_PROGRAM=iTerm.app terminal_detect_env)" || status=$?
   [ "$output" = "iterm2" ]
@@ -54,8 +54,12 @@ teardown() { teardown_tmp_home; }
   TERM_PROGRAM=iTerm.app; [ "$(terminal_current)" = "iterm2" ]
   toml_set "$NEKOSHELL_TOML" terminal kitty; [ "$(terminal_current)" = "kitty" ]
 }
+# Through `bare`, not `fake`: fake overrides terminal_panel so that the music
+# tests can tell the panel path from the inline one, and an adapter that
+# overrides the function cannot test the default it replaced.
 @test "default terminal_panel uses a tmux popup inside tmux and runs inline outside" {
-  terminal_load fake
+  terminal_load bare
+  [ "$(terminal_name)" = "bare" ]
   export PATH="$REPO_ROOT/tests/fakes:$PATH"
   status=0; output="$(TMUX=1 terminal_panel echo hi 2>&1)" || status=$?
   assert_contains "$output" "tmux display-popup"

@@ -99,7 +99,14 @@ teardown() { teardown_tmp_home; }
 }
 
 @test "plugin.zsh is silent when none of the tools are installed" {
-  run zsh -o NO_GLOBAL_RCS -ic "PATH=/nonexistent; source '$P/plugin.zsh'; echo DONE"
+  run zsh -o NO_GLOBAL_RCS -ic "PATH=/nonexistent
+    source '$P/plugin.zsh'
+    alias ls >/dev/null 2>&1 && echo HAS_LS
+    alias cat >/dev/null 2>&1 && echo HAS_CAT
+    echo DONE"
   [ "$status" -eq 0 ]
   assert_contains "$output" "DONE"
+  assert_not_contains "$output" "HAS_LS"
+  assert_not_contains "$output" "HAS_CAT"
+  assert_not_contains "$output" "command not found"
 }
