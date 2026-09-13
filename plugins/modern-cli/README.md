@@ -35,5 +35,5 @@ Nothing. Open a new shell and `ls`, `cat`, `z` and `git diff` are the new ones.
 ## Remove
 
 `nekoshell plugin remove modern-cli` unlinks the configs and takes the include
-region back out of `~/.gitconfig`. Add `purge` to uninstall the formulas too,
+region back out of `~/.gitconfig`. Add `--purge` to uninstall the formulas too,
 as long as no other enabled plugin needs them.

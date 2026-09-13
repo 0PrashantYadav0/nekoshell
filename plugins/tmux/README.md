@@ -46,5 +46,5 @@ It takes a few seconds and only happens the first time.
 ## Remove
 
 `nekoshell plugin remove tmux` drops the `t` alias. Your `tmux.conf` stays
-where it is — it is yours — as does the TPM clone. Add `purge` to uninstall
+where it is — it is yours — as does the TPM clone. Add `--purge` to uninstall
 the formula too, as long as no other enabled plugin needs it.

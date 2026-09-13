@@ -1,117 +1,92 @@
-# Agent install contract for nekoshell
+# Agent contract for nekoshell
 
-This file is written as instructions to an agent installing nekoshell on a Mac. Follow it in order. Do not skip the precondition checks.
+Instructions to an AI agent installing nekoshell on a Mac or changing this repository. Follow the section that matches the task, in order.
 
-## 1. Preconditions
+## Installing
 
-Run each check command. If any fails, stop and report it; do not try to work around it.
+### 1. Preconditions
+
+Run each check. If one fails, stop and report it; do not work around it.
 
 ```bash
 uname -s               # must print Darwin
 command -v brew        # must print a path
-ls /Applications/iTerm.app
-zsh --version
+command -v zsh git     # both must print a path
 ```
 
-If Homebrew is missing, stop. Hand the human this command; do not run it yourself:
+If Homebrew is missing, hand the human this line and stop; do not run it yourself:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-If iTerm2 is missing, stop. The installer checks for it too and refuses to run without it. Hand the human this command:
+The installer asks Homebrew for Starship, antidote and the JetBrainsMono Nerd Font itself, only for whichever is missing, so nothing else has to be installed by hand first.
+
+### 2. Install
 
 ```bash
-brew install --cask iterm2
+[ -d ~/.nekoshell ] || git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
+cd ~/.nekoshell && git pull --ff-only && ./install.sh --yes --profile full --terminal all
 ```
 
-## 2. Where to run from
+`--terminal all` configures every terminal that has an adapter (iTerm2, kitty, Ghostty, Warp, Terminal.app), whether or not the app is installed; `--terminal installed` configures only the ones whose app is present, and is the better choice when the human did not ask for a particular terminal. `--profile` is `minimal`, `dev` or `full`; with `--yes` and no `--profile` the installer picks `minimal`. Add `--with a,b` or `--without c` to adjust the list, and do not add `aerospace` unless the human asked for it: it taps a second Homebrew tap and needs an Accessibility grant only they can make.
 
-Run the installer from a terminal that is not iTerm2: Terminal.app, or the Claude Code desktop app. The installer's last step needs iTerm2 quit so it can write global preferences; running from inside iTerm2 means that step cannot complete.
+The line is safe to run again: it updates an existing checkout, links nothing twice and backs up nothing it wrote itself. `./install.sh --check` prints what would change without changing anything.
 
-If you cannot avoid running from iTerm2, run the installer anyway and expect the "iTerm2 global preferences" step to be reported as pending.
-
-## 3. Install
+### 3. Verify
 
 ```bash
-[ -d ~/.nekoshell ] || git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell; cd ~/.nekoshell && git pull --ff-only && ./install.sh --yes
+nekoshell doctor --json
 ```
 
-Re-running this command is safe; it updates an existing checkout instead of failing on it, and the installer is idempotent. On a machine without Spotify, add `--skip-spotify`.
+Exit code 0 is success. The output is a JSON array of `{"status", "check", "detail"}` rows; only a `fail` row makes the exit code 1, and its detail names the fix. `warn` rows are expected on a fresh machine and are for the human: `iterm2 prefs` (quit iTerm2, run `nekoshell terminal apply`), `terminal-app default` (quit and reopen Terminal.app), `ghostty hotkey` (Accessibility), `spotify login` (`spotify_player authenticate`), `greet time` (over its 150 ms budget; report the number). Do not proceed with a `fail` row present.
 
-Do not add `--aerospace` unless the human explicitly asked for AeroSpace, the tiling window manager. It is opt-in for a reason: it taps a second Homebrew tap and needs the Accessibility permission, which only the human can grant, so passing the flag on your own initiative changes what gets installed on their machine without their say-so.
+### 4. Hand off
 
-## 4. Verify
+Give the human the steps that apply, then stop. The installer prints them as well.
 
-```bash
-bin/nekoshell-doctor --json
-```
+1. iTerm2: quit it, then run `nekoshell terminal apply` so the global preferences land.
+2. Terminal.app: quit and reopen it.
+3. Ghostty: System Settings, Privacy & Security, Accessibility, turn Ghostty on; then restart Ghostty once.
+4. Warp: sign in.
+5. Run `spotify_player authenticate` (needs Spotify Premium).
+6. Run `tmux` and press `C-a I` once to fetch the tmux plugins. Do not start a tmux session yourself.
+7. Open `nvim` once so lazy.nvim fetches its plugins.
 
-Success is exit code 0. Only `fail` rows block that; `warn` rows do not. On a fresh machine, expect `warn` on these checks, and report them to the human rather than trying to fix them yourself:
+### 5. Undo
 
-- `spotify`: the human still needs to log in.
-- `iterm2 prefs`: iTerm2 needs to be quit for this to apply.
-- `greet time`: the greeting took longer than its 150 ms budget, or could not be measured. Report the number; do not block on it.
-- `aerospace`: expected on every machine unless the human asked for `--aerospace`. Do not treat it as a problem.
+The installer moves every file it replaces into `~/.local/share/nekoshell/backup/<timestamp>/`, each set with a `manifest.txt`. Never delete that directory. `./uninstall.sh --yes` removes the plugins, unlinks the zshrc, restores every backup set and takes nekoshell's config out of every configured terminal; `--purge` also uninstalls the Homebrew formulas no other plugin needs. [docs/INSTALL.md](docs/INSTALL.md) lists what it leaves in place.
 
-The `theme` row is not one of them: a finished install reports `ok` with the flavour in force. If it warns, the theme was never rendered; `nekoshell-theme mocha` fixes it.
+## Extending
 
-Any `fail` row means the install is not done. Read that row's detail, fix the underlying problem, and re-run the doctor. Do not proceed to step 5 with a `fail` row present.
+### Adding a plugin
 
-## 5. Hand off to the human
+`tests/fixtures/plugins/demo` is a working plugin with one of everything; copy it to `plugins/<name>/`. A plugin is a directory with:
 
-Give the human these steps verbatim, then stop:
+- `plugin.toml`, with the nine keys `tests/core/repo.bats` requires, every one present even when empty: `name`, `summary`, `requires` (Homebrew formulas), `casks`, `taps`, `requires_plugins` (enabled first), `terminals` (`["any"]` or adapter ids), `conflicts`, `tags` (`media` is what `nekoshell music` looks for). `copy_guard` is optional: paths under `$HOME` whose presence skips the whole copy.
+- Hooks, each optional, run by `core/lib/plugin.sh` with `PLUGIN_NAME`, `PLUGIN_DIR` and `FLAVOR` set: `install.sh` and `uninstall.sh` on add and remove, `theme.sh` on every theme switch, `doctor.sh` reporting rows with `report ok|warn|fail "check" "detail"`.
+- `files/link/`, symlinked into `$HOME`, and `files/copy/`, copied once and then the user's.
+- `plugin.zsh` and `late.zsh`, sourced by the core zshrc before and after Starship; `antidote.txt`, zsh plugins appended to the generated bundle; `bin/`, put on `PATH`; `cmd/<name>.sh`, defining `cmd_<name>` and `usage_<name>`, which becomes `nekoshell <name>`.
+- `README.md` with exactly these headings: `## What it does`, `## Installs`, `## Files`, `## After install`, `## Remove`. The installer prints the "After install" section at the end of a run.
 
-1. Quit and reopen iTerm2.
-2. If the doctor reported `iterm2 prefs` as pending, quit iTerm2 and, from Terminal.app, run:
-   ```bash
-   ~/.nekoshell/install.sh --iterm-prefs
-   ```
-3. Run `spotify_player authenticate` (opens a browser; requires Spotify Premium).
-4. Press ⌥M to open the panel.
-5. Run `tmux` and press `C-a I` once. This installs the tmux plugins, including the Catppuccin status bar. Only a human can do it: the binding runs inside a tmux session. Do not start a tmux session yourself to do it for them.
-6. If you ran `install.sh --aerospace`: open System Settings, Privacy & Security, Accessibility, and turn AeroSpace on. Only a human can grant this permission.
+Add `tests/plugins/<name>.bats`, and a fake under `tests/fakes/` for any tool the hooks call.
 
-## 6. What changed, and how to undo it
+### Adding a terminal adapter
 
-The installer backs up every file it replaces before touching anything. Backups live at:
+`terminals/adapter.sh` is the contract; `terminals/<id>/adapter.sh` is sourced after it and must define all ten functions itself, even the ones it leaves at the default: `terminal_name`, `terminal_detect` (0 when the shell runs in it), `terminal_installed`, `terminal_capabilities` (words from `truecolor images background panel hotkey`), `terminal_font_name`, `terminal_apply FLAVOR`, `terminal_background PATH|none [OPACITY]`, `terminal_panel CMD...`, `terminal_remove` and `terminal_doctor`. Colours go through `theme_render_template` from a `.tmpl` beside the adapter. `terminal_detect_env` in `core/lib/terminal.sh` and the core zshrc both need to know the environment variable that identifies the terminal. A `zsh.zsh` beside the adapter is sourced by the core zshrc inside that terminal.
 
-```
-~/.local/share/nekoshell/backup/<timestamp>/
-```
+Write `terminals/<id>/README.md` with `## What it configures`, `## Panel`, `## Images`, `## Uninstall` and `## Known limits`, add `tests/terminals/<id>.bats`, and add the id to the `install` matrix in `.github/workflows/ci.yml`.
 
-Each backup directory has a `manifest.txt` listing every path it holds, relative to `$HOME`. Never delete this directory.
+### Checks
 
-To roll the installer back:
+`make tools` installs the linters and bats; `make hooks` installs the git hooks (pre-commit lints the staged files, commit-msg checks the message, pre-push runs the suite). `make check` is what CI runs: `scripts/lint.sh` (shellcheck, shfmt with `-i 2 -ci -bn`, the repository shape rules, actionlint, yamllint, markdownlint) and `bats -r tests`. `scripts/lint.sh --fix` rewrites the shell files with shfmt.
 
-```bash
-./uninstall.sh --yes
-```
+Commit messages follow `scripts/check-commit-msg.sh`: a conventional subject `type(scope): description` with the type one of feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, a lower-case description, no trailing full stop, 72 characters at most, a blank second line, and a trailer of the form `Co-Authored-By: Name <email>` when an AI assistant wrote it. Pull requests run four required jobs: lint, test, install (once per terminal adapter) and commits.
 
-This unstows the linked configs, restores the most recent backup, and removes the iTerm2 profiles.
+### Never
 
-It does not undo everything. It deliberately leaves behind:
-
-- the `[include]` line it added to `~/.gitconfig`
-- `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
-- your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
-- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugins in `~/.config/tmux/plugins/`
-- `~/.config/aerospace/`, if `install.sh --aerospace` ran; yours the same way once it has been copied there
-- `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
-- the cache in `~/.cache/nekoshell`
-- the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`
-- Homebrew packages, including AeroSpace if `install.sh --aerospace` ran
-
-It prints the commands for the last two so you can finish by hand if you want to.
-
-## 7. Rules
-
-- These files belong to the user. The installer writes each one once and then leaves it alone: `~/.config/nekoshell/zsh/local.zsh`, `~/.config/nekoshell/greet.conf`, `~/.config/nekoshell/art/`, `~/.config/starship.toml`, `~/.config/fastfetch/config.jsonc`, `~/.config/nvim/init.lua` with the three files under `~/.config/nvim/lua/nekoshell/`, and `~/.config/tmux/tmux.conf`. Everything else under `~/.config/nekoshell/` is a symlink into the checkout and must not be edited.
-- `~/.config/nekoshell/theme`, `~/.config/nekoshell/theme.zsh` and `~/.config/tmux/nekoshell-theme.conf` are nekoshell's own: the installer rewrites them every run. Change them with `nekoshell-theme <flavour>`, never by hand.
-- The installer never touches a Neovim or tmux config that is already there. If `~/.config/nvim/init.lua` or `init.vim` exists it copies no Neovim files at all; if `~/.tmux.conf` or `~/.config/tmux/tmux.conf` exists it copies no tmux config. It warns instead. Do not merge nekoshell's templates into the human's config to work around this; tell them the templates are in `templates/nvim/` and `templates/tmux/` and let them decide.
-- Do not start a tmux session to finish the install. The plugin install binding is a human step, and a session started from an agent's shell attaches to the terminal it is running in.
-- `nekoshell-theme <flavour>` is the one command that does overwrite `~/.config/starship.toml`, `~/.config/fastfetch/config.jsonc` and `~/.config/nekoshell/theme.zsh`. Only run it when the human asked for a different flavour; say so first if they have edited those files.
-- Do not run `defaults write` for iTerm2 while iTerm2 is running; it will be overwritten when iTerm2 quits.
-- Do not install pokemon-colorscripts with sudo.
-- Do not commit to this repo on the user's behalf.
-- `--aerospace` is opt-in. Do not pass it unless the human explicitly asked for AeroSpace; it taps a second Homebrew tap and needs an Accessibility grant only the human can make.
+- Edit a rendered file by hand (`~/.config/starship.toml`, `~/.config/nekoshell/theme.zsh`, `~/.config/fastfetch/config.jsonc`, a terminal's `nekoshell` config file). Change the template and re-run `nekoshell theme`.
+- Write a colour anywhere but `core/theme/palettes.json`. Everything that carries colour is rendered from it.
+- Add a copyrighted image. The art pack samples are the project's own pixel art; Pokémon sprites come from pokemon-colorscripts at greeting time.
+- Merge a shipped Neovim, tmux or AeroSpace config into one the human already has. The installer skips the copy and says so; the human decides.
+- Run `defaults write` for iTerm2 while it is running, install anything with sudo, or commit on the human's behalf.

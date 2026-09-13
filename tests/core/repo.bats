@@ -6,7 +6,7 @@
 load ../helpers
 
 # The nine keys every plugin.toml declares, and the five sections every
-# plugin README carries. Both lists are the contract WRITING-A-PLUGIN.md
+# plugin README carries. Both lists are the contract AGENTS.md
 # documents; tests/fixtures/plugins/demo is the copyable example.
 PLUGIN_KEYS="name summary requires casks taps requires_plugins terminals conflicts tags"
 PLUGIN_SECTIONS="What it does:Installs:Files:After install:Remove"

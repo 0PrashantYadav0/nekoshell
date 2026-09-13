@@ -1,61 +1,38 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.2.0 (unreleased)
 
-- Catppuccin look: iTerm2 theme, Starship prompt, themed bat and btop, JetBrainsMono Nerd Font.
-- All four Catppuccin flavours, switched with one command: `nekoshell-theme latte` re-renders the iTerm2 profiles, the Starship prompt, the greeting, bat, fzf, delta and btop. Mocha stays the default. Every colour comes from `data/palettes.json`, generated from the Catppuccin palette repository at a pinned commit, and `nekoshell-doctor` reports the flavour in force.
-- Greeting on new interactive terminals: Pokémon colourscripts or your own art pack, plus machine stats from fastfetch, under a 150 ms budget.
-- Greeting stats now include storage, battery, Wi-Fi and IP address alongside OS, host, uptime, shell, terminal, CPU, memory and packages.
-- Two-line Starship prompt: full working directory, git and language status on top, with duration, exit status and the clock right-aligned; the character prompt on its own line below.
-- Pokémon facts line in the greeting: national dex number, type and generation next to the name, from a generated PokéAPI data table.
-- Spotify panel: a hotkey-toggled iTerm2 window running spotify_player, with a shpotify remote fallback for non-Premium accounts.
-- fzf previews on every binding: Ctrl-T through bat, Alt-C as an eza tree, Ctrl-R wrapped so a long history line is readable, and an eza listing beside `cd` completions. `fd` supplies the file list when it is installed.
-- Command line syntax highlighting in the flavour's colours, and autosuggestions in its dimmest readable grey. The theme files are vendored from catppuccin/zsh-syntax-highlighting at a pinned commit and loaded from `theme.zsh`, above the antidote block, because the plugin reads its styles at load time.
-- atuin on Ctrl-R: shell history in a searchable local database, with sync and the update check off and the up arrow left on plain zsh history. `nekoshell-doctor` reports it as a tool.
-- An iTerm2 status bar on the main profile: working directory and git branch on the left, CPU, memory, battery and the clock on the right, coloured from the flavour. The installer downloads iTerm2's shell integration, which the first two components read, and the uninstaller leaves that file in place.
-- The cursor guide is on, and inactive split panes are dimmed.
-- The installer and `nekoshell-theme` run `bat cache --build`. bat reads themes out of its own cache rather than out of `~/.config/bat/themes`, so the vendored Catppuccin themes were invisible until now. `nekoshell-doctor` has a `bat theme` row that warns when the cache is stale.
-- Neovim, themed with the rest of the rig: a config in `~/.config/nvim/` with lazy.nvim, catppuccin following `$NEKOSHELL_THEME`, treesitter, telescope, oil, lualine, gitsigns, which-key, indent guides, autopairs and comments, on a Space leader. `vim` and `vi` reach it and `EDITOR` prefers it, both only when it is installed.
-- tmux, themed with the rest of the rig: `C-a` as the prefix, `|` and `-` for splits, `hjkl` to move and resize panes, a mouse, and a Catppuccin status bar on top. `t` starts or attaches to a session called main. The installer clones the tmux plugin manager at a pinned commit; the plugins themselves arrive when you press `C-a I` once inside tmux. `nekoshell-theme` writes the flavour into `~/.config/tmux/nekoshell-theme.conf`, which the config sources, so a switch never edits a file that is yours.
-- Both configs are yours the moment they land: copied once on the first install, never stowed, never overwritten. A config you already have is left completely alone and nothing is replaced, so nothing is backed up either: an `init.lua` or `init.vim` under `~/.config/nvim` stops the Neovim copy, and a `~/.tmux.conf` or `~/.config/tmux/tmux.conf` stops the tmux one. The installer warns and points at `templates/`.
-- Optional AeroSpace tiling window manager: `./install.sh --aerospace` taps `nikitabobko/tap`, installs the `aerospace` cask from a separate `Brewfile.aerospace`, and copies `templates/aerospace/aerospace.toml` to `~/.config/aerospace/aerospace.toml` on the first run, never overwritten after that, the same deal as the Neovim and tmux configs. It tiles whole macOS windows i3-style, alongside tmux rather than in place of it, with the same `hjkl` focus and move keys, five workspaces, and a service mode for resetting the layout or toggling floating. The Spotify panel keeps ⌥M for itself: AeroSpace never binds it, and the panel's own window floats through an `on-window-detected` rule. It is entirely opt-in because it needs the Accessibility permission, which only a human can grant, and its own Homebrew tap; the default install never touches it. `nekoshell-doctor` reports an `aerospace` row that warns, never fails, when it is not installed.
-- Idempotent installer with automatic backups, a `nekoshell-doctor` check, and a matching uninstaller.
-- Agent install contract (`AGENTS.md`) and a skill for installing nekoshell unattended.
+A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`, `theme`, `terminal`, `plugin`, `music` and `uninstall` replace the v0.1 scripts; `install.sh` and `uninstall.sh` only check for macOS and Homebrew and hand over. The v0.1 command names stay as three-line shims onto the subcommands.
 
-### Verified on real hardware
+### Plugins and profiles
 
-Installed on macOS 26.5.2 (Tahoe), Apple M1, 8 GB, zsh 5.9, iTerm2 3.7.0, Homebrew 6.0.22.
-`nekoshell-doctor` reports 14 ok, 2 warn, 0 fail; the greeting measures 85-88 ms against
-its 150 ms budget. The `theme` row was added after that run, so a current install reports one
-more ok. The two warnings are the expected ones: iTerm2 global preferences are
-pending (iTerm2 was running) and Spotify is not authenticated yet.
+- Everything past the shell and the prompt is a plugin under `plugins/<name>/`: a `plugin.toml` with nine keys, optional install, uninstall, theme and doctor hooks, files to link or copy, zsh to source, and commands the plugin adds to `nekoshell`. Ten ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify and aerospace.
+- Profiles name plugins: `minimal`, `dev` and `full`, or `pick` to choose by hand; `--with` and `--without` adjust the list.
+- Copied configs (Neovim, tmux, AeroSpace, greet.conf) are the user's after the first install; a config already at a guarded path skips the whole copy and says so.
+- `nekoshell music` opens the first enabled plugin tagged `media`, or the `music_player` setting, in the running terminal's panel.
 
-Five rows were added after that run: `theme`, `tool: atuin`, `bat theme`, `tool: nvim` and
-`tool: tmux`. On a machine installed before those packages joined the Brewfile, each reports
-fail until `brew bundle --file Brewfile` installs them, after which it moves to ok. `bat theme`
-reports ok once the installer or `nekoshell-theme` has run `bat cache --build`, and warns
-otherwise.
+### Five terminals
 
-The Neovim and tmux configs are not verified on real hardware yet. Neither tool was installed
-on the machine that ran the test suite, so the tests that ask `luac` or `tmux` to parse the
-shipped files skipped rather than ran. Everything else about them is covered: the copy, the
-backup, the flavour file, the plugin manager clone, the aliases and `EDITOR`.
+- Adapters for iTerm2, kitty, Ghostty, Warp and Apple Terminal.app, each behind the same ten functions: font, colours, a music panel, a background image where the terminal can draw one, a doctor block and a clean removal. Every colour comes from `core/theme/palettes.json`.
+- `nekoshell terminal use a,b|all|installed` configures several terminals; the theme, the doctor, `terminal background` and uninstall walk the whole list, and the running terminal is the one the greeting draws in and the panel opens from.
+- The core zshrc sources the running terminal's own hook (`terminals/<id>/zsh.zsh`); Ghostty's turns the quick terminal into the music panel.
+- `nekoshell theme auto` follows the macOS appearance; each new shell re-resolves it in the background.
 
-Fixed while verifying:
+### Repository
 
-- `Brewfile` no longer taps `homebrew/bundle`. That tap is deprecated and tapping it now
-  aborts the whole bundle, taking every package with it.
-- `Brewfile` no longer carries `cask "iterm2"`, because the cask collides with an existing
-  `/Applications/iTerm.app`. iTerm2 is a precondition instead, and the installer's preflight
-  now checks for it and stops with `brew install --cask iterm2` if it is missing.
-- `nekoshell-doctor` reads the greeting's timing line off the end of the line. Real
-  Pokémon art ends on a colour reset with no newline, so the line arrives as
-  `<ESC>[mgreet: 88 ms` and the old anchored pattern never matched it: every real machine
-  reported "could not measure".
+- One linter, `scripts/lint.sh` (shellcheck, shfmt, the repository shape rules, actionlint, yamllint, markdownlint), conventional commit messages checked by `scripts/check-commit-msg.sh`, git hooks installed by `make hooks`, and four required CI jobs: lint, test, install (once per terminal adapter) and commits.
+- `tests/core/repo.bats` guards the plugin and adapter contracts and keeps code off the v0.1 layout. Every shell file is formatted with `shfmt -i 2 -ci -bn`.
 
-The Spotify panel keeps window type 6 ("Right of screen"). Its docking is still unconfirmed
-on real hardware: capturing the screen needs Screen Recording permission and creating the
-window over AppleScript needs iTerm2's "dangerous commands" prompt answered, neither of
-which a script can grant itself. Press ⌥M after restarting iTerm2 to check. If the panel
-does not dock to the right edge, re-run the installer with `NEKOSHELL_PANEL_WINDOW_TYPE`
-set to 10, 5, 9, 2 or 4 until it does.
+### Fixes
+
+- A user's own `~/.config/starship.toml` or fastfetch config is backed up before the first render, and uninstall restores every backup set, not only the newest.
+- A dry run records nothing: `--dry-run` and `--check` no longer leave the toml naming plugins or a theme that were never installed.
+- A v0.1 machine is migrated: the recorded flavour is kept, the profile defaults to `full`, and the twelve stale links v0.1 left are swept.
+- The zshrc sources iTerm2's shell integration, so the status bar's directory and git components fill in, and uninstall removes the iTerm2 dynamic profile.
+- The greeting and `bin/nekoshell` resolve a link to a link, `help` and `version` create nothing in `$HOME`, and plugins are handed the flavour in force rather than mocha when nothing is recorded yet.
+
+Verified on macOS 26 (Tahoe) with iTerm2, kitty, Ghostty, Warp and Terminal.app installed; see the terminal READMEs for the human steps each still needs.
+
+## 0.1.0
+
+The first version: an iTerm2-only rig installed by one script that stowed its configs into the home directory. It had the Catppuccin flavours switched by `nekoshell-theme`, the Pokémon greeting with fastfetch stats, the ⌥M Spotify panel as an iTerm2 hotkey window, fzf previews, atuin, Neovim and tmux configs copied once, opt-in AeroSpace, a Brewfile, a doctor and an uninstaller. v0.2 replaces its layout entirely; the installer migrates a v0.1 machine.
