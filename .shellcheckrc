@@ -1,0 +1,5 @@
+# shellcheck settings for nekoshell. Everything is bash 3.2 (macOS's /bin/bash),
+# and files that `source` others with a computed path say so with
+# `# shellcheck source=/dev/null` at the site rather than being excused here.
+shell=bash
+external-sources=true

@@ -1,0 +1,13 @@
+# yamllint for the workflows and any plugin YAML. GitHub's own examples do not
+# start with "---" and use "on:" as a key, so those two defaults are relaxed.
+extends: default
+rules:
+  document-start: disable
+  truthy:
+    check-keys: false
+  line-length:
+    max: 140
+  comments:
+    min-spaces-from-content: 1
+ignore: |
+  .planning/
