@@ -1,0 +1,13 @@
+name = "tmux"
+summary = "tmux with a C-a prefix, vim-style panes and the Catppuccin status line"
+requires = ["tmux"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
+# Either path means tmux already reads a config of someone else's. tmux 3.x
+# prefers ~/.config/tmux/tmux.conf over ~/.tmux.conf, so ours would quietly
+# win a ~/.tmux.conf that is still in use.
+copy_guard = [".tmux.conf", ".config/tmux/tmux.conf"]
