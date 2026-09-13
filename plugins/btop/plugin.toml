@@ -1,0 +1,9 @@
+name = "btop"
+summary = "A resource monitor that follows the theme, on top"
+requires = ["btop"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
