@@ -1,16 +1,16 @@
 # Install
 
-This is the human version of the install steps. For an AI agent, see [AGENTS.md](../AGENTS.md).
+The human version of the install steps. For an AI agent, see [AGENTS.md](../AGENTS.md).
 
-## 0. Install iTerm2 first
+## 1. Before you start
 
-nekoshell themes iTerm2, so iTerm2 has to be there before you start. The installer checks for it and stops if it is missing.
+nekoshell runs on macOS only and needs Homebrew, zsh and git. `install.sh` checks for macOS and Homebrew and stops with the Homebrew install line if it is missing.
 
-```bash
-brew install --cask iterm2
-```
+The installer puts Starship, antidote and the JetBrainsMono Nerd Font in through Homebrew during step four, only for whichever is missing. `nekoshell doctor` reports each one afterwards: `starship` fails when the prompt is absent, `zsh plugin manager` warns when antidote is, and `font` warns when the cask is, with the command to run.
 
-## 1. Clone and run the installer
+Install the terminal you want before running the installer, so it can be detected and configured. iTerm2, kitty, Ghostty and Warp are all Homebrew casks; Terminal.app is already there.
+
+## 2. Clone and run the installer
 
 ```bash
 git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
@@ -18,133 +18,128 @@ cd ~/.nekoshell
 ./install.sh
 ```
 
-Run this from Terminal.app, not from iTerm2. The last installer step writes iTerm2's global preferences, and iTerm2 rewrites those preferences itself when it quits. If iTerm2 is running while `install.sh` writes them, iTerm2 will overwrite the change on its next quit. Running from Terminal.app lets the installer check whether iTerm2 is running and skip that step cleanly instead of writing a value that gets lost.
+`install.sh` hands over to `nekoshell install`, which runs seven steps:
 
-The installer asks for confirmation, then runs twelve steps: it installs Homebrew packages, backs up any files it is about to replace, renders the theme and copies your Neovim, tmux and greeting configs into place, migrates aliases out of your old `.zshrc`, links its own configs with `stow`, records where you cloned it, installs pokemon-colorscripts, clones the tmux plugin manager, adds a git-delta include to `~/.gitconfig`, downloads iTerm2's shell integration, writes two iTerm2 profiles, and applies iTerm2's global preferences.
+1. **Terminal.** The terminal this shell runs in, when it has an adapter. Otherwise the installer lists the installed terminals and asks. `--terminal ID`, `--terminal a,b`, `--terminal all` (every adapter) or `--terminal installed` (every app that is present) answers it without asking.
+2. **Profile.** `minimal` (modern-cli, greet), `dev` (adds fzf, atuin, lazygit, btop, nvim, tmux), `full` (adds spotify) or `pick`, a menu that toggles plugins one by one. `--profile P` answers it; `--with a,b` and `--without c` adjust the list. With `--yes` and no `--profile`, `minimal` is used.
+3. **Confirm.** Skipped with `--yes` or `--check`.
+4. **Backup and core.** Aliases in an existing `~/.zshrc` are moved to `~/.config/nekoshell/zsh/local.zsh`, the old file goes into the backup set, nekoshell's zshrc is linked in its place, and `~/.config/nekoshell/nekoshell.toml` is written.
+5. **Theme.** The Starship config and the shell colours are rendered for the recorded flavour (mocha the first time), then every configured terminal.
+6. **Plugins.** Each plugin in the profile is enabled: its Homebrew formulas and casks, its linked and copied files, its install and theme hooks.
+7. **Doctor and next steps.** The doctor runs, then the "After install" section of every enabled plugin's README is printed.
 
-Re-running `./install.sh` is safe at any time. Use `install.sh --check` to see what it would change without changing anything, and `install.sh --skip-spotify` if this machine has no Spotify account.
+Every file the installer replaces is moved into `~/.local/share/nekoshell/backup/<timestamp>/` first, with a `manifest.txt` beside it. Running `./install.sh` again is safe: it links nothing twice and backs up nothing it wrote itself.
 
-The installer records where you cloned it and writes that path into the iTerm2 panel profile. If you move the checkout, re-run `./install.sh` from its new location.
+`./install.sh --check` prints what would change and changes nothing. `--dry-run` does the same without skipping the confirmation.
 
-Your greeting settings are copied to `~/.config/nekoshell/greet.conf` on the first install. That file is yours: later installs leave it alone. The same goes for `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc`, which the first install renders from `templates/`, and for `~/.config/nvim/` and `~/.config/tmux/tmux.conf`, which it copies there.
+## 3. Steps only you can do
 
-A Neovim or tmux config you already have is left completely alone. If `~/.config/nvim/init.lua` or `~/.config/nvim/init.vim` exists, the installer copies no Neovim files at all and warns instead; if `~/.tmux.conf` or `~/.config/tmux/tmux.conf` exists, it copies no tmux config. Nothing of yours is replaced, moved or merged, so there is nothing to restore either. Nekoshell's versions stay in `templates/nvim/` and `templates/tmux/` if you want to read or copy from them.
+The installer prints the ones that apply. By terminal:
 
-## 2. Steps only you can do
+- **iTerm2.** If iTerm2 was running during the install, its global preferences (default profile, margins, tab bar, pane dimming) could not be written: iTerm2 rewrites that file from memory when it quits. Quit iTerm2, then run `nekoshell terminal apply`. The doctor's `iterm2 prefs` row warns until this is done. The dynamic profiles and the ⌥M hotkey window need nothing: iTerm2 picks them up by itself.
+- **kitty.** Nothing. New windows read the new config; press ctrl+shift+f5 in an open one. alt+m opens the music panel from inside kitty.
+- **Ghostty.** Grant Accessibility (System Settings, Privacy & Security, Accessibility), or the global ⌥M keybind does nothing. Restart Ghostty once: it reloads most of its config on ⌘⇧, (comma), but the quick terminal's position only on a restart.
+- **Warp.** Sign in to Warp. It hot-reloads its settings file, so the theme and font show as soon as it is running.
+- **Terminal.app.** Quit and reopen Terminal.app. It reads its profiles and the default profile name once, at launch, so windows opened before then keep the old profile. The doctor's `terminal-app default` row says so until you do.
 
-The installer prints these at the end. Do them in order:
+By plugin, when enabled:
 
-1. **Quit and reopen iTerm2.** This loads the new profile and the global preferences.
-2. **If prompted, run `install.sh --iterm-prefs`.** If iTerm2 was open during install, the installer could not write its global preferences and told you so. Quit iTerm2 first, then from Terminal.app run:
-   ```bash
-   ~/.nekoshell/install.sh --iterm-prefs
-   ```
-3. **Run `spotify_player authenticate`.** This opens a browser to log in. It requires a Spotify Premium account; without one, the panel falls back to controlling the Spotify desktop app instead of streaming directly.
-4. **Press ⌥M anywhere** to open the Spotify panel.
-5. **Start `tmux` and press `C-a I` once.** The installer clones the tmux plugin manager, but the plugins themselves are fetched by the plugin manager's own install binding, which only runs inside a tmux session. Press it once and the status bar takes the Catppuccin colours. Until you do, tmux still works; it just wears its default look.
+- **spotify.** Run `spotify_player authenticate`; it opens a browser and needs a Spotify Premium account. Without spotify_player the panel becomes a keyboard remote for the desktop app.
+- **tmux.** Start `tmux` and press `C-a I` once. TPM then fetches the plugins, including the Catppuccin status line.
+- **nvim.** Open `nvim` once; lazy.nvim fetches its plugins on the first start.
+- **aerospace.** Not in any profile. If you add it, open AeroSpace once and grant it Accessibility.
 
-## 3. Themes
+Then open a new terminal window: the prompt, the greeting and the shell colours are read when a shell starts.
 
-nekoshell ships all four Catppuccin flavours and installs mocha. To change flavour:
-
-```bash
-nekoshell-theme list      # latte, frappe, macchiato, mocha
-nekoshell-theme latte
-nekoshell-theme current
-```
-
-One command moves everything that carries colour: the two iTerm2 profiles, the Starship prompt (`~/.config/starship.toml`), the greeting (`~/.config/fastfetch/config.jsonc`), bat, fzf and delta (through `~/.config/nekoshell/theme.zsh`) and btop's `color_theme`. Every colour comes from one file, `data/palettes.json`, generated by `scripts/gen-palettes.py` from the Catppuccin palette repository.
-
-iTerm2 reloads the profile colours by itself within a few seconds. The prompt, greeting and shell colours need a new terminal window, because they are read once when a shell starts.
-
-Your choice is recorded in `~/.config/nekoshell/theme` and survives re-installs: `./install.sh` renders whatever flavour is recorded there, not mocha.
-
-`nekoshell-theme` overwrites `~/.config/starship.toml`, `~/.config/fastfetch/config.jsonc` and `~/.config/nekoshell/theme.zsh`. That is the point of it, but it does mean edits of your own to those three files are lost on a flavour switch, unlike a re-install, which leaves them alone. Keep anything you want to survive in `~/.config/nekoshell/zsh/local.zsh`.
-
-To change a colour rather than a flavour, edit the hex in `data/palettes.json` and re-run `nekoshell-theme <flavour>`.
-
-## 4. Pick the profile by hand (if it did not switch automatically)
-
-1. Open iTerm2 Settings.
-2. Go to Profiles.
-3. Select **nekoshell**.
-4. Click Other Actions, then Set as Default.
-
-## 5. Verify
+## 4. Check
 
 ```bash
-nekoshell-doctor
+nekoshell doctor
 ```
 
-This prints one line per check: font, tools (including `nvim` and `tmux`), zshrc, iTerm2 profiles and preferences, theme, bat theme, pokemon-colorscripts, greeting time, Spotify, and AeroSpace. It exits 1 if any check fails. Add `--json` for machine-readable output.
+One line per check. `ok` and `warn` rows are fine; the command exits 1 only when a row says `fail`, and each `fail` row names the command that fixes it. `nekoshell doctor --json` prints the same rows as JSON; `--plugin NAME` checks one plugin.
 
-## Optional: AeroSpace tiling windows
-
-[AeroSpace](https://github.com/nikitabobko/AeroSpace) tiles whole macOS windows, i3-style, alongside tmux: tmux tiles panes inside one terminal window, AeroSpace tiles windows across the whole screen. It needs the Accessibility permission and its own Homebrew tap, so it is opt-in. Nothing above installs or touches it.
+## 5. Themes
 
 ```bash
-./install.sh --aerospace
+nekoshell theme list      # frappe, latte, macchiato, mocha
+nekoshell theme latte     # switch everything
+nekoshell theme current   # the flavour in force
+nekoshell theme auto      # follow the macOS appearance
 ```
 
-This taps `nikitabobko/tap`, installs the `aerospace` cask from `Brewfile.aerospace`, and copies `templates/aerospace/aerospace.toml` to `~/.config/aerospace/aerospace.toml` the first time it runs. After that the file is yours, the same deal as the Neovim and tmux configs: a re-install leaves your edits alone. An AeroSpace config already there before the first `--aerospace` run is backed up rather than replaced.
+A switch re-renders `~/.config/starship.toml`, `~/.config/nekoshell/theme.zsh` (bat, fzf, syntax highlighting, autosuggestions), every configured terminal and every enabled plugin's themed files (the fastfetch config, btop's `color_theme`, the tmux flavour file). `auto` renders mocha when macOS is dark and latte when it is light; set `theme_auto_dark` and `theme_auto_light` in `nekoshell.toml` to change the pair. Each new interactive shell runs `nekoshell theme --resolve` in the background, so the switch follows the appearance without a command.
 
-Then, by hand: open System Settings, Privacy & Security, Accessibility, and turn AeroSpace on. Only you can do this; AeroSpace tiles windows through that permission and cannot request it itself.
+iTerm2, kitty and Warp pick up the new colours by themselves or in the next window; Ghostty needs ⌘⇧, (comma) or a restart; Terminal.app re-reads the profile at launch. The prompt and greeting want a new shell.
 
-The shipped keybinds are in the README's [tiling windows section](../README.md#optional-tiling-windows-with-aerospace). `⌥M` is never one of them: it stays with the Spotify panel, and the panel's own window floats instead of tiling.
-
-## Troubleshooting
-
-**Icons look wrong (boxes or question marks).** The JetBrainsMono Nerd Font is not selected in iTerm2. Open iTerm2 Settings, Profiles, Text, and set the font to a JetBrainsMono Nerd Font variant.
-
-**No greeting appears.** Run `nekoshell-greet` directly to see any error, and `nekoshell-doctor` to check that fastfetch and pokemon-colorscripts are installed. The greeting is also suppressed on purpose inside tmux, over SSH (unless `NEKOSHELL_GREET_SSH=1`), and inside Claude Code.
-
-**Wi-Fi shows `<redacted>` or is missing.** Give iTerm2 Location Services access in System Settings, Privacy and Security, Location Services.
-
-**The status bar along the bottom is missing.** iTerm2 reads the status bar out of the profile when a session starts, so a window that was already open never gets one. Open a new window, or quit and reopen iTerm2. If it is still missing, check that the nekoshell profile is the one in use (iTerm2 Settings, Profiles) and that Settings, Profiles, Session, Status bar enabled is ticked for it.
-
-**The status bar shows no working directory or git branch.** Those two components read iTerm2's shell integration. The installer downloads it to `~/.iterm2_shell_integration.zsh` and `.zshrc` sources it, so open a new terminal after installing. If the file is missing, re-run `./install.sh`, or fetch it by hand:
+## 6. Terminals
 
 ```bash
-curl -fsSL https://iterm2.com/shell_integration/zsh -o ~/.iterm2_shell_integration.zsh
+nekoshell terminal list           # every adapter, installed or not, * for the configured ones
+nekoshell terminal use ghostty    # configure one more terminal
+nekoshell terminal use all        # every terminal with an adapter
+nekoshell terminal use installed  # every terminal whose app is on this Mac
+nekoshell terminal remove warp    # take nekoshell's config back out of one
+nekoshell terminal apply          # re-render every configured terminal
+nekoshell terminal background ~/Pictures/bg.jpg 0.85
+nekoshell terminal background none
 ```
 
-**bat and the previews are not in the Catppuccin colours.** bat reads its themes out of its own cache, not out of `~/.config/bat/themes`. The installer and `nekoshell-theme` rebuild it; `nekoshell-doctor` reports the `bat theme` row as a warning when it is stale. Rebuild it by hand with:
+A machine can configure several terminals. The greeting and the panel always act on the terminal the shell is running in; the theme, the doctor and uninstall walk every configured one. What each adapter writes, how its panel opens and what it cannot do is in `terminals/<id>/README.md`.
+
+## 7. Plugins
 
 ```bash
-bat cache --build
+nekoshell plugin list
+nekoshell plugin info tmux
+nekoshell plugin add aerospace
+nekoshell plugin remove --purge btop   # --purge also uninstalls formulas no other plugin needs
 ```
 
-**Ctrl-R opens the old fzf history instead of atuin.** atuin is installed by `brew bundle`, so a run with `--skip-brew` leaves it out. Check `nekoshell-doctor` for the `tool: atuin` row, install it with `brew install atuin`, and open a new terminal.
+Each plugin's README (`nekoshell plugin info NAME` prints it) says what it installs, which files it links or copies, and what removing it leaves behind.
 
-**The tmux status bar is not in the Catppuccin colours.** The theme is a tmux plugin, so it arrives with `C-a I` inside a tmux session, not with `./install.sh`. Check that `~/.config/tmux/plugins/tpm` exists (re-run `./install.sh` if it does not), start tmux and press `C-a I`, then `C-a r` to reload.
+## Upgrading
 
-**Neovim opens with no plugins and no colours.** The first `nvim` clones lazy.nvim and then installs the plugins, which takes a few seconds and needs the network. Watch the lazy.nvim window; quit and start it again when it finishes. If it never starts, check `nekoshell-doctor` for the `tool: nvim` row.
+```bash
+cd ~/.nekoshell
+git pull --ff-only
+./install.sh
+```
 
-**tmux does not follow a flavour switch.** `nekoshell-theme` rewrites `~/.config/tmux/nekoshell-theme.conf`, and tmux only reads it when a config is loaded. Press `C-a r` in a running session, or start a new one.
+A second install asks the terminal and profile again (pass `--terminal` and `--profile`, or `--yes`, to skip that), keeps the recorded theme and every plugin already enabled, and re-renders everything from the new checkout. Configs that were copied into your home (Neovim, tmux, greet.conf, AeroSpace) are yours and are not touched; the shipped versions stay readable under `plugins/<name>/files/copy/`.
 
-**The panel does not open.** Check iTerm2 Settings, Keys, Hotkey Window. It should show ⌥M bound to the nekoshell panel profile. If the binding is missing, re-run `./install.sh` to rewrite the profiles. `nekoshell-doctor` reports the `iterm2 profiles` row as stale when the profile still points at an old checkout location.
+### Coming from v0.1
 
-**AeroSpace does not tile anything.** It needs the Accessibility permission, which only you can grant: System Settings, Privacy & Security, Accessibility, turn AeroSpace on. `nekoshell-doctor` reports the `aerospace` row as `warn` until AeroSpace is installed; the row does not check the permission itself.
+A machine installed by nekoshell v0.1 has `~/.config/nekoshell/theme` and a set of symlinks into a directory this version no longer has. The installer recognises the marker, keeps the recorded flavour, and, when no `--profile` is given, uses `full` so that every config v0.1 had in place stays in use. It then sweeps the twelve paths v0.1 linked (the atuin, lazygit, spotify-player, bat and btop configs, the delta gitconfig and the old zsh files), removing each link that is broken or still points into the checkout's old tree, and drops the old `~/.zshrc` link rather than backing it up. A link of your own that resolves to a real file is left alone. The five v0.1 command names still work as three-line shims onto the matching subcommands.
 
 ## Uninstall
 
 ```bash
-./uninstall.sh
+cd ~/.nekoshell
+./uninstall.sh          # asks first; --yes skips the question
+./uninstall.sh --purge  # also uninstalls the formulas no other plugin needs
 ```
 
-This unstows the linked configs, restores the files it backed up, and removes the iTerm2 profiles.
+It removes every enabled plugin in reverse order (their linked files and install-hook changes, such as the delta include in `~/.gitconfig`), unlinks the zshrc, restores every backup set newest first, deletes the Starship config it rendered, takes nekoshell's config back out of every configured terminal, and deletes `theme.zsh`, `antidote.txt` and `nekoshell.toml`.
 
-It does not undo everything. It deliberately leaves behind:
+Left in place, on purpose: `~/.config/nekoshell/zsh/local.zsh`, `greet.conf` and the art pack, `~/.config/fastfetch/config.jsonc`, `~/.config/tmux/nekoshell-theme.conf`, `~/.config/btop/btop.conf`, every config a plugin copied into your home (Neovim, tmux, AeroSpace), the pokemon-colorscripts checkout under `~/.local/share` with its `~/.local/bin` link, the TPM clone, the backup directory, `~/.iterm2_shell_integration.zsh`, and the Homebrew packages unless you passed `--purge`. iTerm2's global preferences are the one thing an uninstall cannot undo while iTerm2 runs; it prints the `defaults delete` line to run with iTerm2 quit.
 
-- the `[include]` line it added to `~/.gitconfig`
-- `~/.local/bin/pokemon-colorscripts` and its clone in `~/.local/share/pokemon-colorscripts`
-- your own files in `~/.config/nekoshell/`: `zsh/local.zsh`, `greet.conf`, `art/`, `theme` and `theme.zsh`
-- `~/.config/nvim/` and `~/.config/tmux/`, which are yours once the first install has copied them there, and the tmux plugins in `~/.config/tmux/plugins/`
-- `~/.config/aerospace/`, if you ran `./install.sh --aerospace`; yours the same way once it has been copied there
-- `~/.iterm2_shell_integration.zsh`, which is iTerm2's own file
-- `~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc` when there was no earlier file of yours to restore over them, and the `color_theme` line it set in `~/.config/btop/btop.conf`
-- the cache in `~/.cache/nekoshell`
-- the five other iTerm2 defaults it wrote: `HideTab`, `TerminalMargin`, `TerminalVMargin`, `PromptOnQuit`, `HideScrollbar`
-- Homebrew packages, including AeroSpace if you installed it
+## Troubleshooting
 
-It prints the commands for the last two so you can finish by hand if you want to.
+Start with `nekoshell doctor`. Every row that is not `ok` names the check and, when there is one, the command that fixes it.
+
+**Icons show as boxes.** The `font` row says the Nerd Font is not installed, or the terminal's own `font` row says the terminal is not using it. Install the cask and run `nekoshell terminal apply`.
+
+**No prompt, no colours, plain zsh.** The `zshrc` row fails when `~/.zshrc` is not nekoshell's link (run `nekoshell install`), the `starship` row when Starship is missing, and the `antidote` row when no plugin has been enabled yet. A missing antidote package gives no row at all: the zshrc skips the plugin block quietly, so `brew install antidote` and open a new shell.
+
+**No greeting.** `nekoshell greet` prints it on demand and shows any error. It is silent on purpose inside tmux, inside the panel, over SSH (unless `NEKOSHELL_GREET_SSH=1`), when stdout is not a terminal, and under Claude Code. The `greet time` row warns when the greeting takes longer than 150 ms.
+
+**The panel does not open.** iTerm2: the hotkey window is in the dynamic profile; the `iterm2 profiles` row says whether it is there, and `nekoshell terminal apply` rewrites it. Ghostty: the `ghostty hotkey` row stays a warning until Accessibility is granted, which the doctor cannot see. kitty: alt+m works from inside a kitty window only. Warp and Terminal.app have no key; `nekoshell music` opens a window.
+
+**A terminal shows the old colours.** iTerm2 re-reads its dynamic profile within seconds. kitty needs a new window or ctrl+shift+f5. Ghostty needs ⌘⇧, (comma) or a restart. Warp watches its theme directory but can take a while to notice a new one; restart it. Terminal.app reads profiles at launch; quit and reopen it.
+
+**tmux ignores the theme.** The status line is a tmux plugin, fetched by `C-a I` inside a session. After a theme switch, press `C-a r` or start a new session.
+
+**Neovim has no plugins.** The first `nvim` clones lazy.nvim and the plugins, which needs the network. Quit and start it again when it finishes.
+
+**Spotify does not play.** The `spotify login` row warns until `spotify_player authenticate` has run. Without Premium, `nekoshell-spotify --remote` drives the desktop app instead.

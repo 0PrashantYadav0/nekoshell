@@ -38,4 +38,4 @@ answer that dialog for you. `nekoshell doctor` warns until AeroSpace answers.
 
 `nekoshell plugin remove aerospace` drops it from the enabled list. Your
 `aerospace.toml` stays where it is — it is yours — and the app keeps running
-until you quit it. Add `purge` to uninstall the cask too.
+until you quit it. Add `--purge` to uninstall the cask too.

@@ -1,54 +1,30 @@
-# Remote hosts, Codespaces, devcontainers
+# Installing over SSH
 
-nekoshell v0.1 targets macOS. This page covers what still works when you connect to a remote host over SSH, or work inside Codespaces or a devcontainer, and what does not.
+nekoshell runs on macOS only: `install.sh` checks `uname -s` and stops on anything else, and there is no Linux port. This page is about installing it on another Mac that you reach over SSH, and what behaves differently there.
 
-## What carries over
+## Install on the remote Mac
 
-If the remote host is a Mac and you install nekoshell there directly:
-
-```bash
-./install.sh --yes --skip-spotify
-```
-
-`--skip-spotify` skips the "run `spotify_player authenticate`" hand-off line, since a remote session usually has no browser to authenticate with.
-
-Once installed, these work the same as local:
-
-- The zsh config and Starship prompt.
-- Your aliases (`~/.config/nekoshell/zsh/local.zsh` and the shipped `aliases.zsh`).
-- bat, eza, fzf, and zoxide, if you also installed them (Linuxbrew works for these on Linux hosts).
-- The greeting, but only when both are true:
-  - `NEKOSHELL_GREET_SSH=1` is set (the greeting is off over SSH by default).
-  - fastfetch and pokemon-colorscripts are installed on that host.
-
-## What does not carry over
-
-- **Fonts.** The Nerd Font icons only render in a local terminal that has the font installed. A remote shell inherits whatever font your local terminal is already using.
-- **The iTerm2 panel.** The hotkey window is a local iTerm2 feature; it has no remote equivalent.
-- **Spotify.** Neither spotify_player nor the shpotify remote control a Spotify session from inside an SSH connection.
-
-## Linux hosts, Codespaces, devcontainers
-
-`install.sh` checks `uname -s` and refuses to run on anything but Darwin. There is no Linux port yet. To get the shell config working on a Linux host today, copy two pieces by hand and source them from your own shell config:
+Over an SSH session there is no terminal app to detect and nobody to answer a menu, so give the installer everything on the command line:
 
 ```bash
-mkdir -p ~/.config/nekoshell-zsh
-sed 's/@@FLAVOR@@/mocha/' ~/.nekoshell/templates/starship.toml > ~/.config/starship.toml
-cp ~/.nekoshell/stow/config/.config/nekoshell/zsh/*.zsh ~/.config/nekoshell-zsh/
-cp ~/.config/nekoshell/theme.zsh ~/.config/nekoshell-zsh/
+ssh other-mac
+git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
+cd ~/.nekoshell
+./install.sh --yes --profile dev --terminal installed
 ```
 
-The Starship config is a template on this side: `@@FLAVOR@@` picks the Catppuccin
-flavour, so swap `mocha` for `latte`, `frappe` or `macchiato` if that is what you
-run locally. `theme.zsh` carries `BAT_THEME` and `FZF_DEFAULT_OPTS`; copying it
-from the Mac keeps the remote shell on the same flavour.
+`--terminal installed` configures every terminal whose app is on that Mac; name one instead (`--terminal iterm2`) when you know which one its owner uses. Homebrew, zsh and git have to be there already, and so do Starship, antidote and the Nerd Font, which the installer does not install (see [INSTALL.md](INSTALL.md)). `nekoshell doctor` on the remote Mac reports what is missing.
 
-Then add to your `.zshrc`:
+The human steps are the same as a local install and have to be done at that Mac: quitting and reopening Terminal.app, quitting iTerm2 and running `nekoshell terminal apply` for its global preferences, granting Ghostty Accessibility, signing in to Warp, `spotify_player authenticate`, and `C-a I` inside tmux. Each terminal's `terminals/<id>/README.md` says which apply to it.
 
-```bash
-export STARSHIP_CONFIG="$HOME/.config/starship.toml"
-eval "$(starship init zsh)"
-for f in "$HOME"/.config/nekoshell-zsh/*.zsh; do source "$f"; done
-```
+## What an SSH session sees
 
-For Codespaces, point your dotfiles repository setting at this repo, but wait for Linux support before expecting `install.sh` to run there. There is no `remote/bootstrap.sh` shipped in v0.1; the manual copy above is the only path until Linux support lands.
+The shell config, prompt, aliases, fzf, atuin and the modern-cli tools work the same inside the SSH session, since they run on the remote Mac.
+
+The greeting is silent over SSH. `plugins/greet/late.zsh` and the greet script both check `SSH_CONNECTION` and skip the greeting unless `NEKOSHELL_GREET_SSH` is set to exactly `1`; setting it to `0` means no. Put `export NEKOSHELL_GREET_SSH=1` in `~/.config/nekoshell/zsh/local.zsh` on the remote Mac to get it back, and note that inline images then depend on the terminal you are connecting from, not the one configured on the remote Mac.
+
+The panel and the terminal configuration are for the remote Mac's own windows. `nekoshell music` inside an SSH session finds no terminal adapter for the connection and runs the player in place; inside tmux it opens a popup, which works anywhere. Fonts and colours are drawn by your local terminal, so what you see over SSH is your local terminal's font and its own theme.
+
+## What an AI agent does
+
+An agent installing nekoshell on a Mac it reaches over SSH follows [AGENTS.md](../AGENTS.md) unchanged: the same non-interactive install line, `nekoshell doctor --json` to verify, and the human steps handed back rather than attempted. The only difference is that the terminal cannot be detected, so the agent passes `--terminal installed` or a named id.

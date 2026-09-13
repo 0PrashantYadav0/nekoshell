@@ -3,74 +3,51 @@
 ## Setup
 
 ```bash
-brew install bats-core shellcheck
+make tools   # brew install bats-core shellcheck shfmt actionlint yamllint markdownlint-cli2
+make hooks   # git config core.hooksPath .githooks
 ```
+
+The hooks are the same checks CI runs, earlier: pre-commit lints the staged files, commit-msg checks the message, pre-push runs the whole suite. `git commit --no-verify` and `git push --no-verify` skip one run when you need to.
 
 ## Before opening a pull request
 
-Run the tests:
-
 ```bash
-bats -r tests
+make lint    # scripts/lint.sh
+make test    # bats -r tests
+make check   # both, in CI's order
 ```
 
-Run the linter, the same line CI runs:
+`scripts/lint.sh` runs shellcheck, shfmt, the repository shape rules (executables are executable, no CRLF, every `plugin.toml` has its nine keys, every adapter its ten functions), actionlint, yamllint and markdownlint. `scripts/lint.sh FILE...` checks only those files; `scripts/lint.sh --fix` rewrites the shell files with `shfmt -i 2 -ci -bn` (two-space indent, indented case arms, binary operators may start a line). A linter you do not have installed is skipped with a note on a laptop and is a failure on CI.
 
-```bash
-shellcheck -x install.sh uninstall.sh bin/* core/lib/*.sh core/cmd/*.sh \
-  terminals/adapter.sh terminals/*/adapter.sh \
-  plugins/*/*.sh plugins/*/bin/* plugins/*/cmd/*.sh \
-  tests/helpers.bash tests/fakes/*
-```
-
-Both must pass. Tests never touch your real `$HOME`: `tests/helpers.bash` gives
-every test a throwaway one, and `tests/fakes/` stands in for the tools an
-install would otherwise run.
+Tests never touch your real `$HOME`: `tests/helpers.bash` gives every test a throwaway one, and `tests/fakes/` stands in for the tools an install would otherwise run. Tests live under `tests/core`, `tests/plugins/<name>.bats` and `tests/terminals/<id>.bats`.
 
 ## Commit messages
 
-Use [conventional commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, and so on.
+`scripts/check-commit-msg.sh` enforces these, in the commit-msg hook and over every commit of a pull request:
 
-## Code style
+- The subject is a conventional commit, `type(scope): description`, with the type one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. The scope is optional; `!` before the colon marks a breaking change.
+- The description starts lower-case and has no trailing full stop. The subject is 72 characters at most.
+- The second line is blank; the body, when there is one, comes after it.
+- A message written with an AI assistant ends with a trailer of exactly this form: `Co-Authored-By: Name <email>`.
 
-Keep every script bash 3.2 compatible. macOS ships bash 3.2 as `/bin/bash`, and
-nekoshell must run there without requiring a newer bash from Homebrew. No
-associative arrays, no `${var,,}`, no `mapfile`. Every executable starts with
-`set -euo pipefail`.
+Merge commits, git's own reverts and `fixup!`/`squash!` commits are accepted as they are.
 
-## Images
+## Pull request checks
 
-Do not add copyrighted images to the art pack or anywhere else in the repo.
-Only openly licensed sample images belong in `plugins/greet/art/`.
+Every pull request runs four jobs in `.github/workflows/ci.yml`, and branch protection on `main` requires all four: `lint` (`scripts/lint.sh` on Linux), `test` (`bats -r tests` on macOS), `install` (`nekoshell install --check --profile full` against a throwaway `HOME`, once per terminal adapter) and `commits` (every commit message of the pull request). The pull request template asks for `make check` output, the terminals the change was tried in, a test for new behaviour, updated docs and a changelog line.
 
-## Vendored files
+## Code rules
 
-If you add a file copied from another project, list it in [THIRD_PARTY.md](THIRD_PARTY.md) with its source and license.
+**bash 3.2.** macOS ships bash 3.2 as `/bin/bash` and nekoshell must run there: no associative arrays, no `${var,,}`, no `mapfile`, and an empty array is unbound under `set -u`, so guard `"${arr[@]}"` with a length check. Every executable starts with `set -euo pipefail`. The zsh files (`core/zsh`, `plugin.zsh`, `late.zsh`, `terminals/*/zsh.zsh`) are zsh, with no bashisms.
 
-Generated files (`core/theme/palettes.json`, `plugins/greet/data/pokemon.tsv`)
-are committed, with the generator beside them pinning the upstream commit it
-downloaded from. Re-run the generator and commit its output rather than editing
-the data by hand.
+**bats 1.14.** A failing `[[ ]]` that is not a test's last statement does not fail the test, because a compound command's status never reaches the ERR trap bats installs. Use `[ ]`, plain commands, or the helpers in `tests/helpers.bash` (`assert_contains`, `assert_not_contains`, `assert_matches`, `assert_not_matches`), which return non-zero and print what they expected next to what they got.
 
-## Colours
+**Colours.** Every colour comes from `core/theme/palettes.json`, generated by `core/theme/gen-palettes.py` from the Catppuccin palette at a pinned commit. Anything that carries colour is a `.tmpl` rendered through `theme_render_template` in `core/lib/theme.sh`; a hex value written into a config is left behind on the next `nekoshell theme`.
 
-Every colour in the rig comes from `core/theme/palettes.json`. If you add
-something that carries colour, render it from a template through
-`core/lib/theme.sh` rather than writing a hex value into a config, or
-`nekoshell theme` will leave it behind on the old flavour.
+**Images.** No copyrighted images anywhere in the repository. `plugins/greet/art/` holds the project's own pixel art only.
 
-## Adding a plugin
+**Vendored files.** A file copied from another project is listed in [THIRD_PARTY.md](THIRD_PARTY.md) with its source commit and license. Generated files (`core/theme/palettes.json`, `plugins/greet/data/pokemon.tsv`) are committed with the generator beside them; re-run the generator rather than editing the output.
 
-[docs/WRITING-A-PLUGIN.md](docs/WRITING-A-PLUGIN.md) is the full guide. The
-short version:
+## Adding a plugin or a terminal adapter
 
-1. Copy `tests/fixtures/plugins/demo` to `plugins/<name>/` — it is a working
-   plugin with one of everything.
-2. Fill in `plugin.toml`'s nine keys: `name`, `summary`, `requires`, `casks`,
-   `taps`, `requires_plugins`, `terminals`, `conflicts`, `tags`.
-3. Write `README.md` with its five sections: `## What it does`, `## Installs`,
-   `## Files`, `## After install`, `## Remove`.
-4. Add `tests/plugins/<name>.bats`.
-
-`tests/core/repo.bats` checks the first three for every plugin, so a missing
-key or section fails the build.
+[AGENTS.md](AGENTS.md) has the contract for both: the nine `plugin.toml` keys, the hook files and README sections a plugin needs, and the ten functions and README sections an adapter needs. `tests/core/repo.bats` checks them for every plugin and adapter, so a missing key, function or section fails the build.
