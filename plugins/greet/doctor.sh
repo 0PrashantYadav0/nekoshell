@@ -21,8 +21,11 @@ fi
 # colour reset, so the timing line arrives with an escape sequence glued to
 # its front: match the tail of the line, not the whole of it.
 if command -v fastfetch >/dev/null 2>&1; then
-  gr_ms="$(NEKOSHELL_SEED=1 NEKOSHELL_GREET_TIME=1 NEKOSHELL_NO_GREET='' CLAUDECODE='' TMUX='' \
-    script -q /dev/null "$PLUGIN_DIR/bin/nekoshell-greet" </dev/null 2>/dev/null \
+  # `|| true` inside, because the hook runs under `set -o pipefail`: a machine
+  # with no usable `script` must leave the row unmeasured, not take the whole
+  # doctor hook down with it.
+  gr_ms="$({ NEKOSHELL_SEED=1 NEKOSHELL_GREET_TIME=1 NEKOSHELL_NO_GREET='' CLAUDECODE='' TMUX='' \
+    script -q /dev/null "$PLUGIN_DIR/bin/nekoshell-greet" </dev/null 2>/dev/null || true; } \
     | tr -d '\r' | sed -n 's/^.*greet: \([0-9][0-9]*\) ms$/\1/p')"
   if [[ -z "$gr_ms" ]]; then
     report warn "greet time" "could not measure"
