@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# pokemon greet-art: the caption line, then the sprite, from pokemon-colorscripts.
+# Silent and non-zero when there is nothing to draw: the greeting then shows
+# the stats alone. Keys from greet.conf: POKEMON_SHINY_ODDS (1 in N shiny,
+# 128), POKEMON_GENERATIONS ("1-3" or "1,4", empty for all). The older
+# unprefixed names still work, for a greet.conf copied before this plugin.
+set -uo pipefail
+command -v pokemon-colorscripts >/dev/null 2>&1 || exit 1
+[[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
+
+tsv="${PLUGIN_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}/data/pokemon.tsv"
+shiny_odds="${POKEMON_SHINY_ODDS:-${SHINY_ODDS:-128}}"
+generations="${POKEMON_GENERATIONS:-${GENERATIONS:-}}"
+
+# facts NAME: "Pikachu · #025 · Electric · Gen 1", or the capitalised name alone.
+facts() {
+  local name="$1" cap
+  cap="$(printf '%s' "${name:0:1}" | tr '[:lower:]' '[:upper:]')${name:1}"
+  if [[ -r "$tsv" ]]; then
+    awk -F'\t' -v n="$name" -v cap="$cap" '$1==n {printf "%s · #%03d · %s · Gen %s\n", cap, $2, $3, $4; found=1} END {if (!found) print cap}' "$tsv"
+  else
+    printf '%s\n' "$cap"
+  fi
+}
+
+args=(-r)
+[[ -n "$generations" ]] && args+=("$generations")
+shiny=""
+if ((shiny_odds > 0)) && ((RANDOM % shiny_odds == 0)); then
+  args+=(-s)
+  shiny=" ✦ shiny"
+fi
+out="$(pokemon-colorscripts "${args[@]}" 2>/dev/null)" || exit 1
+[[ "$out" == *$'\n'* ]] || exit 1
+name="${out%%$'\n'*}"
+printf '%s%s\n' "$(facts "$name")" "$shiny"
+printf '%s\n' "${out#*$'\n'}"

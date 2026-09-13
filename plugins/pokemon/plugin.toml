@@ -1,0 +1,9 @@
+name = "pokemon"
+summary = "A random Pokémon sprite in the greeting, captioned with its number, type and generation"
+requires = []
+casks = []
+taps = []
+requires_plugins = ["greet"]
+terminals = ["any"]
+conflicts = []
+tags = ["look"]
