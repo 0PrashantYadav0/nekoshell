@@ -32,7 +32,20 @@ start_ms=""
 
 # The plugin's own directory, from this script rather than from anything
 # recorded: the data and the sample art belong to the copy that is running.
-PLUGIN_DIR="${PLUGIN_DIR:-$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/.." 2>/dev/null && pwd -P)}"
+# A relative link target is relative to the link's own directory, not to
+# $PWD, and a link can point at another link; both are resolved here the
+# same way bin/nekoshell does it.
+_greet_self="${BASH_SOURCE[0]}"
+_greet_hops=0
+while [[ -L "$_greet_self" && "$_greet_hops" -lt 16 ]]; do
+  _greet_target="$(readlink "$_greet_self")"
+  case "$_greet_target" in
+    /*) _greet_self="$_greet_target" ;;
+    *) _greet_self="$(cd "$(dirname "$_greet_self")" && pwd -P)/$_greet_target" ;;
+  esac
+  _greet_hops=$((_greet_hops + 1))
+done
+PLUGIN_DIR="${PLUGIN_DIR:-$(cd "$(dirname "$_greet_self")/.." 2>/dev/null && pwd -P)}"
 [[ -n "$PLUGIN_DIR" ]] || exit 0
 export PLUGIN_DIR
 

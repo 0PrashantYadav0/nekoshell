@@ -23,6 +23,7 @@ PALETTES = Path(__file__).resolve().parents[2] / "core" / "theme" / "palettes.js
 
 MAIN_GUID = "4E4B4F53-4845-4C4C-0001-000000000001"
 PANEL_GUID = "4E4B4F53-4845-4C4C-0002-000000000002"
+# Replaced in main() from --font and --size; the default is what the adapter prints.
 FONT = "JetBrainsMonoNF-Regular 15"
 
 ANSI = ["surface1", "red", "green", "yellow", "blue", "pink", "teal", "subtext1",
@@ -173,6 +174,9 @@ def main():
     ap.add_argument("--root", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--flavor", default="mocha", help="Catppuccin flavour name")
+    ap.add_argument("--font", default="JetBrainsMonoNF-Regular",
+                    help="PostScript font name, what the adapter's terminal_font_name prints")
+    ap.add_argument("--size", type=int, default=15, help="font size in points")
     ap.add_argument("--window-type", type=int, default=6,
                     help="iTerm2 numeric window type for 'Right of screen'")
     ap.add_argument("--background", default=None,
@@ -180,6 +184,8 @@ def main():
     ap.add_argument("--blend", type=float, default=None,
                     help="how far the background colour fades the image, 0..1")
     a = ap.parse_args()
+    global FONT
+    FONT = f"{a.font} {a.size}"
     if a.blend is not None and not 0 <= a.blend <= 1:
         raise SystemExit(f"--blend must be between 0 and 1, not {a.blend}")
     palette = load_palette(a.flavor)

@@ -18,7 +18,8 @@ terminal_name() { echo "iterm2"; }
 terminal_detect() { [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; }
 terminal_installed() { [[ -e "/Applications/iTerm.app" || -e "$HOME/Applications/iTerm.app" ]]; }
 terminal_capabilities() { echo "truecolor images background panel hotkey"; }
-terminal_font_name() { echo "JetBrainsMono NF"; }
+# iTerm2 wants the PostScript name; the generator appends the size.
+terminal_font_name() { echo "JetBrainsMonoNF-Regular"; }
 
 iterm_is_running() { pgrep -xq iTerm2; }
 
@@ -75,6 +76,7 @@ iterm_write_profiles() {
     --root "$NEKOSHELL_ROOT" \
     --out "$ITERM_DYNAMIC_DIR/nekoshell.json" \
     --flavor "$flavor" \
+    --font "$(terminal_font_name)" \
     --window-type "$NEKOSHELL_PANEL_WINDOW_TYPE" ${1+"$@"}
 }
 
@@ -183,10 +185,16 @@ terminal_background() {
     b64="$(printf %s "$path" | base64)"
   fi
   # The escape changes the window this ran in, so the new background shows up
-  # without waiting for a new one. iTerm2 asks the first time a program does it.
-  # A dry run must not send it: the escape is the change, not a report of one.
+  # without waiting for a new one; with an empty payload it clears the
+  # window's image, which is what `none` means. iTerm2 asks the first time a
+  # program sets one. A dry run must not send it: the escape is the change,
+  # not a report of one.
   if [[ "${TERM_PROGRAM:-}" == "iTerm.app" && "${NEKOSHELL_DRY_RUN:-0}" != "1" ]]; then
-    log_info "iTerm2 asks you to confirm the first time a program sets the background image"
+    if [[ -n "$b64" ]]; then
+      log_info "iTerm2 asks you to confirm the first time a program sets the background image"
+    else
+      log_info "clearing this window's background image"
+    fi
     # The trailing newline is this script's, not part of the escape: without it
     # the next prompt starts mid-line.
     printf '\033]1337;SetBackgroundImageFile=%s\a\n' "$b64"
@@ -223,14 +231,17 @@ except Exception:
     sys.exit(1)
 if len(profiles) != 2:
     sys.exit(1)
-print(profiles[0].get("Normal Font", ""))
+font = profiles[0].get("Normal Font", "")
+if not font:
+    sys.exit(3)
+print(font)
 PY
     )" || rc=$?
-    if [[ "$rc" -eq 0 ]]; then
-      report ok "iterm2 profiles" "$prof"
-    else
-      report fail "iterm2 profiles" "unreadable or not two profiles; run: nekoshell terminal apply"
-    fi
+    case "$rc" in
+      0) report ok "iterm2 profiles" "$prof" ;;
+      3) report fail "iterm2 profiles" "the main profile names no font; run: nekoshell terminal apply" ;;
+      *) report fail "iterm2 profiles" "unreadable or not two profiles; run: nekoshell terminal apply" ;;
+    esac
   fi
 
   if iterm_prefs_pending; then

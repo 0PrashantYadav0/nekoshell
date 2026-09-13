@@ -145,7 +145,7 @@ PY
   load_adapter
   [ "$(terminal_name)" = "iterm2" ]
   [ "$(terminal_capabilities)" = "truecolor images background panel hotkey" ]
-  [ "$(terminal_font_name)" = "JetBrainsMono NF" ]
+  [ "$(terminal_font_name)" = "JetBrainsMonoNF-Regular" ]
 }
 
 @test "terminal_detect is true only under TERM_PROGRAM=iTerm.app" {

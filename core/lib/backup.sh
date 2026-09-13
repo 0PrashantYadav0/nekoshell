@@ -120,17 +120,3 @@ backup_restore_all() {
     _backup_restore_one "${dirs[$i]}"
   done
 }
-
-# backup_restore_latest: the newest backup set only. backup_restore_all is what
-# uninstall wants; this stays for a caller that means exactly one set.
-backup_restore_latest() {
-  local latest="" dir
-  for dir in "$NEKOSHELL_BACKUP_ROOT"/*/; do
-    [[ -d "$dir" ]] && latest="${dir%/}"
-  done
-  [[ -n "$latest" && -r "$latest/manifest.txt" ]] || {
-    log_warn "no backup to restore"
-    return 0
-  }
-  _backup_restore_one "$latest"
-}

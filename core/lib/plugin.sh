@@ -2,7 +2,7 @@
 # Plugin discovery, enable and disable. Needs paths, log, backup, config, link,
 # brew, terminal. Source this file; do not execute it.
 NEKOSHELL_PLUGINS_DIR="${NEKOSHELL_PLUGINS_DIR:-$NEKOSHELL_ROOT/plugins}"
-NEKOSHELL_CORE_ANTIDOTE="${NEKOSHELL_CORE_ANTIDOTE:-$NEKOSHELL_ROOT/core/zsh/.config/nekoshell/zsh/plugins.txt}"
+NEKOSHELL_CORE_ANTIDOTE="${NEKOSHELL_CORE_ANTIDOTE:-$NEKOSHELL_ROOT/core/antidote.txt}"
 export NEKOSHELL_PLUGINS_DIR NEKOSHELL_CORE_ANTIDOTE
 
 plugin_dir() { printf '%s/%s\n' "$NEKOSHELL_PLUGINS_DIR" "$1"; }
@@ -28,7 +28,13 @@ plugin_supports_terminal() {
 plugin_env() {
   PLUGIN_NAME="$1"
   PLUGIN_DIR="$(plugin_dir "$1")"
-  FLAVOR="$(config_get theme_resolved 2>/dev/null || echo mocha)"
+  # The flavour in force, asked of theme.sh when it is loaded: a machine that
+  # recorded a flavour but has not rendered yet must not hand plugins mocha.
+  if command -v theme_current >/dev/null 2>&1; then
+    FLAVOR="$(theme_current 2>/dev/null || echo "$NEKOSHELL_DEFAULT_FLAVOR")"
+  else
+    FLAVOR="$(config_get theme_resolved 2>/dev/null || echo "${NEKOSHELL_DEFAULT_FLAVOR:-mocha}")"
+  fi
   export PLUGIN_NAME PLUGIN_DIR FLAVOR
 }
 
@@ -45,7 +51,7 @@ plugin_run_hook() {
   )
 }
 
-# plugin_regen_antidote: core plugins.txt + every enabled plugin's antidote.txt.
+# plugin_regen_antidote: core/antidote.txt + every enabled plugin's antidote.txt.
 plugin_regen_antidote() {
   local out="$NEKOSHELL_CONFIG/antidote.txt" p f
   mkdir -p "$NEKOSHELL_CONFIG"

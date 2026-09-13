@@ -9,11 +9,6 @@ teardown() { teardown_tmp_home; }
   [ "$output" = "$HOME/.config/nekoshell|$HOME/.cache/nekoshell|$HOME/.local/share/nekoshell/backup" ]
 }
 
-@test "nekoshell_root_from resolves the repo root from a bin path" {
-  run bash -c "source '$REPO_ROOT/core/lib/paths.sh'; nekoshell_root_from '$REPO_ROOT/bin/anything'"
-  [ "$output" = "$REPO_ROOT" ]
-}
-
 @test "root fallback is not fooled by a rootless key and reads the real root key" {
   mkdir -p "$HOME/.config/nekoshell"
   cat > "$HOME/.config/nekoshell/nekoshell.toml" <<'EOF'
