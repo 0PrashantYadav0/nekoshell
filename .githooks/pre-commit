@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# pre-commit: lint what is about to be committed. Installed by `make hooks`
+# (git config core.hooksPath .githooks). Runs scripts/lint.sh on the staged
+# files only, so a commit touching one script waits for one script's checks.
+# Skip once with `git commit --no-verify`; CI runs the same checks anyway.
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+staged=()
+while IFS= read -r f; do [[ -n "$f" ]] && staged+=("$f"); done < <(git diff --cached --name-only --diff-filter=ACMR)
+[[ ${#staged[@]} -gt 0 ]] || exit 0
+# Lint the index, not the working tree: a file edited after `git add` must
+# not make a clean commit look dirty or a dirty one look clean.
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/nekoshell-precommit.XXXXXX")"
+trap 'rm -rf "$tmp"' EXIT
+copies=()
+for f in "${staged[@]}"; do
+  mkdir -p "$tmp/$(dirname "$f")"
+  git show ":$f" >"$tmp/$f"
+  [[ -x "$f" ]] && chmod +x "$tmp/$f"
+  copies+=("$tmp/$f")
+done
+# The shape checks in lint.sh read the repository itself (plugin.toml keys,
+# adapter functions), which is fine: those files are in the index too.
+(cd "$root" && scripts/lint.sh "${copies[@]}") || {
+  echo >&2
+  echo "pre-commit: lint failed; fix the above or commit with --no-verify" >&2
+  exit 1
+}
+# The staged bats files: a test file that bats cannot even count should not
+# land either. `bats --count` parses without running anything; bash -n would
+# not do, because @test blocks are not bash.
+if command -v bats >/dev/null 2>&1; then
+  for f in "${staged[@]}"; do
+    case "$f" in
+      tests/*.bats)
+        bats --count "$f" >/dev/null 2>&1 || {
+          echo "pre-commit: $f does not parse (bats --count failed)" >&2
+          exit 1
+        }
+        ;;
+    esac
+  done
+fi

@@ -1,0 +1,14 @@
+# markdownlint for the docs. Prose is written in paragraphs, so the line
+# length rule is off; the rest of the defaults stay, so headings, lists and
+# code fences are shaped the same way in every file.
+config:
+  default: true
+  MD013: false # line length: paragraphs wrap in the editor, not in the file
+  MD024:
+    siblings_only: true # the same heading may repeat under different parents (plugin READMEs)
+  MD033: false # inline HTML: badges and the screenshot table in the README
+  MD041: false # first line need not be a heading: some files open with a note
+ignores:
+  - .planning/**
+  - node_modules/**
+  - "**/CHANGELOG.md"

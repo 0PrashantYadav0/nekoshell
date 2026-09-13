@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# pre-push: the whole test suite before anything leaves the machine. Installed
+# by `make hooks`. Pushing a branch that fails its tests wastes a CI run and
+# a reviewer's time; the suite takes about two minutes on a laptop. Skip once
+# with `git push --no-verify` when the push is a work-in-progress branch.
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+command -v bats >/dev/null 2>&1 || {
+  echo "pre-push: bats is not installed (brew install bats-core); skipping the suite" >&2
+  exit 0
+}
+echo "pre-push: running the test suite (git push --no-verify skips this)"
+bats -r tests

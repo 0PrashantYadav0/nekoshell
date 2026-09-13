@@ -1,26 +1,81 @@
 name: ci
+
+# Every push to main and every pull request runs four independent jobs, so a
+# reviewer sees which one failed at a glance: lint (static checks, on Linux
+# because they do not need macOS), test (the bats suite, on macOS because
+# the code is macOS-only), install (the installer against a throwaway HOME,
+# once per terminal adapter) and commits (every commit message of a pull
+# request is a conventional commit). Branch protection on main requires
+# all four.
 on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install linters
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q shellcheck yamllint
+          curl -sSfL "https://github.com/mvdan/sh/releases/download/v3.10.0/shfmt_v3.10.0_linux_amd64" -o /usr/local/bin/shfmt
+          chmod +x /usr/local/bin/shfmt
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.7 /usr/local/bin
+          npm install -g markdownlint-cli2@0.17.2
+      - name: Lint
+        run: NEKOSHELL_LINT_STRICT=1 scripts/lint.sh
+
   test:
+    name: test
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install test tools
-        run: brew install bats-core shellcheck
-      - name: Shellcheck
-        run: |
-          shellcheck -x install.sh uninstall.sh bin/* core/lib/*.sh core/cmd/*.sh \
-            terminals/adapter.sh terminals/*/adapter.sh \
-            plugins/*/*.sh plugins/*/bin/* plugins/*/cmd/*.sh \
-            tests/helpers.bash tests/fakes/*
+        run: brew install bats-core
       - name: Tests
         run: bats -r tests
+
+  install:
+    name: install (${{ matrix.terminal }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        terminal: [iterm2, kitty, ghostty, warp, terminal-app]
+    steps:
+      - uses: actions/checkout@v4
       # The installer against a throwaway HOME. --check mutates nothing, and
-      # NEKOSHELL_SKIP_PREFLIGHT drops the macOS app checks the runner cannot
+      # NEKOSHELL_SKIP_PREFLIGHT drops the app checks the runner cannot
       # satisfy, so this is the end-to-end proof that every profile still
-      # names plugins that exist.
+      # names plugins that exist and every adapter still loads.
       - name: Install check
-        run: HOME="$(mktemp -d)" NEKOSHELL_SKIP_PREFLIGHT=1 ./bin/nekoshell install --check --profile full --terminal iterm2
+        run: |
+          HOME="$(mktemp -d)" NEKOSHELL_SKIP_PREFLIGHT=1 \
+            ./bin/nekoshell install --check --profile full --terminal "${{ matrix.terminal }}"
+      - name: Help, version and terminal list run without a config
+        run: |
+          HOME="$(mktemp -d)" ./bin/nekoshell version
+          HOME="$(mktemp -d)" ./bin/nekoshell help
+          HOME="$(mktemp -d)" ./bin/nekoshell terminal list
+
+  commits:
+    name: commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Every commit message is a conventional commit
+        run: scripts/check-commit-msg.sh --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
