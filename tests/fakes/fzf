@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 # Fake fzf: `--zsh` prints the key bindings, which a zsh can source without
-# side effects here.
+# side effects here. FAKE_FZF_PICK=N prints the Nth line of stdin, the way a
+# person choosing that row would; otherwise stdin is drained and the
+# arguments go to stderr (stdout is the pick, and there is none), so a caller
+# that captures the pick sees nothing and a test sees the flags.
 if [[ "${1:-}" == "--zsh" ]]; then
   echo ': fzf key bindings'
   exit 0
 fi
-echo "fzf $*"
+if [[ -n "${FAKE_FZF_PICK:-}" ]]; then
+  sed -n "${FAKE_FZF_PICK}p"
+  exit 0
+fi
+cat >/dev/null
+echo "fzf $*" >&2

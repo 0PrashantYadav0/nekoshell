@@ -460,3 +460,92 @@ EOF
   run env PATH="/usr/bin:/bin" "$NK" doctor --plugin spotify
   assert_matches "$output" 'fail +tool: shpotify \(spotify\)'
 }
+
+# --- the search bar ---------------------------------------------------------
+# nekoshell-spotify-search: rows from spotify_player's JSON, fzf over them
+# (or a numbered menu), and playback of the pick on the active device.
+
+@test "search --rows flattens tracks, albums, artists and playlists into typed rows" {
+  run "$P/bin/nekoshell-spotify-search" --rows "hello"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" $'♪ Hello Hello · V. Harikrishna, Vijay Prakash · Bachchan (Original Motion Picture Soundtrack)\ttrack\t0nGs9LxrUfQY8SPDnZL9AD'
+  assert_contains "$output" $'♪ Hello · Adele · 25\ttrack\t14TtpYFT2Bvsk7xsVnfk2W'
+  assert_contains "$output" $'▣ Hello! · Anup Rubens\talbum\t682WNO7d7IHFmLIro3NOz2'
+  assert_contains "$output" $'♩ Hellow Raja\tartist\t2THK0oboxhbn3I1qT7c1i4'
+  assert_contains "$output" $'≡ abhi toh party shuru hui hai · shreeya\tplaylist\t0KbFgvlSFTI2878PjwOvEv'
+  assert_not_contains "$output" "Hello Monday"
+  assert_not_contains "$output" "episode"
+  [ "${#lines[@]}" -eq 5 ]
+}
+
+@test "search --rows with no query prints nothing" {
+  run "$P/bin/nekoshell-spotify-search" --rows ""
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "an upstream parse error becomes one error row, status 1" {
+  FAKE_SPOTIFY_SEARCH_FAIL=1 run "$P/bin/nekoshell-spotify-search" --rows "daft punk"
+  [ "$status" -eq 1 ]
+  assert_matches "$output" $'^! spotify_player could not read Spotify.s answer for "daft punk".*\terror\t-$'
+  [ "${#lines[@]}" -eq 1 ]
+}
+
+@test "search --play starts a track by id, a context by type, and ignores the error row" {
+  run "$P/bin/nekoshell-spotify-search" --play $'♪ Hello · A · B\ttrack\tT1'
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "spotify_player playback start track --id T1"
+  assert_contains "$output" "playing: ♪ Hello · A · B"
+  run "$P/bin/nekoshell-spotify-search" --play $'≡ Mix · Spotify\tplaylist\tP1'
+  assert_contains "$output" "spotify_player playback start context --id P1 playlist"
+  run "$P/bin/nekoshell-spotify-search" --play $'▣ Disc · Band\talbum\tA1'
+  assert_contains "$output" "playback start context --id A1 album"
+  run "$P/bin/nekoshell-spotify-search" --play $'! oops\terror\t-'
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "search --play with no active device says to start the player" {
+  FAKE_SPOTIFY_NO_DEVICE=1 run "$P/bin/nekoshell-spotify-search" --play $'♪ Hello · A · B\ttrack\tT1'
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "no Spotify device is active; start nekoshell music first"
+}
+
+@test "search with a query opens fzf on the rows and plays the pick" {
+  FAKE_FZF_PICK=2 run "$P/bin/nekoshell-spotify-search" "hello"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "spotify_player playback start track --id 14TtpYFT2Bvsk7xsVnfk2W"
+  assert_contains "$output" "playing: ♪ Hello · Adele · 25"
+}
+
+@test "search hands fzf a disabled filter, the prompt and a reload on change" {
+  run "$P/bin/nekoshell-spotify-search" "hello"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "fzf --disabled"
+  assert_contains "$output" "--prompt Spotify › "
+  assert_contains "$output" "--query hello"
+  assert_contains "$output" "change:reload:sleep 0.25; \"$P/bin/nekoshell-spotify-search\" --rows {q}"
+}
+
+@test "search without fzf falls back to a numbered menu" {
+  run bash -c "printf '2\n' | PATH='$REPO_ROOT/tests/fakes-nofzf:/usr/bin:/bin' '$P/bin/nekoshell-spotify-search' hello"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" " 1) ♪ Hello Hello"
+  assert_contains "$output" " 2) ♪ Hello · Adele · 25"
+  assert_contains "$output" "playback start track --id 14TtpYFT2Bvsk7xsVnfk2W"
+  run bash -c "printf 'x\n' | PATH='$REPO_ROOT/tests/fakes-nofzf:/usr/bin:/bin' '$P/bin/nekoshell-spotify-search' hello"
+  [ "$status" -eq 0 ]
+  assert_not_contains "$output" "playback start"
+}
+
+@test "nekoshell spotify search, the usage line and the sps alias" {
+  "$NK" plugin add spotify >/dev/null
+  FAKE_FZF_PICK=1 run "$NK" spotify search hello
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "playback start track --id 0nGs9LxrUfQY8SPDnZL9AD"
+  run "$NK" spotify --help
+  assert_contains "$output" "nekoshell spotify search [QUERY]"
+  ln -s "$REPO_ROOT/core/zsh/.zshrc" "$HOME/.zshrc"
+  run zsh -o NO_GLOBAL_RCS -ic 'alias sps; exit 0'
+  assert_contains "$output" "nekoshell spotify search"
+}

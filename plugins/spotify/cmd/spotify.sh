@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-# spotify: your own client id, and logging in and out of spotify_player
+# spotify: a search bar, your own client id, and logging in and out of spotify_player
 # shellcheck source=plugins/spotify/lib.sh
 source "$PLUGIN_DIR/lib.sh"
 
 usage_spotify() {
   cat <<EOF
-usage: nekoshell spotify client-id ID   put your own Spotify client id in app.toml
+usage: nekoshell spotify search [QUERY]  a search bar: type, Enter plays (alias: sps)
+       nekoshell spotify client-id ID   put your own Spotify client id in app.toml
        nekoshell spotify login          log in to Spotify (again, after a new id)
        nekoshell spotify logout         forget the cached Spotify login
+
+search opens fzf with the tracks, albums, artists and playlists Spotify finds
+for the words you type, and plays the one you pick on the active device: the
+player window (nekoshell music) or the desktop app has to be running.
 
 Spotify's rate limit is per application, and spotify_player's built-in id is
 shared by everyone who has not registered one, so on it a start-up can wait
@@ -84,6 +89,7 @@ cmd_spotify() {
   local sub="${1:-}"
   [[ $# -gt 0 ]] && shift
   case "$sub" in
+    search) exec "$PLUGIN_DIR/bin/nekoshell-spotify-search" "$@" ;;
     client-id) _spotify_client_id "$@" ;;
     login) _spotify_login "$@" ;;
     logout) _spotify_logout "$@" ;;

@@ -218,7 +218,11 @@ print(d["display"]["color"]["title"])'
   set_plugins '"greet", "fakeart", "fakeart2"'
   local seen="" seed
   for seed in 1 2 3 4 5 6 7 8; do
+    # The cache is cleared first, so a run that drew nothing is seen as an
+    # empty caption rather than as the previous seed's.
+    rm -f "$HOME/.cache/nekoshell/art-name"
     NEKOSHELL_SEED=$seed NEKOSHELL_GREET_MODE=text greet >/dev/null
+    [ -s "$HOME/.cache/nekoshell/art-name" ]
     seen="$seen $(cat "$HOME/.cache/nekoshell/art-name")"
   done
   assert_contains "$seen" "Fake Art · one"
