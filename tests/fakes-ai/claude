@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Fake Claude Code: a version, and an echo of its arguments otherwise.
+if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
+  echo "2.1.269 (Claude Code)"
+  exit 0
+fi
+echo "claude $*"
