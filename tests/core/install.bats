@@ -136,3 +136,41 @@ teardown() { teardown_tmp_home; }
   grep -q 'alias k=kubectl' "$HOME/.zshrc"
   grep -q 'my own demo conf' "$HOME/.config/demo/conf"
 }
+
+# A v0.1 machine has every plugin's config already in place; a narrower profile
+# would leave those files with nothing using them.
+@test "a v0.1 install with no --profile uses the full profile and says so" {
+  mkdir -p "$HOME/.config/nekoshell"; echo latte > "$HOME/.config/nekoshell/theme"
+  run "$NK" install --yes </dev/null
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "v0.1 install detected: using the full profile (pass --profile to choose)"
+  grep -q '^profile = "full"' "$HOME/.config/nekoshell/nekoshell.toml"
+  grep -q '^plugins = \["demo", "needs-demo"\]' "$HOME/.config/nekoshell/nekoshell.toml"
+}
+@test "install sweeps the v0.1 links the profile does not re-link, and keeps the user's own" {
+  mkdir -p "$HOME/.config/atuin" "$HOME/.config/bat/themes" "$HOME/.config/lazygit"
+  # Broken: v0.2 deleted the tree these pointed into.
+  ln -s "$REPO_ROOT/stow/atuin/.config/atuin/config.toml" "$HOME/.config/atuin/config.toml"
+  ln -s "$REPO_ROOT/stow/bat/.config/bat/themes/Catppuccin.tmTheme" "$HOME/.config/bat/themes/Catppuccin.tmTheme"
+  # A link of the user's own, to a file that is really there: never touched.
+  printf 'mine\n' > "$HOME/real-lazygit.yml"
+  ln -s "$HOME/real-lazygit.yml" "$HOME/.config/lazygit/config.yml"
+  run "$NK" install --yes --profile minimal
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "v0.1 leftover: removing ~/.config/atuin/config.toml"
+  [ ! -L "$HOME/.config/atuin/config.toml" ]
+  [ ! -L "$HOME/.config/bat/themes/Catppuccin.tmTheme" ]
+  [ -L "$HOME/.config/lazygit/config.yml" ]
+  [ "$(readlink "$HOME/.config/lazygit/config.yml")" = "$HOME/real-lazygit.yml" ]
+}
+@test "install replaces a relative, dangling v0.1 link at ~/.zshrc without backing it up" {
+  local rel
+  rel="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$REPO_ROOT/stow/zsh/.zshrc" "$HOME")"
+  ln -s "$rel" "$HOME/.zshrc"
+  [ -L "$HOME/.zshrc" ]; [ ! -e "$HOME/.zshrc" ]
+  run "$NK" install --yes --profile minimal
+  [ "$status" -eq 0 ]
+  [ "$(readlink "$HOME/.zshrc")" = "$REPO_ROOT/core/zsh/.zshrc" ]
+  # v0.1's own link, not the user's: dropped rather than saved.
+  [ "$(find "$HOME/.local/share/nekoshell/backup" -name .zshrc | wc -l | tr -d ' ')" -eq 0 ]
+}

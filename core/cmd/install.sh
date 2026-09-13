@@ -88,6 +88,51 @@ _install_after_notes() {
   return 0
 }
 
+# The HOME-relative paths v0.1 kept as stow links. v0.2 renders or links every
+# one of them from somewhere else and never writes a link into the old tree, so
+# a link at one of these paths that is broken, or that still resolves into the
+# checkout's stow directory, has nothing at the far end of it. Sweeping them is
+# what keeps a v0.1 machine from being left with dangling links for every
+# plugin the chosen profile does not enable.
+_INSTALL_V01_PATHS='.config/atuin/config.toml
+.config/lazygit/config.yml
+.config/spotify-player/app.toml
+.config/spotify-player/theme.toml
+.config/bat/config
+.config/bat/themes/*
+.config/btop/themes/*
+.config/nekoshell/git/delta.gitconfig
+.config/nekoshell/zsh/aliases.zsh
+.config/nekoshell/zsh/env.zsh
+.config/nekoshell/zsh/fzf.zsh
+.config/nekoshell/zsh/plugins.txt'
+
+# _install_sweep_v01_links: drop those leftovers. Safe to run on a machine that
+# was never on v0.1: a link v0.2 wrote resolves to core/ or plugins/, not into
+# the stow tree, and is not broken, so it is left where it is. Dry-run aware
+# through run(); every removal is logged.
+_install_sweep_v01_links() {
+  local rel p target
+  while IFS= read -r rel; do
+    [[ -n "$rel" ]] || continue
+    # Unquoted so the two themes/* entries expand; a pattern that matches
+    # nothing comes back as itself and fails the -L test below.
+    for p in "$HOME"/$rel; do
+      [[ -L "$p" ]] || continue
+      target="$(backup_link_target "$p" 2>/dev/null || true)"
+      # A relative link whose target directory is gone cannot be resolved by
+      # following it, and that is exactly the shape v0.1 left behind.
+      [[ -n "$target" ]] || target="$(backup_link_target_lexical "$p" 2>/dev/null || true)"
+      if [[ -e "$p" && "$target" != "$NEKOSHELL_ROOT"/stow/* ]]; then continue; fi
+      log_info "v0.1 leftover: removing ~/${p#"$HOME"/}"
+      run rm -f "$p"
+    done
+  done <<EOF
+$_INSTALL_V01_PATHS
+EOF
+  return 0
+}
+
 cmd_install() {
   local PROFILE="" WITH="" WITHOUT="" YES=0 CHECK=0 TERMINAL_FLAG=""
   while [[ $# -gt 0 ]]; do
@@ -106,6 +151,9 @@ cmd_install() {
   if [[ "$CHECK" == 1 ]]; then NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN; fi
 
   local TOTAL=7
+  # Read before step 4 deletes it: ~/.config/nekoshell/theme is v0.1's marker.
+  local V01=0
+  if [[ -e "$NEKOSHELL_CONFIG/theme" ]]; then V01=1; fi
 
   # --- Preflight (unnumbered; skippable). ---------------------------------
   if [[ -z "${NEKOSHELL_SKIP_PREFLIGHT:-}" ]]; then
@@ -147,7 +195,14 @@ cmd_install() {
   local profiles_dir="${NEKOSHELL_PROFILES_DIR:-$NEKOSHELL_ROOT/profiles}"
   local chosen_profile="$PROFILE"
   if [[ -z "$chosen_profile" ]]; then
-    if [[ -t 0 && "$YES" != 1 ]]; then
+    # A v0.1 machine already had every plugin's config in place, so the profile
+    # that keeps it working is the one that enables all of them. Anything
+    # narrower would leave the rest of its files behind with nothing using
+    # them; --profile is still the way to choose something else.
+    if [[ "$V01" == 1 ]]; then
+      log_info "v0.1 install detected: using the full profile (pass --profile to choose)"
+      chosen_profile="full"
+    elif [[ -t 0 && "$YES" != 1 ]]; then
       chosen_profile="$(_install_pick_from_list "profile?" minimal dev full pick)"
       [[ -z "$chosen_profile" ]] && chosen_profile="minimal"
     else
@@ -211,6 +266,10 @@ cmd_install() {
   if [[ -L "$HOME/.zshrc" ]]; then
     local zshrc_target
     zshrc_target="$(backup_link_target "$HOME/.zshrc" 2>/dev/null || true)"
+    # v0.1 wrote a relative link and this version deleted the tree it pointed
+    # into, so following it resolves nothing. The textual target is what tells
+    # that link apart from a foreign one worth backing up.
+    [[ -n "$zshrc_target" ]] || zshrc_target="$(backup_link_target_lexical "$HOME/.zshrc" 2>/dev/null || true)"
     if [[ -n "$zshrc_target" && "$zshrc_target" == "$NEKOSHELL_ROOT"/* ]]; then
       # Already nekoshell's: the old stow-era file was never the user's (its
       # aliases lived in the stowed .zshrc itself, not something to migrate),
@@ -251,6 +310,7 @@ cmd_install() {
       fi
     fi
   fi
+  _install_sweep_v01_links
   link_tree "$NEKOSHELL_ROOT/core/zsh" "$HOME"
   if [[ "$NEKOSHELL_DRY_RUN" == "1" ]]; then
     log_info "would write nekoshell.toml"
