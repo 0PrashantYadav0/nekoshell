@@ -12,7 +12,7 @@ Ghostty's quick terminal cannot be handed a command, so the panel is the quick t
 
 ## Images
 
-Ghostty draws the kitty graphics protocol, so the greet plugin passes fastfetch `--kitty` and the Pokémon appears inline. `nekoshell terminal background PATH [OPACITY]` writes `background-image`, `background-image-opacity` and `background-image-fit = cover` into the owned file, records the path in nekoshell.toml so a theme switch keeps it, and `none` drops it. The path is made absolute first, since Ghostty resolves a relative one against its own working directory. PNG and JPEG only, and Ghostty keeps a copy of the image per terminal, so a large one costs VRAM in every split.
+Ghostty draws the kitty graphics protocol, so the greet plugin passes fastfetch `--kitty` and the pictures from your art pack appear inline (the sprites are text and draw in any terminal). `nekoshell terminal background PATH [OPACITY]` writes `background-image`, `background-image-opacity` and `background-image-fit = cover` into the owned file, records the path in nekoshell.toml so a theme switch keeps it, and `none` drops it. The path is made absolute first, since Ghostty resolves a relative one against its own working directory. PNG and JPEG only, and Ghostty keeps a copy of the image per terminal, so a large one costs VRAM in every split.
 
 ## Uninstall
 
