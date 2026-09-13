@@ -1,4 +1,3 @@
-truecolor
 modern-cli
 greet
 fzf
@@ -7,5 +6,3 @@ lazygit
 btop
 nvim
 tmux
-statusbar
-recommend

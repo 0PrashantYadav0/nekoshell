@@ -1,7 +1,7 @@
 -- lazy.nvim plugin spec. Yours to edit; nekoshell never overwrites this file.
 --
 -- The colourscheme follows $NEKOSHELL_THEME, which ~/.config/nekoshell/theme.zsh
--- exports and `nekoshell-theme <flavour>` rewrites, so one command moves the
+-- exports and `nekoshell theme <flavour>` rewrites, so one command moves the
 -- editor with the rest of the rig. A Neovim already open keeps the old flavour
 -- until it restarts, because the variable is read once at startup.
 --

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate data/pokemon.tsv from PokeAPI/pokeapi CSVs at a pinned commit.
+"""Generate plugins/greet/data/pokemon.tsv from PokeAPI/pokeapi CSVs at a pinned commit.
 
 Downloads pokemon_species.csv, pokemon.csv, pokemon_types.csv and types.csv from
 https://raw.githubusercontent.com/PokeAPI/pokeapi/<sha>/data/v2/csv/ and writes one
