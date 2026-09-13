@@ -18,7 +18,7 @@ A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with
 
 **Five terminals.** iTerm2, kitty, Ghostty, Warp and Apple Terminal.app each have an adapter. Every one gets the font, the colours and a music panel; what differs is in the table below.
 
-Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the sixteen that ship: modern-cli, greet, pokemon, anime, minecraft, colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, spotify, aerospace, p10k and omz. [docs/plugins/README.md](docs/plugins/README.md) is the user manual, one page per plugin.
+Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the twenty that ship: modern-cli, greet, pokemon, anime, minecraft, colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, yazi, gh, mise, spotify, aerospace, p10k, pure and omz. [docs/plugins/README.md](docs/plugins/README.md) is the user manual, one page per plugin.
 
 ## Install
 
