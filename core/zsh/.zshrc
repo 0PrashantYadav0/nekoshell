@@ -29,6 +29,13 @@ if [[ -r "$NEKOSHELL_CONFIG/nekoshell.toml" ]]; then
   _nk_theme=${${_nk_theme_line#*=}//[\" ]/}
 fi
 
+# A plugin's early.zsh runs before anything else prints or loads: this is
+# where Powerlevel10k's instant prompt has to be sourced. _nk_plugins is
+# already known, so a hook can look at what else is enabled.
+for _p in $_nk_plugins; do
+  [[ -r "$NEKOSHELL_PLUGINS_DIR/$_p/early.zsh" ]] && source "$NEKOSHELL_PLUGINS_DIR/$_p/early.zsh"
+done
+
 # theme = "auto" is resolved by `nekoshell theme --resolve`, which only
 # writes when the resolved flavour actually changed. Run in the background so
 # the prompt is not delayed; the next shell picks up the change.
@@ -83,7 +90,11 @@ for _p in $_nk_plugins; do
   [[ -r "$NEKOSHELL_PLUGINS_DIR/$_p/plugin.zsh" ]] && source "$NEKOSHELL_PLUGINS_DIR/$_p/plugin.zsh"
 done
 
-(( $+commands[starship] )) && eval "$(starship init zsh)"
+# Starship is the prompt unless a plugin's plugin.zsh took it over by setting
+# NEKOSHELL_PROMPT to its own name (p10k does).
+if (( $+commands[starship] )) && [[ "${NEKOSHELL_PROMPT:-starship}" == starship ]]; then
+  eval "$(starship init zsh)"
+fi
 
 # iTerm2's own zsh hooks, which `nekoshell terminal apply` downloads. They are
 # what reports the working directory and the last command's status to the

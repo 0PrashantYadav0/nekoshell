@@ -1,0 +1,10 @@
+name = "p10k"
+summary = "Powerlevel10k as the prompt instead of Starship, with your ~/.p10k.zsh and the flavour's colours"
+requires = ["powerlevel10k"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["prompt", "shell"]
+copy_guard = [".p10k.zsh"]
