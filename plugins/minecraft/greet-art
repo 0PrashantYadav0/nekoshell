@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# minecraft greet-art: a random block from minecraft-colorscripts, captioned
+# with its name. MINECRAFT_PACK in greet.conf picks the texture pack
+# directory (default-1.8.9 is the only one shipped).
+set -uo pipefail
+pack="${MINECRAFT_PACK:-default-1.8.9}"
+dir="$HOME/.local/share/minecraft-colorscripts/colorscripts/$pack"
+[[ -d "$dir" ]] || exit 1
+[[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
+files=()
+for f in "$dir"/*.txt; do [[ -f "$f" ]] && files+=("$f"); done
+[[ ${#files[@]} -gt 0 ]] || exit 1
+f="${files[$((RANDOM % ${#files[@]}))]}"
+basename "$f" .txt | tr '_' ' ' | awk '{ for (i = 1; i <= NF; i++) $i = toupper(substr($i, 1, 1)) substr($i, 2) } 1'
+cat "$f"

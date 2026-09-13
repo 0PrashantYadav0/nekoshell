@@ -1,0 +1,9 @@
+name = "colorscripts"
+summary = "An ANSI pattern in the terminal's own palette in the greeting, from a vetted set of colorscripts"
+requires = []
+casks = []
+taps = []
+requires_plugins = ["greet"]
+terminals = ["any"]
+conflicts = []
+tags = ["look"]
