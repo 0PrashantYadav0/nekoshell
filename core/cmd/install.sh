@@ -273,6 +273,12 @@ cmd_install() {
 
   # --- 5: Theme. ---------------------------------------------------------
   log_step 5 "$TOTAL" "Theme"
+  # Everything about to be replaced is backed up first. The renders overwrite
+  # whatever is at these two paths, and the fastfetch one belongs to the greet
+  # plugin, whose theme hook may not run until step 6 (or at all) - so both are
+  # named here rather than left to the hook that writes them.
+  theme_backup_foreign "$HOME/.config/starship.toml"
+  theme_backup_foreign "$HOME/.config/fastfetch/config.jsonc"
   if [[ "$NEKOSHELL_DRY_RUN" == "1" ]]; then
     log_info "would apply theme $(theme_resolve)"
   else

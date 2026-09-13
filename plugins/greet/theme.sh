@@ -10,6 +10,10 @@ mkdir -p "$HOME/.config/fastfetch"
 # The fastfetch config used to be stowed, and `stow --restow` leaves the old
 # link behind. Rendering through it would write straight into the checkout.
 theme_clear_stale_link "$HOME/.config/fastfetch/config.jsonc"
+# A config of the user's own is theirs to get back: it goes into the backup set
+# before the render writes over it. One we rendered is skipped, so a flavour
+# switch does not keep copying our own output into the backups.
+theme_backup_foreign "$HOME/.config/fastfetch/config.jsonc"
 theme_render_template "$PLUGIN_DIR/fastfetch.jsonc.tmpl" "$HOME/.config/fastfetch/config.jsonc" "$FLAVOR"
 
 true
