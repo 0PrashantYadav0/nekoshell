@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Fixture provider: a caption and three lines, or nothing at all when
+# FAKEART_FAIL=1, the way a provider whose pack never arrived behaves.
+[[ "${FAKEART_FAIL:-}" == 1 ]] && exit 1
+echo "Fake Art · one"
+printf '▄▄▄\n███\n▀▀▀\n'

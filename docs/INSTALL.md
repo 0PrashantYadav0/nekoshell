@@ -21,7 +21,7 @@ cd ~/.nekoshell
 `install.sh` hands over to `nekoshell install`, which runs seven steps:
 
 1. **Terminal.** The terminal this shell runs in, when it has an adapter. Otherwise the installer lists the installed terminals and asks. `--terminal ID`, `--terminal a,b`, `--terminal all` (every adapter) or `--terminal installed` (every app that is present) answers it without asking.
-2. **Profile.** `minimal` (modern-cli, greet), `dev` (adds fzf, atuin, lazygit, btop, nvim, tmux), `full` (adds spotify) or `pick`, a menu that toggles plugins one by one. `--profile P` answers it; `--with a,b` and `--without c` adjust the list. With `--yes` and no `--profile`, `minimal` is used.
+2. **Profile.** `minimal` (modern-cli, greet, pokemon), `dev` (adds fzf, atuin, lazygit, btop, nvim, tmux), `full` (adds spotify) or `pick`, a menu that toggles plugins one by one. `--profile P` answers it; `--with a,b` and `--without c` adjust the list. With `--yes` and no `--profile`, `minimal` is used.
 3. **Confirm.** Skipped with `--yes` or `--check`.
 4. **Backup and core.** Aliases in an existing `~/.zshrc` are moved to `~/.config/nekoshell/zsh/local.zsh`, the old file goes into the backup set, nekoshell's zshrc is linked in its place, and `~/.config/nekoshell/nekoshell.toml` is written.
 5. **Theme.** The Starship config and the shell colours are rendered for the recorded flavour (mocha the first time), then every configured terminal.
@@ -123,7 +123,7 @@ cd ~/.nekoshell
 
 It removes every enabled plugin in reverse order (their linked files and install-hook changes, such as the delta include in `~/.gitconfig`), unlinks the zshrc, restores every backup set newest first, deletes the Starship config it rendered, takes nekoshell's config back out of every configured terminal, and deletes `theme.zsh`, `antidote.txt` and `nekoshell.toml`.
 
-Left in place, on purpose: `~/.config/nekoshell/zsh/local.zsh`, `greet.conf` and the art pack, `~/.config/fastfetch/config.jsonc`, `~/.config/tmux/nekoshell-theme.conf`, `~/.config/btop/btop.conf`, every config a plugin copied into your home (Neovim, tmux, AeroSpace), the pokemon-colorscripts checkout under `~/.local/share` with its `~/.local/bin` link, the TPM clone, the backup directory, `~/.iterm2_shell_integration.zsh`, and the Homebrew packages unless you passed `--purge`. iTerm2's global preferences are the one thing an uninstall cannot undo while iTerm2 runs; it prints the `defaults delete` line to run with iTerm2 quit.
+Left in place, on purpose: `~/.config/nekoshell/zsh/local.zsh`, `greet.conf` and the art pack, `~/.config/fastfetch/config.jsonc`, `~/.config/tmux/nekoshell-theme.conf`, `~/.config/btop/btop.conf`, every config a plugin copied into your home (Neovim, tmux, AeroSpace), the sprite packs under `~/.local/share` (pokemon-colorscripts with its `~/.local/bin` link, anime-colorscripts, minecraft-colorscripts, colorscripts), the TPM clone, the backup directory, `~/.iterm2_shell_integration.zsh`, and the Homebrew packages unless you passed `--purge`. iTerm2's global preferences are the one thing an uninstall cannot undo while iTerm2 runs; it prints the `defaults delete` line to run with iTerm2 quit.
 
 ## Troubleshooting
 

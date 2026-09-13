@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# greet install: fetch pokemon-colorscripts, pinned.
+# pokemon install: fetch pokemon-colorscripts, pinned.
 #
 # It is not in Homebrew, so it is a checkout with a commit written down: the
 # sprites are what the greeting draws, and an unpinned copy makes two machines
@@ -13,9 +13,10 @@ POKEMON_URL="https://gitlab.com/phoneybadger/pokemon-colorscripts.git"
 
 # Everything past the first checkout is advisory. Offline, or a directory that
 # is not a checkout at all, still leaves a greeting: an older set of sprites is
-# a greeting, and no sprites at all is a greeting too (show_pokemon returns
-# quietly when the command is missing). None of it is worth aborting
-# `plugin add` over, so each step warns and the hook carries on.
+# a greeting, and no sprites at all is a greeting too (greet-art exits quietly
+# when the command is missing, and the stats print on their own). None of it
+# is worth aborting `plugin add` over, so each step warns and the hook carries
+# on.
 if [[ ! -d "$POKEMON_DIR" ]]; then
   run git clone --quiet "$POKEMON_URL" "$POKEMON_DIR"
 elif git -C "$POKEMON_DIR" cat-file -e "$POKEMON_SHA^{commit}" 2>/dev/null; then
