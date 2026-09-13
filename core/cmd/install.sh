@@ -382,6 +382,22 @@ cmd_install() {
   fi
   _install_sweep_v01_links
   link_tree "$NEKOSHELL_ROOT/core/zsh" "$HOME"
+  # The prompt, the zsh plugin manager and the font. Plugins bring their own
+  # formulas through plugin.toml; these three are what the zshrc and every
+  # terminal profile assume, so core installs them here, once, and never
+  # again for what is already present. A missing font is a warning: the rig
+  # runs without it, with boxes where the icons should be, and the doctor
+  # names the cask.
+  if command -v brew >/dev/null 2>&1; then
+    brew_install starship antidote || {
+      log_fail "Homebrew could not install starship and antidote"
+      return 1
+    }
+    brew_cask_install font-jetbrains-mono-nerd-font \
+      || log_warn "the Nerd Font did not install; run: brew install --cask font-jetbrains-mono-nerd-font"
+  else
+    log_warn "Homebrew is not on PATH; install starship, antidote and the JetBrainsMono Nerd Font yourself"
+  fi
   if [[ "$NEKOSHELL_DRY_RUN" == "1" ]]; then
     log_info "would write nekoshell.toml"
   else

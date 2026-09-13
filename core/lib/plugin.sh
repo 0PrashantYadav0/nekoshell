@@ -82,7 +82,7 @@ _plugin_doctor_rows() {
   [[ -f "$hook" ]] || return 0
   (
     plugin_env "$1"
-    # shellcheck disable=SC2329 # invoked indirectly by the sourced doctor.sh
+    # shellcheck disable=SC2317,SC2329 # invoked indirectly by the sourced doctor.sh (2317 is the code before 0.10)
     report() { printf '%-4s %-28s %s\n' "$1" "$2" "$3"; }
     # shellcheck source=/dev/null
     source "$hook"
