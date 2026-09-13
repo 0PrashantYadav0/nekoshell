@@ -1,0 +1,39 @@
+# nekoshell: rendered from plugins/spotify/files/theme.toml.tmpl by the spotify
+# plugin's theme hook, on `nekoshell plugin add spotify` and every
+# `nekoshell theme <flavour>`. This file is overwritten on each flavour switch;
+# a theme of your own goes in a file app.toml's `theme` names instead.
+[[themes]]
+name = "catppuccin_@@FLAVOR@@"
+
+[themes.palette]
+background = "@@HEX:base@@"
+foreground = "@@HEX:text@@"
+black = "@@HEX:surface1@@"
+red = "@@HEX:red@@"
+green = "@@HEX:green@@"
+yellow = "@@HEX:yellow@@"
+blue = "@@HEX:blue@@"
+magenta = "@@HEX:pink@@"
+cyan = "@@HEX:teal@@"
+white = "@@HEX:subtext1@@"
+bright_black = "@@HEX:surface2@@"
+bright_red = "@@HEX:red@@"
+bright_green = "@@HEX:green@@"
+bright_yellow = "@@HEX:yellow@@"
+bright_blue = "@@HEX:blue@@"
+bright_magenta = "@@HEX:pink@@"
+bright_cyan = "@@HEX:teal@@"
+bright_white = "@@HEX:subtext0@@"
+
+[themes.component_style]
+block_title = { fg = "Magenta", modifiers = ["Bold"] }
+border = { fg = "BrightBlack" }
+playback_track = { fg = "Cyan", modifiers = ["Bold"] }
+playback_artists = { fg = "Cyan", modifiers = ["Bold"] }
+playback_album = { fg = "Yellow" }
+playback_metadata = { fg = "BrightBlack" }
+playback_progress_bar = { bg = "BrightBlack", fg = "Green" }
+current_playing = { fg = "Green", modifiers = ["Bold"] }
+page_desc = { fg = "Cyan", modifiers = ["Bold"] }
+table_header = { fg = "Blue" }
+selection = { fg = "Magenta", modifiers = ["Bold"] }
