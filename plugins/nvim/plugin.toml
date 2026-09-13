@@ -1,0 +1,14 @@
+name = "nvim"
+summary = "Neovim, themed and configured, without taking over a config you already have"
+requires = ["neovim"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["editor"]
+# A config already at either of these paths means Neovim is already someone's,
+# and the whole copy is skipped rather than layered underneath it. init.vim is
+# on the list because Neovim reads init.lua in preference to it: dropping ours
+# in would silence a vimscript config without replacing a single file.
+copy_guard = [".config/nvim/init.lua", ".config/nvim/init.vim"]
