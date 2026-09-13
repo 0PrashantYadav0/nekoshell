@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Fake mise: an activation a zsh can eval, completions, a version.
+case "${1:-} ${2:-}" in
+  "activate zsh")
+    echo 'export MISE_FAKE_ACTIVATED=1'
+    exit 0
+    ;;
+  "completion zsh")
+    printf '#compdef mise\n_mise() { :; }\ncompdef _mise mise 2>/dev/null\n'
+    exit 0
+    ;;
+esac
+if [[ "${1:-}" == "--version" ]]; then
+  echo "2026.9.6 macos-arm64"
+  exit 0
+fi
+echo "mise $*"
