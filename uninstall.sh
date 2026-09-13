@@ -1,38 +1,10 @@
 #!/usr/bin/env bash
-# Undo install.sh: unstow, restore the newest backup, remove the iTerm2 profiles.
+# Undo install.sh. Everything happens in `nekoshell uninstall`; this file only
+# checks that macOS and Homebrew are there and hands over. Flags pass through.
 set -euo pipefail
-NEKOSHELL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-export NEKOSHELL_ROOT
-# shellcheck source=lib/log.sh
-source "$NEKOSHELL_ROOT/lib/log.sh"
-# shellcheck source=lib/paths.sh
-source "$NEKOSHELL_ROOT/lib/paths.sh"
-# shellcheck source=lib/backup.sh
-source "$NEKOSHELL_ROOT/lib/backup.sh"
-
-YES=0
-for arg in "$@"; do
-  case "$arg" in
-    --yes|-y) YES=1 ;;
-    --dry-run) NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN ;;
-    -h|--help)
-      sed -n '2p' "$0"
-      echo "usage: uninstall.sh [--yes] [--dry-run]"
-      exit 0 ;;
-    *) log_fail "unknown flag: $arg"; exit 2 ;;
-  esac
-done
-if [[ "$YES" != 1 ]]; then
-  printf 'Remove nekoshell links and restore your previous files? [y/N] '
-  read -r reply; [[ "$reply" == y* || "$reply" == Y* ]] || exit 1
-fi
-
-run stow --no-folding --dir "$NEKOSHELL_ROOT/stow" --target "$HOME" --delete zsh config
-backup_restore_latest
-run rm -f "$ITERM_DYNAMIC_DIR/nekoshell.json" "$NEKOSHELL_CONFIG/root"
-log_ok "nekoshell removed. Left in place: Homebrew packages, ~/.iterm2_shell_integration.zsh,"
-echo "  your ~/.config/nvim and ~/.config/tmux, and the tmux plugins in ~/.config/tmux/plugins/"
-echo "  (the shell integration is iTerm2's own file; remove it with: rm ~/.iterm2_shell_integration.zsh)"
-echo "  To remove the Homebrew packages:"
-echo "  brew bundle cleanup --file $NEKOSHELL_ROOT/Brewfile --force"
-echo "  (and: defaults delete com.googlecode.iterm2 'Default Bookmark Guid')"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+[[ "$(uname -s)" == "Darwin" ]] || { echo "nekoshell supports macOS only" >&2; exit 1; }
+# shellcheck disable=SC2016  # the install line is printed verbatim, not evaluated
+command -v brew >/dev/null 2>&1 || { echo 'Homebrew is missing. Install it first:
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"' >&2; exit 1; }
+exec "$here/bin/nekoshell" uninstall "$@"
