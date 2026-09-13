@@ -231,3 +231,110 @@ PY
   [ "$(profile_backgrounds)" = "$HOME/wall.png 0.2 | $HOME/wall.png 0.2" ]
 }
 
+# --- terminal_background -----------------------------------------------------
+
+@test "terminal_background sets the image and blend on both profiles" {
+  load_adapter
+  status=0; output="$(terminal_background "$HOME/wall.png" 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  [ "$(profile_backgrounds)" = "$HOME/wall.png 0.15 | $HOME/wall.png 0.15" ]
+}
+
+@test "terminal_background honours an explicit opacity" {
+  load_adapter
+  status=0; output="$(terminal_background "$HOME/wall.png" 0.5 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  [ "$(profile_backgrounds)" = "$HOME/wall.png 0.5 | $HOME/wall.png 0.5" ]
+}
+
+@test "terminal_background none clears the image and blend" {
+  load_adapter
+  terminal_background "$HOME/wall.png" >/dev/null 2>&1
+  status=0; output="$(terminal_background none 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  [ "$(profile_backgrounds)" = "none False | none False" ]
+}
+
+@test "terminal_background prints the live escape only inside iTerm2" {
+  load_adapter
+  b64="$(printf %s "$HOME/wall.png" | base64)"
+  status=0; output="$(terminal_background "$HOME/wall.png" 2>&1)" || status=$?
+  assert_not_contains "$output" "SetBackgroundImageFile"
+  export TERM_PROGRAM=iTerm.app
+  status=0; output="$(terminal_background "$HOME/wall.png" 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "]1337;SetBackgroundImageFile=$b64"
+  assert_contains "$output" "confirm"
+  status=0; output="$(terminal_background none 2>&1)" || status=$?
+  assert_contains "$output" "]1337;SetBackgroundImageFile="
+  assert_not_contains "$output" "$b64"
+}
+
+# --- terminal_panel ----------------------------------------------------------
+
+@test "terminal_panel pops up inside tmux and runs inline with a hotkey hint outside" {
+  load_adapter
+  status=0; output="$(TMUX=1 terminal_panel echo hi 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "tmux display-popup"
+  status=0; output="$(terminal_panel echo hi 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "toggle the panel"
+  assert_contains "$output" "hi"
+}
+
+# --- the doctor and the commands --------------------------------------------
+
+@test "doctor fails the profiles row before anything is applied" {
+  export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
+  ln -s "$REPO_ROOT/core/zsh/.zshrc" "$HOME/.zshrc"
+  run "$NK" doctor
+  [ "$status" -eq 1 ]
+  assert_matches "$output" 'fail +iterm2 profiles'
+  assert_matches "$output" 'warn +iterm2 prefs +pending'
+  assert_matches "$output" 'warn +iterm2 shell integration'
+}
+
+@test "doctor reports the profiles, prefs, shell integration and font rows after an apply" {
+  export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
+  ln -s "$REPO_ROOT/core/zsh/.zshrc" "$HOME/.zshrc"
+  "$NK" terminal apply >/dev/null 2>&1
+  run "$NK" doctor
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +iterm2 profiles'
+  assert_matches "$output" 'warn +iterm2 prefs +pending: quit iTerm2, run: nekoshell terminal apply'
+  assert_matches "$output" 'ok +iterm2 shell integration'
+  assert_matches "$output" 'ok +iterm2 font +JetBrainsMonoNF'
+}
+
+@test "doctor fails the profiles row when the file is not JSON" {
+  export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
+  mkdir -p "$(dirname "$PROF")"
+  printf 'not json\n' > "$PROF"
+  run "$NK" doctor
+  [ "$status" -eq 1 ]
+  assert_matches "$output" 'fail +iterm2 profiles'
+}
+
+@test "nekoshell terminal use iterm2 records the terminal and writes the profiles" {
+  printf 'root = "%s"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = []\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" terminal use iterm2
+  [ "$status" -eq 0 ]
+  [ -f "$PROF" ]
+  grep -q '^terminal = "iterm2"$' "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" terminal capabilities
+  assert_contains "$output" "hotkey"
+}
+
+@test "nekoshell theme latte re-renders the profiles in latte" {
+  export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
+  run "$NK" theme latte
+  [ "$status" -eq 0 ]
+  run python3 - "$PROF" <<'PY'
+import json,sys
+p=json.load(open(sys.argv[1]))['Profiles'][0]
+bg=p['Background Color']
+print(round(bg['Red Component']*255), round(bg['Green Component']*255), round(bg['Blue Component']*255))
+PY
+  [ "${lines[0]}" = "239 241 245" ]
+}
