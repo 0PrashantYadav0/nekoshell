@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Fake `sw_vers`: reports $FAKE_SW_VERS_PRODUCT_VERSION as the macOS version,
+# 26.0 when unset, so a test can stand on either side of the Terminal.app
+# 24-bit colour line without caring which Mac it runs on.
+if [[ "${1:-}" == "-productVersion" ]]; then
+  printf '%s\n' "${FAKE_SW_VERS_PRODUCT_VERSION:-26.0}"
+  exit 0
+fi
+echo "sw_vers $*"
