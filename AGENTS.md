@@ -67,6 +67,7 @@ The installer moves every file it replaces into `~/.local/share/nekoshell/backup
 - Hooks, each optional, run by `core/lib/plugin.sh` with `PLUGIN_NAME`, `PLUGIN_DIR` and `FLAVOR` set: `install.sh` and `uninstall.sh` on add and remove, `theme.sh` on every theme switch, `doctor.sh` reporting rows with `report ok|warn|fail "check" "detail"`.
 - `files/link/`, symlinked into `$HOME`, and `files/copy/`, copied once and then the user's.
 - `early.zsh`, `plugin.zsh` and `late.zsh`, sourced by the core zshrc first of all (before anything prints), before the prompt, and after it; a plugin.zsh that sets `NEKOSHELL_PROMPT` takes the prompt over from Starship; `antidote.txt`, zsh plugins appended to the generated bundle; `bin/`, put on `PATH`; `cmd/<name>.sh`, defining `cmd_<name>` and `usage_<name>`, which becomes `nekoshell <name>`.
+- `greet-art`, an executable that prints a caption line and then a sprite (exit non-zero, silent, when it has nothing), makes the plugin an art provider for the greeting; it must list `greet` in `requires_plugins`, fetch its pack in `install.sh` pinned, and draw in a few milliseconds.
 - `README.md` with exactly these headings: `## What it does`, `## Installs`, `## Files`, `## After install`, `## Remove`. The installer prints the "After install" section at the end of a run.
 - A user page, `docs/plugins/<name>.md`, with the headings `## What you get`, `## Using it`, `## Files`, `## Theme`, `## Turning it off`, and a row in the table in [docs/plugins/README.md](docs/plugins/README.md). Facts from the code only: no key or flag that is not in a config or a script.
 
@@ -88,6 +89,7 @@ Commit messages follow `scripts/check-commit-msg.sh`: a conventional subject `ty
 
 - Edit a rendered file by hand (`~/.config/starship.toml`, `~/.config/nekoshell/theme.zsh`, `~/.config/fastfetch/config.jsonc`, a terminal's `nekoshell` config file). Change the template and re-run `nekoshell theme`.
 - Write a colour anywhere but `core/theme/palettes.json`. Everything that carries colour is rendered from it.
-- Add a copyrighted image. The art pack samples are the project's own pixel art; Pokémon sprites come from pokemon-colorscripts at greeting time.
+- Add a copyrighted image. The art pack samples are the project's own pixel art; the sprites come from the provider plugins' packs at greeting time.
+- Add an art provider whose draw takes more than a few milliseconds, or one that runs unpinned third-party code: the greeting has a 150 ms budget and runs on every shell.
 - Merge a shipped Neovim, tmux or AeroSpace config into one the human already has. The installer skips the copy and says so; the human decides.
 - Run `defaults write` for iTerm2 while it is running, install anything with sudo, or commit on the human's behalf.

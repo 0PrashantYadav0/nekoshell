@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# anime greet-art: a random sprite from the anime-colorscripts pack, captioned
+# with the character's name. The pack's own launcher is not used: it wants
+# GNU coreutils on macOS, and picking a file needs neither it nor them.
+#
+# The candidates come from .nekoshell-list.txt, which the install hook writes
+# with the sprites that fit next to the stats (some in the pack are 250
+# columns wide). Filtering runs on that list with a few pipes rather than a
+# process per file: 247 files, two processes each, is half a second, and
+# the greeting has 150 ms for everything.
+#
+# Keys from greet.conf: ANIME_ONLY (words; only names containing one are
+# drawn) and ANIME_SKIP (words never drawn; the pack has one crude name).
+set -uo pipefail
+base="$HOME/.local/share/anime-colorscripts"
+dir="$base/colorscripts"
+[[ -d "$dir" ]] || exit 1
+[[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
+
+if [[ -s "$base/.nekoshell-list.txt" ]]; then
+  candidates="$(cat "$base/.nekoshell-list.txt")"
+else
+  candidates="$(find "$dir" -maxdepth 1 -name '*.txt' | sed 's|.*/||; s/\.txt$//' | sort)"
+fi
+for word in ${ANIME_SKIP-fuck}; do
+  candidates="$(printf '%s\n' "$candidates" | grep -iv -e "$word" || true)"
+done
+if [[ -n "${ANIME_ONLY:-}" ]]; then
+  args=()
+  for word in $ANIME_ONLY; do args+=(-e "$word"); done
+  candidates="$(printf '%s\n' "$candidates" | grep -i "${args[@]}" || true)"
+fi
+names=()
+while IFS= read -r n; do
+  [[ -n "$n" && -f "$dir/$n.txt" ]] && names+=("$n")
+done <<<"$candidates"
+[[ ${#names[@]} -gt 0 ]] || exit 1
+name="${names[$((RANDOM % ${#names[@]}))]}"
+caption="${name#[0-9]*-}"
+caption="${caption#[0-9]*_}"
+printf '%s\n' "$caption" | tr '_-' '  ' | awk '{ for (i = 1; i <= NF; i++) $i = toupper(substr($i, 1, 1)) substr($i, 2) } 1'
+cat "$dir/$name.txt"

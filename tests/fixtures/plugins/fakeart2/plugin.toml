@@ -1,0 +1,9 @@
+name = "fakeart2"
+summary = "A fixture art provider"
+requires = []
+casks = []
+taps = []
+requires_plugins = ["greet"]
+terminals = ["any"]
+conflicts = []
+tags = ["look"]

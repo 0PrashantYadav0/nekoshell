@@ -1,0 +1,9 @@
+name = "anime"
+summary = "A random anime character sprite in the greeting, from anime-colorscripts"
+requires = []
+casks = []
+taps = []
+requires_plugins = ["greet"]
+terminals = ["any"]
+conflicts = []
+tags = ["look"]

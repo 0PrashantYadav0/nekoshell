@@ -21,4 +21,4 @@ Follow `AGENTS.md` in <https://github.com/0PrashantYadav0/nekoshell> exactly. In
 
 The look is Catppuccin mocha by default; `nekoshell theme latte` (or frappe, macchiato, `auto`) switches every themed file at once. Run it only when the human asks for a different flavour.
 
-Never delete `~/.local/share/nekoshell/backup/`. Roll back with `./uninstall.sh --yes`; it restores the backups and leaves the user's own files in `~/.config/nekoshell/`, the copied configs, the pokemon-colorscripts checkout and the Homebrew packages in place.
+Never delete `~/.local/share/nekoshell/backup/`. Roll back with `./uninstall.sh --yes`; it restores the backups and leaves the user's own files in `~/.config/nekoshell/`, the copied configs, the sprite packs under `~/.local/share` and the Homebrew packages in place.

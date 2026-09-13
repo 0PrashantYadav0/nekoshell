@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# colorscripts greet-art: one of the vetted ANSI pattern scripts, run in the
+# terminal's own palette so it follows the flavour by itself. Only names in
+# scripts.txt beside this file are run: they were read and timed at the
+# pinned commit and none animates or waits, which is what keeps a shell
+# start-up quick and a third-party script from doing anything but print.
+set -uo pipefail
+dir="$HOME/.local/share/colorscripts/colorscripts"
+list="${PLUGIN_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}/scripts.txt"
+[[ -d "$dir" && -r "$list" ]] || exit 1
+[[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
+names=()
+while IFS= read -r n; do
+  [[ -n "$n" && -f "$dir/$n" ]] && names+=("$n")
+done <"$list"
+[[ ${#names[@]} -gt 0 ]] || exit 1
+n="${names[$((RANDOM % ${#names[@]}))]}"
+printf '%s\n' "$n"
+bash "$dir/$n" 2>/dev/null

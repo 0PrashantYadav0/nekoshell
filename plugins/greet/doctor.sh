@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# greet doctor: the two tools, and how long the greeting actually takes.
+# greet doctor: fastfetch, every enabled art provider, and how long the
+# greeting actually takes.
 
 if command -v fastfetch >/dev/null 2>&1; then
   report ok "tool: fastfetch" "$(command -v fastfetch)"
@@ -7,13 +8,20 @@ else
   report fail "tool: fastfetch" "missing (nekoshell plugin add greet)"
 fi
 
-# Asked to draw something, not just to exist: a checkout whose python is gone
-# or whose sprites never arrived answers `command -v` and nothing else.
-if command -v pokemon-colorscripts >/dev/null 2>&1 && pokemon-colorscripts -r >/dev/null 2>&1; then
-  report ok "pokemon-colorscripts" "$(command -v pokemon-colorscripts)"
-else
-  report fail "pokemon-colorscripts" "missing or broken (nekoshell plugin add greet)"
-fi
+# One row per enabled art provider, asked to draw rather than just to exist:
+# a pack that never arrived answers `-x` and nothing else.
+_greet_any=0
+for _greet_p in $(plugin_enabled_all); do
+  _greet_art="$(plugin_dir "$_greet_p")/greet-art"
+  [[ -x "$_greet_art" ]] || continue
+  _greet_any=1
+  if PLUGIN_NAME="$_greet_p" PLUGIN_DIR="$(plugin_dir "$_greet_p")" "$_greet_art" >/dev/null 2>&1; then
+    report ok "art: $_greet_p" "draws"
+  else
+    report fail "art: $_greet_p" "nothing to draw (nekoshell plugin add $_greet_p)"
+  fi
+done
+[[ "$_greet_any" == 1 ]] || report warn "art" "no art provider enabled (run: nekoshell plugin add pokemon)"
 
 # This runs on every new shell, so it has a budget. Measured through a pty,
 # because the greeting says nothing at all without one.
@@ -34,7 +42,7 @@ if command -v fastfetch >/dev/null 2>&1; then
   # with no usable `script` must leave the row unmeasured, not take the whole
   # doctor hook down with it.
   gr_ms="$({ NEKOSHELL_SEED=1 NEKOSHELL_GREET_TIME=1 NEKOSHELL_NO_GREET='' CLAUDECODE='' TMUX='' \
-    SSH_CONNECTION='' NEKOSHELL_PANEL='' NEKOSHELL_GREET_MODE='' \
+    SSH_CONNECTION='' NEKOSHELL_PANEL='' NEKOSHELL_GREET_MODE='' NEKOSHELL_GREET_ART='' \
     script -q /dev/null "$PLUGIN_DIR/bin/nekoshell-greet" </dev/null 2>/dev/null || true; } \
     | tr -d '\r' | sed -n 's/^.*greet: \([0-9][0-9]*\) ms$/\1/p')"
   if [[ -z "$gr_ms" ]]; then

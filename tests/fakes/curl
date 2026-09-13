@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
 # Fake curl for the installer tests: writes a stub wherever -o points instead
-# of reaching the network.
+# of reaching the network. FAKE_CURL_SOURCE names a file to deliver instead
+# of the stub (a tarball a test built); FAKE_CURL_FAIL=1 fails the way an
+# offline curl does, writing nothing.
 dest=""
 prev=""
 for arg in "$@"; do
   [[ "$prev" == "-o" ]] && dest="$arg"
   prev="$arg"
 done
-[[ -n "$dest" ]] && printf '# fake iTerm2 shell integration\n' >"$dest"
+[[ "${FAKE_CURL_FAIL:-}" == 1 ]] && exit 22
+if [[ -n "$dest" ]]; then
+  if [[ -n "${FAKE_CURL_SOURCE:-}" ]]; then
+    cp "$FAKE_CURL_SOURCE" "$dest"
+  else
+    printf '# fake iTerm2 shell integration\n' >"$dest"
+  fi
+fi
 exit 0

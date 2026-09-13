@@ -1,12 +1,12 @@
 # nekoshell
 
-A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, `nekoshell`, installs it, themes it and checks it.
+A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon (or an anime character, a Minecraft block, an ANSI pattern) or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, `nekoshell`, installs it, themes it and checks it.
 
 ## What you get
 
 **Look.** Catppuccin in any of its four flavours, mocha by default, and JetBrainsMono Nerd Font in every configured terminal. Commands are coloured as you type them and the autosuggestion behind the cursor takes the palette's dimmest readable grey. `nekoshell theme latte` moves the whole rig to another flavour; `nekoshell theme auto` follows the macOS appearance.
 
-**Greeting.** A new interactive shell prints art next to the machine stats fastfetch collects. The art is a Pokémon sprite 70 percent of the time and a picture from your art pack the rest, when the terminal can draw images. It stays silent inside tmux, inside the panel, over SSH and under Claude Code.
+**Greeting.** A new interactive shell prints art next to the machine stats fastfetch collects. The art is a sprite from an art provider plugin 70 percent of the time and a picture from your art pack the rest, when the terminal can draw images. The `pokemon` provider is in every profile; `anime`, `minecraft` and `colorscripts` are one `nekoshell plugin add` away. It stays silent inside tmux, inside the panel, over SSH and under Claude Code.
 
 **Prompt.** Starship, two lines: the working directory, git and language status on top, the last command's duration, exit status and the clock on the right. The p10k plugin puts Powerlevel10k in its place, in the flavour's colours.
 
@@ -18,7 +18,7 @@ A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with
 
 **Five terminals.** iTerm2, kitty, Ghostty, Warp and Apple Terminal.app each have an adapter. Every one gets the font, the colours and a music panel; what differs is in the table below.
 
-Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the twelve that ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify, aerospace, p10k and omz. [docs/plugins/README.md](docs/plugins/README.md) is the user manual, one page per plugin.
+Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the sixteen that ship: modern-cli, greet, pokemon, anime, minecraft, colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, spotify, aerospace, p10k and omz. [docs/plugins/README.md](docs/plugins/README.md) is the user manual, one page per plugin.
 
 ## Install
 
@@ -122,4 +122,4 @@ Your own shell additions go in `~/.config/nekoshell/zsh/local.zsh`, which is sou
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Pokémon sprites come from pokemon-colorscripts at greeting time and are not part of this repository; Pokémon is a trademark of The Pokémon Company.
+MIT, see [LICENSE](LICENSE). The sprites the greeting draws (Pokémon, anime characters, Minecraft blocks) come from their packs at greeting time and are not part of this repository; Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.

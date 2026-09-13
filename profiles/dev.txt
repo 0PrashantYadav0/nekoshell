@@ -1,5 +1,6 @@
 modern-cli
 greet
+pokemon
 fzf
 atuin
 lazygit

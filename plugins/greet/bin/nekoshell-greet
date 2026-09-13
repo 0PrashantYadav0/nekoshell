@@ -31,10 +31,10 @@ start_ms=""
 [[ -n "${NEKOSHELL_GREET_TIME:-}" ]] && start_ms="$(now_ms)"
 
 # The plugin's own directory, from this script rather than from anything
-# recorded: the data and the sample art belong to the copy that is running.
-# A relative link target is relative to the link's own directory, not to
-# $PWD, and a link can point at another link; both are resolved here the
-# same way bin/nekoshell does it.
+# recorded: the sample art belongs to the copy that is running. A relative
+# link target is relative to the link's own directory, not to $PWD, and a
+# link can point at another link; both are resolved here the same way
+# bin/nekoshell does it.
 _greet_self="${BASH_SOURCE[0]}"
 _greet_hops=0
 while [[ -L "$_greet_self" && "$_greet_hops" -lt 16 ]]; do
@@ -59,16 +59,25 @@ export NEKOSHELL_ROOT="${NEKOSHELL_ROOT:-}"
 
 NEKOSHELL_CONFIG="$HOME/.config/nekoshell"
 NEKOSHELL_CACHE="$HOME/.cache/nekoshell"
+NEKOSHELL_PLUGINS_DIR="${NEKOSHELL_PLUGINS_DIR:-$NEKOSHELL_ROOT/plugins}"
+export NEKOSHELL_CONFIG NEKOSHELL_CACHE NEKOSHELL_PLUGINS_DIR
 
-POKEMON_SHARE=70
-SHINY_ODDS=128
-GENERATIONS=""
+# greet.conf: the engine's own keys, and any an art provider reads. It is
+# sourced with everything exported, so a provider (a separate process) sees
+# the same keys without parsing the file again.
+ART="auto"
+SPRITE_SHARE=""
+POKEMON_SHARE=""
 IMAGE_WIDTH=28
 IMAGE_HEIGHT=14
+set -a
 if [[ -r "$NEKOSHELL_CONFIG/greet.conf" ]]; then
   # shellcheck source=/dev/null
   source "$NEKOSHELL_CONFIG/greet.conf"
 fi
+set +a
+# SPRITE_SHARE used to be POKEMON_SHARE, when the Pokémon was the only sprite.
+[[ -n "$SPRITE_SHARE" ]] || SPRITE_SHARE="${POKEMON_SHARE:-70}"
 
 [[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
 mkdir -p "$NEKOSHELL_CACHE"
@@ -116,31 +125,84 @@ pick_image() {
   printf '%s\n' "${files[$((RANDOM % ${#files[@]}))]}"
 }
 
-# pokemon_facts NAME: "Pikachu · #025 · Electric · Gen 1", or just the capitalised name if unknown.
-pokemon_facts() {
-  local name="$1" tsv="$PLUGIN_DIR/data/pokemon.tsv" cap
-  cap="$(printf '%s' "${name:0:1}" | tr '[:lower:]' '[:upper:]')${name:1}"
-  if [[ -r "$tsv" ]]; then
-    awk -F'\t' -v n="$name" -v cap="$cap" '$1==n {printf "%s · #%03d · %s · Gen %s\n", cap, $2, $3, $4; found=1} END {if (!found) print cap}' "$tsv"
-  else
-    printf '%s\n' "$cap"
-  fi
+# enabled_plugins: the names on the plugins line of nekoshell.toml, in order.
+# Read with sed rather than the core config library, which would cost the
+# greeting a few more sourced files on every shell.
+enabled_plugins() {
+  local toml="$NEKOSHELL_CONFIG/nekoshell.toml" line
+  [[ -r "$toml" ]] || return 0
+  line="$(sed -n 's/^plugins[[:space:]]*=[[:space:]]*\[\(.*\)\].*/\1/p' "$toml" | head -1)"
+  printf '%s\n' "$line" | tr ',' '\n' | tr -d '" ' | sed '/^$/d'
+  return 0
 }
 
-show_pokemon() {
-  command -v pokemon-colorscripts >/dev/null 2>&1 || return 0
-  local args=(-r) out name
-  [[ -n "$GENERATIONS" ]] && args+=("$GENERATIONS")
-  local shiny=""
-  if ((SHINY_ODDS > 0)) && ((RANDOM % SHINY_ODDS == 0)); then
-    args+=(-s)
-    shiny=" ✦ shiny"
+# providers: the enabled plugins that ship an executable greet-art, in the
+# order they were enabled. That file is the whole of the provider contract:
+# the caption on the first line, the sprite after it, silence and a non-zero
+# status when there is nothing to draw.
+providers() {
+  local p
+  for p in $(enabled_plugins); do
+    [[ -x "$NEKOSHELL_PLUGINS_DIR/$p/greet-art" ]] && printf '%s\n' "$p"
+  done
+  return 0
+}
+
+# pick_provider: one provider name by ART, or nothing when none applies.
+# "auto" gives every enabled provider the same odds. A list such as
+# "pokemon:70,anime:30" weights them; a name without a weight counts 1, a
+# name that is not an enabled provider is dropped, and a weight of 0 never
+# draws.
+pick_provider() {
+  local names=() weights=() total=0 entry name w p roll acc i avail
+  if [[ -z "$ART" || "$ART" == "auto" ]]; then
+    for p in $(providers); do
+      names+=("$p")
+      weights+=(1)
+      total=$((total + 1))
+    done
+  else
+    avail=" $(providers | tr '\n' ' ')"
+    for entry in ${ART//,/ }; do
+      name="${entry%%:*}"
+      w="${entry#*:}"
+      [[ "$w" == "$entry" ]] && w=1
+      [[ "$w" =~ ^[0-9]+$ ]] || w=1
+      [[ "$avail" == *" $name "* ]] || continue
+      ((w > 0)) || continue
+      names+=("$name")
+      weights+=("$w")
+      total=$((total + w))
+    done
   fi
-  out="$(pokemon-colorscripts "${args[@]}" 2>/dev/null)" || return 0
-  [[ "$out" == *$'\n'* ]] || return 0
-  name="${out%%$'\n'*}"
-  printf '%s%s\n' "$(pokemon_facts "$name")" "$shiny" >"$NEKOSHELL_CACHE/art-name"
+  [[ ${#names[@]} -gt 0 ]] || return 0
+  roll=$((RANDOM % total))
+  acc=0
+  for i in "${!names[@]}"; do
+    acc=$((acc + weights[i]))
+    if ((roll < acc)); then
+      printf '%s\n' "${names[i]}"
+      return 0
+    fi
+  done
+}
+
+# show_sprite NAME: run NAME's greet-art and hand fastfetch the sprite. The
+# caption goes to the cache for the "Art" row. A provider that prints nothing
+# usable fails this, and the caller shows the stats alone.
+show_sprite() {
+  local name="$1" out
+  out="$(PLUGIN_NAME="$name" PLUGIN_DIR="$NEKOSHELL_PLUGINS_DIR/$name" \
+    "$NEKOSHELL_PLUGINS_DIR/$name/greet-art" 2>/dev/null)" || return 1
+  [[ "$out" == *$'\n'* ]] || return 1
+  printf '%s\n' "${out%%$'\n'*}" >"$NEKOSHELL_CACHE/art-name"
   printf '%s\n' "${out#*$'\n'}" | fastfetch --config "$ff_config" --file-raw -
+}
+
+# show_stats: the machine stats with no picture, which is still a greeting.
+show_stats() {
+  : >"$NEKOSHELL_CACHE/art-name"
+  fastfetch --config "$ff_config" --logo none </dev/null
 }
 
 show_image() {
@@ -150,17 +212,19 @@ show_image() {
 }
 
 # The roll is taken whatever the mode, so a forced greeting and an automatic
-# one draw the same pokemon from the same seed.
+# one draw the same sprite from the same seed.
 roll=$((RANDOM % 100))
 img=""
 flag=""
-case "${NEKOSHELL_GREET_MODE:-auto}" in
+mode="${NEKOSHELL_GREET_MODE:-auto}"
+[[ -n "${NEKOSHELL_GREET_ART:-}" ]] && mode=text
+case "$mode" in
   text) ;;
   image)
     flag="$(image_flag)"
     [[ -n "$flag" ]] && img="$(pick_image)"
     ;;
-  *) if ((roll >= POKEMON_SHARE)); then
+  *) if ((roll >= SPRITE_SHARE)); then
     flag="$(image_flag)"
     [[ -n "$flag" ]] && img="$(pick_image)"
   fi ;;
@@ -169,7 +233,11 @@ esac
 if [[ -n "$img" ]]; then
   show_image "$img" "$flag"
 else
-  show_pokemon
+  provider="${NEKOSHELL_GREET_ART:-}"
+  [[ -n "$provider" ]] || provider="$(pick_provider)"
+  if [[ -z "$provider" ]] || ! show_sprite "$provider"; then
+    show_stats
+  fi
 fi
 
 if [[ -n "${NEKOSHELL_GREET_TIME:-}" ]]; then
