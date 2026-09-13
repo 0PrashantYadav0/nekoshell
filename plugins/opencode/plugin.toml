@@ -1,0 +1,9 @@
+name = "opencode"
+summary = "OpenCode in the flavour: a Catppuccin theme and the welcome banner"
+requires = ["opencode"]
+casks = []
+taps = []
+requires_plugins = ["ai"]
+terminals = ["any"]
+conflicts = []
+tags = ["ai"]

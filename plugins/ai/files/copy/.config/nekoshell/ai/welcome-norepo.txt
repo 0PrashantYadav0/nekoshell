@@ -1,0 +1,1 @@
+Welcome to @@TOOL@@. You are in @@DIR@@, not a git repository.

@@ -1,0 +1,9 @@
+name = "claude-code"
+summary = "Claude Code in the flavour: a Catppuccin theme, a status line, and the welcome banner"
+requires = []
+casks = []
+taps = []
+requires_plugins = ["ai"]
+terminals = ["any"]
+conflicts = []
+tags = ["ai"]
