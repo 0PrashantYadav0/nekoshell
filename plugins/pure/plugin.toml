@@ -1,0 +1,9 @@
+name = "pure"
+summary = "The pure prompt in place of Starship: one line, the path, git, the last command's time"
+requires = ["pure"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = ["p10k"]
+tags = ["prompt", "shell"]
