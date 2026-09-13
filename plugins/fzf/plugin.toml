@@ -1,0 +1,9 @@
+name = "fzf"
+summary = "Fuzzy finder key bindings, with previews for files, directories and history"
+requires = ["fzf"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
