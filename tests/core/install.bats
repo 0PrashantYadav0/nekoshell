@@ -96,3 +96,43 @@ teardown() { teardown_tmp_home; }
   [ -L "$HOME/.zshrc" ]
   [ "$(readlink "$HOME/.zshrc")" = "$HOME/dotfiles/zshrc" ]
 }
+
+# Critical: the renders write straight over whatever is at these paths, so a
+# config of the user's own has to be in the backup set before step 5 runs.
+@test "install backs up the configs it renders over; uninstall brings them back" {
+  mkdir -p "$HOME/.config/fastfetch"
+  printf '# my own starship\n' > "$HOME/.config/starship.toml"
+  printf '{ "mine": true }\n' > "$HOME/.config/fastfetch/config.jsonc"
+  "$NK" install --yes --profile minimal >/dev/null
+  local dir
+  dir="$(find "$HOME/.local/share/nekoshell/backup" -mindepth 1 -maxdepth 1 -type d | head -1)"
+  [ -n "$dir" ]
+  grep -q 'my own starship' "$dir/.config/starship.toml"
+  grep -q 'mine' "$dir/.config/fastfetch/config.jsonc"
+  grep -q 'nekoshell Starship config' "$HOME/.config/starship.toml"
+  run "$NK" uninstall --yes
+  [ "$status" -eq 0 ]
+  grep -q 'my own starship' "$HOME/.config/starship.toml"
+  grep -q 'mine' "$HOME/.config/fastfetch/config.jsonc"
+}
+@test "a second install does not back up the starship.toml it rendered itself" {
+  "$NK" install --yes --profile minimal >/dev/null
+  "$NK" install --yes --profile minimal >/dev/null
+  [ "$(find "$HOME/.local/share/nekoshell/backup" -name starship.toml | wc -l | tr -d ' ')" -eq 0 ]
+}
+# Critical: every `plugin add` begins a backup set of its own, so by uninstall
+# there is more than one and only the oldest holds the original ~/.zshrc.
+@test "uninstall restores every backup set, not only the newest" {
+  printf 'alias k=kubectl\n' > "$HOME/.zshrc"
+  mkdir -p "$HOME/.config/demo"; printf 'my own demo conf\n' > "$HOME/.config/demo/conf"
+  "$NK" install --yes --profile empty >/dev/null
+  # Backup dirs are named to the second; without this both sets would be one.
+  sleep 1
+  "$NK" plugin add demo >/dev/null
+  [ "$(find "$HOME/.local/share/nekoshell/backup" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" -eq 2 ]
+  run "$NK" uninstall --yes
+  [ "$status" -eq 0 ]
+  [ ! -L "$HOME/.zshrc" ]
+  grep -q 'alias k=kubectl' "$HOME/.zshrc"
+  grep -q 'my own demo conf' "$HOME/.config/demo/conf"
+}

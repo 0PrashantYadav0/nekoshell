@@ -31,6 +31,32 @@ backup_link_target() {
   printf '%s/%s\n' "${dir%/}" "$(basename "$target")"
 }
 
+# backup_link_target_lexical ABS_SYMLINK: the symlink's target as an absolute
+# path, resolved textually against the link's own directory. backup_link_target
+# needs the target's directory to still exist; this one does not, which is the
+# shape a v0.1 stow link has once the tree it pointed into was deleted. Purely
+# textual, so it never follows a further symlink: use it only as a fallback for
+# a link backup_link_target could not resolve.
+backup_link_target_lexical() {
+  local src="$1" target out seg
+  target="$(readlink "$src" 2>/dev/null)" || return 1
+  [[ -n "$target" ]] || return 1
+  if [[ "$target" == /* ]]; then
+    printf '%s\n' "$target"
+    return 0
+  fi
+  out="$(dirname "$src")"
+  local IFS='/'
+  for seg in $target; do
+    case "$seg" in
+      ''|.) ;;
+      ..) out="${out%/*}"; [[ -n "$out" ]] || out="/" ;;
+      *) out="${out%/}/$seg" ;;
+    esac
+  done
+  printf '%s\n' "$out"
+}
+
 # backup_path REL: move $HOME/REL (file, dir or foreign symlink) into the backup dir.
 # Symlinks that already point into NEKOSHELL_ROOT are left alone (idempotent re-runs).
 backup_path() {
@@ -49,24 +75,53 @@ backup_path() {
   fi
 }
 
-# backup_restore_latest: move every manifest entry of the newest backup back into $HOME.
-backup_restore_latest() {
-  local latest="" rel dir
-  # Backup dirs are UTC timestamps, so the last glob match is the newest.
-  for dir in "$NEKOSHELL_BACKUP_ROOT"/*/; do
-    [[ -d "$dir" ]] && latest="${dir%/}"
-  done
-  [[ -n "$latest" && -r "$latest/manifest.txt" ]] || { log_warn "no backup to restore"; return 0; }
+# _backup_restore_one DIR: move every manifest entry of one backup set back
+# into $HOME, then retire its manifest so a second uninstall skips the set.
+_backup_restore_one() {
+  local dir="$1" rel
+  [[ -r "$dir/manifest.txt" ]] || return 0
   while IFS= read -r rel; do
     [[ -n "$rel" ]] || continue
     # An entry already restored (or never saved) must not clobber what is in
     # $HOME now: only remove the destination when there is a source to move.
-    [[ -e "$latest/$rel" || -L "$latest/$rel" ]] || continue
+    # That guard is also what lets an older set be applied after a newer one:
+    # whatever the newer set already put back is left where it is.
+    [[ -e "$dir/$rel" || -L "$dir/$rel" ]] || continue
     run rm -rf "$HOME/$rel"
     run mkdir -p "$HOME/$(dirname "$rel")"
-    run mv "$latest/$rel" "$HOME/$rel"
-  done < "$latest/manifest.txt"
-  log_ok "restored $(wc -l < "$latest/manifest.txt" | tr -d ' ') paths from $latest"
-  # Retire the manifest so a second uninstall finds nothing to restore.
-  run mv "$latest/manifest.txt" "$latest/manifest.restored"
+    run mv "$dir/$rel" "$HOME/$rel"
+  done < "$dir/manifest.txt"
+  log_ok "restored $(wc -l < "$dir/manifest.txt" | tr -d ' ') paths from $dir"
+  run mv "$dir/manifest.txt" "$dir/manifest.restored"
+}
+
+# backup_restore_all: every backup set that still has a manifest, newest first.
+# Each `nekoshell plugin add` begins a set of its own, so by the time uninstall
+# runs there is usually more than one of them and only the oldest holds the
+# files the first install replaced. Newest first, with _backup_restore_one's
+# "only move when there is a source" guard, means an older set never overwrites
+# a newer original, while the oldest set - the true original - is still applied
+# to everything the newer sets did not cover.
+backup_restore_all() {
+  local dir dirs=() i
+  # Backup dirs are UTC timestamps, so the glob is already oldest-first.
+  for dir in "$NEKOSHELL_BACKUP_ROOT"/*/; do
+    [[ -d "$dir" && -r "${dir%/}/manifest.txt" ]] || continue
+    dirs+=("${dir%/}")
+  done
+  if [[ ${#dirs[@]} -eq 0 ]]; then log_warn "no backup to restore"; return 0; fi
+  for (( i = ${#dirs[@]} - 1; i >= 0; i-- )); do
+    _backup_restore_one "${dirs[$i]}"
+  done
+}
+
+# backup_restore_latest: the newest backup set only. backup_restore_all is what
+# uninstall wants; this stays for a caller that means exactly one set.
+backup_restore_latest() {
+  local latest="" dir
+  for dir in "$NEKOSHELL_BACKUP_ROOT"/*/; do
+    [[ -d "$dir" ]] && latest="${dir%/}"
+  done
+  [[ -n "$latest" && -r "$latest/manifest.txt" ]] || { log_warn "no backup to restore"; return 0; }
+  _backup_restore_one "$latest"
 }

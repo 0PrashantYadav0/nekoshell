@@ -34,7 +34,7 @@ cmd_uninstall() {
   fi
 
   unlink_tree "$NEKOSHELL_ROOT/core/zsh" "$HOME"
-  backup_restore_latest
+  backup_restore_all
 
   # starship.toml is only ours to remove if we rendered it; a user's own
   # config, or one left by something else, is never touched.
