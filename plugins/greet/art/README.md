@@ -4,7 +4,7 @@
 
 nekoshell does not ship anime stills or Pokémon sprites: those are copyrighted. Pokémon art comes from the pokemon-colorscripts project at greeting time. To use your own images:
 
-    nekoshell-art add ~/Pictures/my-favourite.png
-    nekoshell-art list
+    nekoshell art add ~/Pictures/my-favourite.png
+    nekoshell art list
 
 Images live in `~/.config/nekoshell/art/`. PNG and JPG work. Transparent PNGs look best. Size is set in `~/.config/nekoshell/greet.conf` (`IMAGE_WIDTH`, `IMAGE_HEIGHT`, in terminal cells).
