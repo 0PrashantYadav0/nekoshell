@@ -39,7 +39,9 @@ cmd_music() {
       --here) here=1; shift ;;
       -h|--help|help) usage_music; return 0 ;;
       -*) usage_music; return 2 ;;
-      *) player="$1"; shift ;;
+      # One player, not a list: a second name is a typo or a misremembered
+      # flag, and silently ignoring either would start the wrong player.
+      *) [[ -z "$player" ]] || { usage_music >&2; return 2; }; player="$1"; shift ;;
     esac
   done
 
@@ -59,11 +61,16 @@ cmd_music() {
   if [[ "$here" -eq 1 ]]; then "$bin"; return $?; fi
 
   # No terminal configured or no adapter for it: there is no panel to open, so
-  # the player runs here rather than not at all.
+  # the player runs here rather than not at all. A terminal that is configured
+  # but cannot be loaded says so first — the player appearing in this window
+  # instead of a panel is otherwise a silent mystery.
   term="$(terminal_current 2>/dev/null || true)"
-  if [[ -n "$term" ]] && terminal_load "$term" 2>/dev/null; then
+  if [[ -z "$term" ]]; then
+    "$bin"
+  elif terminal_load "$term" 2>/dev/null; then
     terminal_panel "$bin"
   else
+    log_warn "terminal $term not available; running the player here"
     "$bin"
   fi
 }

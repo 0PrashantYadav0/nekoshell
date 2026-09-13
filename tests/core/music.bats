@@ -15,18 +15,43 @@ setup() {
 }
 teardown() { teardown_tmp_home; }
 
-@test "music --here runs the player in this window" {
+# The fake adapter's terminal_panel prints "fake panel:" and then runs the
+# command, so these two tests can tell the panel path from the inline one. The
+# default terminal_panel could not: outside tmux it runs the command in this
+# window, which is exactly what --here looks like.
+@test "music --here runs the player in this window, not through the panel" {
   "$NK" plugin add fakeplayer >/dev/null
   run "$NK" music --here
   [ "$status" -eq 0 ]
   assert_contains "$output" "fakeplayer running"
+  assert_not_contains "$output" "fake panel:"
 }
 
 @test "music without --here goes through the terminal adapter's panel" {
   "$NK" plugin add fakeplayer >/dev/null
   run "$NK" music
   [ "$status" -eq 0 ]
+  assert_contains "$output" "fake panel:"
   assert_contains "$output" "fakeplayer running"
+}
+
+@test "music warns and runs here when the configured terminal has no adapter" {
+  "$NK" plugin add fakeplayer >/dev/null
+  sed 's/^terminal = .*/terminal = "nope"/' "$HOME/.config/nekoshell/nekoshell.toml" > "$HOME/t.toml"
+  mv "$HOME/t.toml" "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" music
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "terminal nope not available; running the player here"
+  assert_contains "$output" "fakeplayer running"
+  assert_not_contains "$output" "fake panel:"
+}
+
+@test "music refuses a second player argument" {
+  "$NK" plugin add fakeplayer >/dev/null
+  run "$NK" music fakeplayer guarded --here
+  [ "$status" -eq 2 ]
+  assert_contains "$output" "usage: nekoshell music"
+  assert_not_contains "$output" "fakeplayer running"
 }
 
 @test "music picks the first enabled plugin tagged media" {
