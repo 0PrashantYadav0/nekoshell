@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# nekoshell-greet: art + machine stats for a new interactive terminal.
+# Never fails a fresh shell: every problem exits 0 quietly.
+set -uo pipefail
+
+[[ -t 1 ]] || exit 0
+[[ -n "${NEKOSHELL_NO_GREET:-}" ]] && exit 0
+[[ -n "${CLAUDECODE:-}" ]] && exit 0
+[[ -n "${TMUX:-}" ]] && exit 0
+[[ -n "${NEKOSHELL_PANEL:-}" ]] && exit 0
+if [[ -n "${SSH_CONNECTION:-}" && -z "${NEKOSHELL_GREET_SSH:-}" ]]; then exit 0; fi
+
+command -v fastfetch >/dev/null 2>&1 || exit 0
+
+# now_ms: current time in whole milliseconds. macOS `date` has no %N, so this
+# shells out to python3. Only called when NEKOSHELL_GREET_TIME is set, so the
+# normal greeting path never invokes python.
+now_ms() {
+  python3 -c 'import time;print(int(time.time()*1000))'
+}
+
+start_ms=""
+[[ -n "${NEKOSHELL_GREET_TIME:-}" ]] && start_ms="$(now_ms)"
+
+# The plugin's own directory, from this script rather than from anything
+# recorded: the data and the sample art belong to the copy that is running.
+PLUGIN_DIR="${PLUGIN_DIR:-$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/.." 2>/dev/null && pwd -P)}"
+[[ -n "$PLUGIN_DIR" ]] || exit 0
+export PLUGIN_DIR
+
+# The checkout: whatever the environment says, else the root nekoshell.toml
+# records. A greeting never complains, so a root that cannot be found means
+# the terminal question below is simply left unanswered.
+if [[ -z "${NEKOSHELL_ROOT:-}" ]] && [[ -r "$HOME/.config/nekoshell/nekoshell.toml" ]]; then
+  NEKOSHELL_ROOT="$(sed -n 's/^root *= *"\(.*\)"/\1/p' "$HOME/.config/nekoshell/nekoshell.toml" | head -1)"
+fi
+export NEKOSHELL_ROOT="${NEKOSHELL_ROOT:-}"
+
+NEKOSHELL_CONFIG="$HOME/.config/nekoshell"
+NEKOSHELL_CACHE="$HOME/.cache/nekoshell"
+
+POKEMON_SHARE=70
+SHINY_ODDS=128
+GENERATIONS=""
+IMAGE_WIDTH=28
+IMAGE_HEIGHT=14
+if [[ -r "$NEKOSHELL_CONFIG/greet.conf" ]]; then
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_CONFIG/greet.conf"
+fi
+
+[[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
+mkdir -p "$NEKOSHELL_CACHE"
+ff_config="$HOME/.config/fastfetch/config.jsonc"
+
+# image_flag: the fastfetch flag that draws an inline image in this terminal,
+# or nothing at all when it cannot draw one. The question is put to the
+# terminal adapter, never to TERM_PROGRAM: an iTerm2 window running inside
+# something else, or a terminal that sets no TERM_PROGRAM at all, would both
+# get the wrong answer from the variable. iTerm2 has an image protocol of its
+# own; everything else that can draw images speaks kitty's.
+image_flag() {
+  local term caps c
+  [[ -n "$NEKOSHELL_ROOT" ]] || return 0
+  for c in log paths config terminal; do
+    [[ -r "$NEKOSHELL_ROOT/core/lib/$c.sh" ]] || return 0
+  done
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_ROOT/core/lib/log.sh" 2>/dev/null || return 0
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_ROOT/core/lib/paths.sh" 2>/dev/null || return 0
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_ROOT/core/lib/config.sh" 2>/dev/null || return 0
+  # shellcheck source=/dev/null
+  source "$NEKOSHELL_ROOT/core/lib/terminal.sh" 2>/dev/null || return 0
+  term="$(terminal_current 2>/dev/null || true)"
+  [[ -n "$term" ]] || return 0
+  terminal_load "$term" >/dev/null 2>&1 || return 0
+  caps="$(terminal_capabilities 2>/dev/null || true)"
+  for c in $caps; do
+    [[ "$c" == "images" ]] || continue
+    if [[ "$term" == "iterm2" ]]; then printf '%s\n' "--iterm"; else printf '%s\n' "--kitty"; fi
+    return 0
+  done
+  return 0
+}
+
+pick_image() {
+  # Print a random image path from the art pack, or nothing.
+  local files=() f
+  for f in "$NEKOSHELL_CONFIG"/art/*.png "$NEKOSHELL_CONFIG"/art/*.jpg "$NEKOSHELL_CONFIG"/art/*.jpeg; do
+    [[ -f "$f" ]] && files+=("$f")
+  done
+  [[ ${#files[@]} -eq 0 ]] && return 0
+  printf '%s\n' "${files[$((RANDOM % ${#files[@]}))]}"
+}
+
+# pokemon_facts NAME: "Pikachu · #025 · Electric · Gen 1", or just the capitalised name if unknown.
+pokemon_facts() {
+  local name="$1" tsv="$PLUGIN_DIR/data/pokemon.tsv" cap
+  cap="$(printf '%s' "${name:0:1}" | tr '[:lower:]' '[:upper:]')${name:1}"
+  if [[ -r "$tsv" ]]; then
+    awk -F'\t' -v n="$name" -v cap="$cap" '$1==n {printf "%s · #%03d · %s · Gen %s\n", cap, $2, $3, $4; found=1} END {if (!found) print cap}' "$tsv"
+  else
+    printf '%s\n' "$cap"
+  fi
+}
+
+show_pokemon() {
+  command -v pokemon-colorscripts >/dev/null 2>&1 || return 0
+  local args=(-r) out name
+  [[ -n "$GENERATIONS" ]] && args+=("$GENERATIONS")
+  local shiny=""
+  if (( SHINY_ODDS > 0 )) && (( RANDOM % SHINY_ODDS == 0 )); then
+    args+=(-s); shiny=" ✦ shiny"
+  fi
+  out="$(pokemon-colorscripts "${args[@]}" 2>/dev/null)" || return 0
+  [[ "$out" == *$'\n'* ]] || return 0
+  name="${out%%$'\n'*}"
+  printf '%s%s\n' "$(pokemon_facts "$name")" "$shiny" > "$NEKOSHELL_CACHE/art-name"
+  printf '%s\n' "${out#*$'\n'}" | fastfetch --config "$ff_config" --file-raw -
+}
+
+show_image() {
+  local img="$1" flag="$2"
+  basename "$img" > "$NEKOSHELL_CACHE/art-name"
+  fastfetch --config "$ff_config" "$flag" "$img" --logo-width "$IMAGE_WIDTH" --logo-height "$IMAGE_HEIGHT" </dev/null
+}
+
+# The roll is taken whatever the mode, so a forced greeting and an automatic
+# one draw the same pokemon from the same seed.
+roll=$((RANDOM % 100))
+img=""
+flag=""
+case "${NEKOSHELL_GREET_MODE:-auto}" in
+  text) ;;
+  image) flag="$(image_flag)"; [[ -n "$flag" ]] && img="$(pick_image)" ;;
+  *) if (( roll >= POKEMON_SHARE )); then
+       flag="$(image_flag)"
+       [[ -n "$flag" ]] && img="$(pick_image)"
+     fi ;;
+esac
+
+if [[ -n "$img" ]]; then
+  show_image "$img" "$flag"
+else
+  show_pokemon
+fi
+
+if [[ -n "${NEKOSHELL_GREET_TIME:-}" ]]; then
+  end_ms="$(now_ms)"
+  printf 'greet: %d ms\n' $(( end_ms - start_ms ))
+fi
+exit 0

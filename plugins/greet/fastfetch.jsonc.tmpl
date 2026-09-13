@@ -1,0 +1,31 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  // The logo is passed on the command line by nekoshell-greet.
+  // plugins/greet/fastfetch.jsonc.tmpl is the source; the greet plugin's theme
+  // hook renders it to ~/.config/fastfetch/config.jsonc with the flavour's
+  // mauve and blue substituted, as SGR colours, into the display colours
+  // below. Edits to the rendered copy are lost on the next flavour switch.
+  "display": {
+    "separator": "  ",
+    "color": { "keys": "@@sgr:mauve@@", "title": "@@sgr:blue@@" }
+  },
+  "modules": [
+    "title",
+    "separator",
+    { "type": "os", "key": "OS" },
+    { "type": "host", "key": "Host" },
+    { "type": "uptime", "key": "Uptime" },
+    { "type": "shell", "key": "Shell" },
+    { "type": "terminal", "key": "Terminal" },
+    { "type": "cpu", "key": "CPU" },
+    { "type": "memory", "key": "Memory" },
+    { "type": "disk", "key": "Storage", "folders": "/" },
+    { "type": "battery", "key": "Battery" },
+    { "type": "wifi", "key": "Wi-Fi" },
+    { "type": "localip", "key": "IP", "showIpv6": false, "compact": true },
+    { "type": "packages", "key": "Packages" },
+    { "type": "command", "key": "Art", "text": "cat \"$HOME/.cache/nekoshell/art-name\" 2>/dev/null" },
+    "break",
+    "colors"
+  ]
+}

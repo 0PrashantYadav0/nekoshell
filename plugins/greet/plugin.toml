@@ -1,0 +1,9 @@
+name = "greet"
+summary = "A Pokémon or your own pixel art next to the machine stats, on every new shell"
+requires = ["fastfetch"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["look"]
