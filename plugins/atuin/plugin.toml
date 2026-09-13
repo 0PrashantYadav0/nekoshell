@@ -1,0 +1,9 @@
+name = "atuin"
+summary = "Shell history you can actually search, kept on this machine"
+requires = ["atuin"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
