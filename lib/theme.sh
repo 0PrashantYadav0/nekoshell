@@ -73,7 +73,10 @@ with open(dst, "w", encoding="utf-8") as f:
 # theme_clear_stale_link PATH: drop PATH when it is a leftover stow link.
 # starship.toml and the fastfetch config used to be stowed. `stow --restow` only
 # unlinks what the package still holds, so an upgraded machine keeps the old link
-# and a render would write straight into the repo.
+# and a render would write straight into the repo. install_user_configs runs the
+# same guard on greet.conf, the Neovim init.lua/init.vim and tmux.conf: those are
+# copied "only if absent", and a stale link back into the checkout would look
+# absent-enough for `-e` while making `cp` write through it into the repo.
 #
 # Two shapes count as stale, because stow writes relative links and this version
 # deleted the directory one of them pointed through:
@@ -87,12 +90,14 @@ with open(dst, "w", encoding="utf-8") as f:
 #
 # A relative link to a real file outside the checkout is the user's own dotfiles
 # setup. It is neither shape and is left alone.
+#
+# The removal goes through `run` so `--dry-run` only prints it.
 theme_clear_stale_link() {
   local p="$1" target
   [[ -L "$p" ]] || return 0
   target="$(backup_link_target "$p" 2>/dev/null || true)"
   if [[ -n "$target" && "$target" == "$NEKOSHELL_ROOT"/* ]] || [[ ! -e "$p" ]]; then
-    rm -f "$p"
+    run rm -f "$p"
   fi
   return 0
 }

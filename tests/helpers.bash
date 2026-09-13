@@ -16,12 +16,30 @@ setup_tmp_home() {
   export HOME
   export XDG_CONFIG_HOME="$HOME/.config"
   mkdir -p "$HOME/.config" "$HOME/.cache" "$HOME/.local/share" "$HOME/.local/bin"
+  # Captured before a test's own setup() puts tests/fakes in front of PATH, so
+  # real_git below always reaches the real git rather than the fake that just
+  # echoes its argv.
+  NEKOSHELL_REAL_PATH="$PATH"
+  export NEKOSHELL_REAL_PATH
+}
+
+# real_git ARGS...: git from the real PATH, bypassing tests/fakes/git (which
+# only echoes its argv and never touches the filesystem). Tests use this to
+# inspect the checkout itself, e.g. to prove a copy never wrote into $REPO_ROOT.
+real_git() {
+  PATH="$NEKOSHELL_REAL_PATH" git "$@"
 }
 
 teardown_tmp_home() {
   case "${HOME:-}" in
     */nekoshell-home.??????) rm -rf "$HOME" ;;
   esac
+}
+
+# relpath TARGET FROM_DIR: TARGET as a path relative to FROM_DIR, the shape stow
+# writes its links in.
+relpath() {
+  python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$1" "$2"
 }
 
 # Assertions.
