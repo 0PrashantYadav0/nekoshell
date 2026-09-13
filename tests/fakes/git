@@ -46,6 +46,18 @@ for arg in "$@"; do
         printf '#!/usr/bin/env bash\nexit 0\n' >"$dest/tpm"
         chmod +x "$dest/tpm"
         ;;
+      minecraft-colorscripts)
+        mkdir -p "$dest/colorscripts/default-1.8.9"
+        printf 'BLOCK stone\nrow2\n' >"$dest/colorscripts/default-1.8.9/stone.txt"
+        printf 'BLOCK oak_planks\nrow2\n' >"$dest/colorscripts/default-1.8.9/oak_planks.txt"
+        ;;
+      colorscripts)
+        mkdir -p "$dest/colorscripts"
+        printf '#!/usr/bin/env bash\necho BARS\n' >"$dest/colorscripts/bars"
+        printf '#!/usr/bin/env bash\necho PACMAN\n' >"$dest/colorscripts/pacman"
+        printf '#!/usr/bin/env bash\necho NOTLISTED\n' >"$dest/colorscripts/notlisted"
+        chmod +x "$dest"/colorscripts/*
+        ;;
       *)
         printf '#!/usr/bin/env bash\necho pikachu\n' >"$dest/pokemon-colorscripts.py"
         chmod +x "$dest/pokemon-colorscripts.py"
