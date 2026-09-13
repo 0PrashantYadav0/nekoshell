@@ -69,7 +69,7 @@ _plugin_doctor_rows() {
 }
 
 plugin_add() {
-  local name="$1" term dep c t
+  local name="$1" term dep c t g skip_copy=0
   plugin_exists "$name" || { log_fail "no plugin named $name (nekoshell plugin list)"; return 1; }
   term="$(terminal_current || true)"
   if [[ -n "$term" ]] && ! plugin_supports_terminal "$name" "$term"; then
@@ -93,7 +93,21 @@ plugin_add() {
     brew_cask_install "${casks[@]}" || { log_fail "$name: Homebrew install failed"; return 1; }
   fi
   link_tree "$(plugin_dir "$name")/files/link" "$HOME" || { log_fail "$name: linking files failed"; return 1; }
-  copy_once "$(plugin_dir "$name")/files/copy" "$HOME" || { log_fail "$name: copying files failed"; return 1; }
+  # copy_guard: paths (relative to $HOME) that mean the user already has a
+  # config of their own for this plugin. copy_once alone would keep each file
+  # it finds, but a plugin's copy tree is a set: half of ours layered under an
+  # existing init.lua or tmux.conf is worse than none of it. One guard path
+  # present skips the whole copy, loudly, and the files stay readable in the
+  # checkout for anyone who wants to merge them by hand.
+  for g in $(plugin_meta_list "$name" copy_guard); do
+    if [[ -e "$HOME/$g" ]]; then
+      log_warn "$name: $g exists; left your config alone (see plugins/$name/files/copy)"
+      skip_copy=1
+    fi
+  done
+  if [[ "$skip_copy" -eq 0 ]]; then
+    copy_once "$(plugin_dir "$name")/files/copy" "$HOME" || { log_fail "$name: copying files failed"; return 1; }
+  fi
   plugin_run_hook "$name" install || return 1
   plugin_run_hook "$name" theme || return 1
   config_list_add plugins "$name"

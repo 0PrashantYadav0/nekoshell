@@ -1,0 +1,10 @@
+name = "guarded"
+summary = "A fixture plugin whose copy is guarded"
+requires = []
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
+copy_guard = [".config/guarded/mine"]
