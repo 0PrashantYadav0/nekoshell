@@ -1,3 +1,21 @@
 #!/usr/bin/env bash
+# Fake spotify_player. `search` answers with the fixture JSON (or the file
+# FAKE_SPOTIFY_SEARCH_JSON names); FAKE_SPOTIFY_SEARCH_FAIL=1 makes it fail
+# the way 0.25.1 does on an answer it cannot parse. `playback start ...`
+# echoes, or fails with "No active device found" under
+# FAKE_SPOTIFY_NO_DEVICE=1. Everything else echoes its arguments and the
+# panel marker, which the music tests read.
+if [[ "${1:-}" == "search" ]]; then
+  if [[ "${FAKE_SPOTIFY_SEARCH_FAIL:-}" == 1 ]]; then
+    echo "Bad request: json parse error: invalid type: null, expected a boolean at line 1 column 106845" >&2
+    exit 1
+  fi
+  cat "${FAKE_SPOTIFY_SEARCH_JSON:-$(dirname "${BASH_SOURCE[0]}")/../fixtures/spotify-search.json}"
+  exit 0
+fi
+if [[ "${1:-}" == "playback" && "${2:-}" == "start" && "${FAKE_SPOTIFY_NO_DEVICE:-}" == 1 ]]; then
+  echo "No active device found. Please connect to a device first." >&2
+  exit 1
+fi
 echo "spotify_player $*"
 echo "PANEL=${NEKOSHELL_PANEL:-unset}"

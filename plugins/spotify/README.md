@@ -16,7 +16,15 @@ Two ways in, picked automatically:
   volume, `q` to quit. This is the fallback when spotify_player is missing,
   and `nekoshell-spotify --remote` asks for it directly.
 
-`nekoshell spotify` looks after the login and your client id:
+`nekoshell spotify search [QUERY]` (alias `sps`) is a search bar in the
+shell: fzf opens with the tracks, albums, artists and playlists Spotify
+finds for the words you type, the list refilling as you type, and Enter
+plays the pick on the active device, so the player window (`nekoshell
+music`) or the desktop app has to be running. Without fzf it is a numbered
+menu. spotify_player 0.25.1 cannot read Spotify's answer to a few searches
+("daft punk" is one); the bar shows that as one line rather than hanging.
+
+`nekoshell spotify` also looks after the login and your client id:
 
 - `nekoshell spotify client-id <id>` puts your own Spotify client id in
   app.toml (see "After install" for why you want one).

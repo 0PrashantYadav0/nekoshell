@@ -97,7 +97,7 @@ nekoshell plugin add aerospace
 nekoshell plugin remove --purge btop   # --purge also uninstalls formulas no other plugin needs
 ```
 
-Twelve plugins ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify, aerospace, p10k and omz. Each plugin's README (`nekoshell plugin info NAME` prints it) says what it installs, which files it links or copies, and what removing it leaves behind. [docs/plugins/README.md](plugins/README.md) is the manual: what each one does day to day, its keys, commands and aliases, the files you may edit, how it follows the theme, and how to turn it off.
+Twenty-three plugins ship: modern-cli, greet and its art providers pokemon, anime, minecraft and colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, yazi, gh, mise, spotify, ai, claude-code, opencode, aerospace, p10k, pure and omz. Each plugin's README (`nekoshell plugin info NAME` prints it) says what it installs, which files it links or copies, and what removing it leaves behind. [docs/plugins/README.md](plugins/README.md) is the manual: what each one does day to day, its keys, commands and aliases, the files you may edit, how it follows the theme, and how to turn it off.
 
 ## Upgrading
 

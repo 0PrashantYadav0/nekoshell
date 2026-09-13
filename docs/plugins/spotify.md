@@ -16,6 +16,7 @@ The first spotify_player start opens a browser for the Spotify login and caches 
 | `nekoshell music --panel` | open it in the terminal's panel |
 | `nekoshell music spotify` | name the player, when `music_player` in `nekoshell.toml` is something else |
 | `nekoshell-spotify --remote` | the desktop-app remote, even with spotify_player installed |
+| `nekoshell spotify search [QUERY]` (alias `sps`) | a search bar: fzf over the tracks, albums, artists and playlists Spotify finds for what you type, refilled as you type; Enter plays the pick on the active device (the player window or the desktop app must be running). Without fzf, a numbered menu. A search spotify_player cannot parse (`daft punk` is one) shows as one error line |
 | `nekoshell spotify client-id ID` | write your Spotify app's client id (32 hex characters) into `app.toml` |
 | `nekoshell spotify login` | forget the cached login and run `spotify_player authenticate`; do this after a new id |
 | `nekoshell spotify logout` | forget the cached login; the next start asks again |
