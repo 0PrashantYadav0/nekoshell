@@ -1,0 +1,9 @@
+name = "otherplayer"
+summary = "A second fixture media plugin, so the auto pick and the setting can be told apart"
+requires = []
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["media"]

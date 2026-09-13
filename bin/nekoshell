@@ -5,26 +5,35 @@ _self="${BASH_SOURCE[0]}"
 # readlink prints the target as written, which for a relative link is relative
 # to the link's own directory, not to $PWD. Resolving it anywhere else finds
 # the wrong checkout, or none.
-if [[ -L "$_self" ]]; then
+# Every level of link, not one: a Homebrew-style shim pointing at a link in
+# ~/.local/bin pointing at the checkout is two hops, and stopping after the
+# first would compute a root that does not exist.
+_hops=0
+while [[ -L "$_self" && "$_hops" -lt 16 ]]; do
   _target="$(readlink "$_self")"
   case "$_target" in
     /*) _self="$_target" ;;
     *) _self="$(cd "$(dirname "$_self")" && pwd -P)/$_target" ;;
   esac
-fi
+  _hops=$((_hops + 1))
+done
 NEKOSHELL_ROOT="$(cd "$(dirname "$_self")/.." && pwd -P)"
 export NEKOSHELL_ROOT
 for _lib in log paths backup config link brew terminal plugin theme zsh_migrate; do
   # shellcheck source=/dev/null
   source "$NEKOSHELL_ROOT/core/lib/$_lib.sh"
 done
-# The libraries only define functions on source (no side effects); the
-# dispatcher is what actually runs, so it is what bootstraps the directories
-# hooks and commands assume are already there.
-mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE" "$NEKOSHELL_DATA"
 sub="${1:-help}"
 [[ $# -gt 0 ]] && shift
 case "$sub" in -h | --help) sub=help ;; -v | --version) sub=version ;; esac
+# The libraries only define functions on source (no side effects); the
+# dispatcher is what actually runs, so it is what bootstraps the directories
+# hooks and commands assume are already there. Not for help and version:
+# asking what nekoshell is must not leave three directories in $HOME.
+case "$sub" in
+  help | version) ;;
+  *) mkdir -p "$NEKOSHELL_CONFIG" "$NEKOSHELL_CACHE" "$NEKOSHELL_DATA" ;;
+esac
 # A sub containing a "/" is never a real command name (core/cmd/*.sh and
 # plugin cmd/*.sh names are both single path segments); treat it as unknown
 # rather than letting it walk `core/cmd/$sub.sh` or a plugin's cmd/ lookup

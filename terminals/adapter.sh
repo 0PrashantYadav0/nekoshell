@@ -5,7 +5,7 @@
 #   terminal_detect                     0 when the current shell runs in it
 #   terminal_installed                  0 when the app is on this Mac
 #   terminal_capabilities               words from: truecolor images background panel hotkey
-#   terminal_font_name                  Nerd Font face to configure
+#   terminal_font_name                  the Nerd Font, spelled the way this terminal's config wants it
 #   terminal_apply FLAVOR               write font + colours into the terminal's config
 #   terminal_background PATH|none [OPACITY]
 #   terminal_panel CMD...               open CMD in a panel/overlay
@@ -22,7 +22,7 @@ terminal_name() { echo "unknown"; }
 terminal_detect() { return 1; }
 terminal_installed() { return 1; }
 terminal_capabilities() { :; }
-terminal_font_name() { echo "JetBrainsMono NF"; }
+terminal_font_name() { echo "JetBrainsMono Nerd Font"; }
 terminal_apply() { _terminal_unsupported "theme"; }
 terminal_background() { _terminal_unsupported "background"; }
 # Nothing by default: an adapter that only reads the terminal's config has

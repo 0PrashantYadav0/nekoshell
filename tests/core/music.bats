@@ -77,13 +77,18 @@ teardown() { teardown_tmp_home; }
   assert_contains "$output" "fakeplayer running"
 }
 
+# otherplayer is enabled first, so the auto pick would choose it; the setting
+# has to be what steers the command to fakeplayer instead.
 @test "music reads music_player from the config" {
-  "$NK" plugin add demo >/dev/null
+  "$NK" plugin add otherplayer >/dev/null
   "$NK" plugin add fakeplayer >/dev/null
+  run "$NK" music --here
+  assert_contains "$output" "otherplayer running"
   printf 'music_player = "fakeplayer"\n' >> "$HOME/.config/nekoshell/nekoshell.toml"
   run "$NK" music --here
   [ "$status" -eq 0 ]
   assert_contains "$output" "fakeplayer running"
+  assert_not_contains "$output" "otherplayer running"
 }
 
 @test "music fails clearly when the player has no binary" {
