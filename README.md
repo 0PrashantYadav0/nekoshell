@@ -1,5 +1,7 @@
 # nekoshell
 
+> v0.2 rebuild in progress: the code below is the new plugin-based layout; these docs are being rewritten and may still describe v0.1. Run `./install.sh` and `nekoshell help`.
+
 A Catppuccin-themed iTerm2 rig with a Pokémon greeting, machine stats, and a hotkey Spotify panel, installed by one idempotent script.
 
 ![Greeting](docs/screenshots/greeting.png)

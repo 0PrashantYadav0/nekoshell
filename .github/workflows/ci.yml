@@ -1,0 +1,26 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test tools
+        run: brew install bats-core shellcheck
+      - name: Shellcheck
+        run: |
+          shellcheck -x install.sh uninstall.sh bin/* core/lib/*.sh core/cmd/*.sh \
+            terminals/adapter.sh terminals/*/adapter.sh \
+            plugins/*/*.sh plugins/*/bin/* plugins/*/cmd/*.sh \
+            tests/helpers.bash tests/fakes/*
+      - name: Tests
+        run: bats -r tests
+      # The installer against a throwaway HOME. --check mutates nothing, and
+      # NEKOSHELL_SKIP_PREFLIGHT drops the macOS app checks the runner cannot
+      # satisfy, so this is the end-to-end proof that every profile still
+      # names plugins that exist.
+      - name: Install check
+        run: HOME="$(mktemp -d)" NEKOSHELL_SKIP_PREFLIGHT=1 ./bin/nekoshell install --check --profile full --terminal iterm2
