@@ -44,6 +44,23 @@ _iterm_flavor() {
 # much of the background colour is laid over it.
 _iterm_blend() { awk -v o="$1" 'BEGIN { printf "%g\n", 1 - o }'; }
 
+# _iterm_opacity_ok OPACITY: a decimal from 0 to 1 and nothing else. awk would
+# read "abc" as 0 and "1.5" as a negative Blend, either of which iTerm2 stores
+# and then draws wrongly, so the check happens before anything is written.
+_iterm_opacity_ok() { [[ "$1" =~ ^(0|1|0?\.[0-9]+|1\.0+)$ ]]; }
+
+# _iterm_abspath PATH: PATH as an absolute, symlink-resolved path. iTerm2
+# resolves a relative "Background Image Location" against its own working
+# directory, not the shell's, so a relative path would silently show no image.
+_iterm_abspath() {
+  local p="$1"
+  [[ "$p" == /* ]] || p="$PWD/$p"
+  if [[ -e "$p" ]]; then
+    p="$(cd "$(dirname "$p")" && pwd -P)/$(basename "$p")"
+  fi
+  printf '%s' "$p"
+}
+
 # iterm_write_profiles [FLAVOR] [EXTRA...]: regenerate
 # ~/Library/Application Support/iTerm2/DynamicProfiles/nekoshell.json. EXTRA is
 # passed to the generator as-is (--background/--blend). The flavour defaults to
@@ -88,10 +105,18 @@ iterm_prefs_pending() {
 # vendored because it is iTerm2's file and has to match the running iTerm2. A
 # failed download is not a failed apply: everything else about the rig works
 # without it, so this warns and carries on.
+# The download lands on a temp file and is moved into place, so a connection
+# that dies half way through cannot leave a truncated file that .zshrc would
+# source and that the "already there" check above would then never replace.
 iterm_install_shell_integration() {
+  local part="$ITERM_SHELL_INTEGRATION.part"
   if [[ ! -f "$ITERM_SHELL_INTEGRATION" ]]; then
-    run curl -fsSL https://iterm2.com/shell_integration/zsh -o "$ITERM_SHELL_INTEGRATION" \
-      || log_warn "iTerm2 shell integration download failed; the status bar's working directory and git components will stay blank"
+    if run curl -fsSL https://iterm2.com/shell_integration/zsh -o "$part"; then
+      run mv "$part" "$ITERM_SHELL_INTEGRATION"
+    else
+      run rm -f "$part"
+      log_warn "iTerm2 shell integration download failed; the status bar's working directory and git components will stay blank"
+    fi
   fi
   return 0
 }
@@ -105,7 +130,11 @@ terminal_apply() {
   if [[ -n "$bg" ]]; then
     opacity="$(_iterm_setting background_opacity)"
     [[ -n "$opacity" ]] || opacity="0.85"
-    iterm_write_profiles "$flavor" --background "$bg" --blend "$(_iterm_blend "$opacity")"
+    if ! _iterm_opacity_ok "$opacity"; then
+      log_warn "background_opacity is $opacity, which is not between 0 and 1; using 0.85"
+      opacity="0.85"
+    fi
+    iterm_write_profiles "$flavor" --background "$(_iterm_abspath "$bg")" --blend "$(_iterm_blend "$opacity")"
   else
     iterm_write_profiles "$flavor"
   fi
@@ -129,15 +158,20 @@ terminal_background() {
   if [[ "$path" == "none" ]]; then
     iterm_write_profiles "$flavor" --background ""
   else
+    _iterm_opacity_ok "$opacity" || { log_fail "opacity must be between 0 and 1"; return 1; }
+    path="$(_iterm_abspath "$path")"
     [[ -e "$path" ]] || log_warn "$path does not exist yet; writing it into the profiles anyway"
     iterm_write_profiles "$flavor" --background "$path" --blend "$(_iterm_blend "$opacity")"
     b64="$(printf %s "$path" | base64)"
   fi
   # The escape changes the window this ran in, so the new background shows up
   # without waiting for a new one. iTerm2 asks the first time a program does it.
-  if [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then
+  # A dry run must not send it: the escape is the change, not a report of one.
+  if [[ "${TERM_PROGRAM:-}" == "iTerm.app" && "${NEKOSHELL_DRY_RUN:-0}" != "1" ]]; then
     log_info "iTerm2 asks you to confirm the first time a program sets the background image"
-    printf '\033]1337;SetBackgroundImageFile=%s\a' "$b64"
+    # The trailing newline is this script's, not part of the escape: without it
+    # the next prompt starts mid-line.
+    printf '\033]1337;SetBackgroundImageFile=%s\a\n' "$b64"
   fi
   return 0
 }
@@ -146,7 +180,7 @@ terminal_background() {
 # there is nothing to open — say which key opens it and run the command here.
 terminal_panel() {
   if [[ -n "${TMUX:-}" ]]; then
-    tmux display-popup -E -w 80% -h 80% "$*"
+    terminal_panel_default "$@"
   else
     log_info "press ⌥M to toggle the panel; running here"
     "$@"
@@ -154,20 +188,30 @@ terminal_panel() {
 }
 
 terminal_doctor() {
-  local prof="$ITERM_DYNAMIC_DIR/nekoshell.json" font=""
+  local prof="$ITERM_DYNAMIC_DIR/nekoshell.json" font="" rc=0
   if [[ ! -f "$prof" ]]; then
     report fail "iterm2 profiles" "missing (run: nekoshell terminal apply)"
-  elif font="$(python3 - "$prof" 2>/dev/null <<'PY'
-import json, sys
-d = json.load(open(sys.argv[1], encoding="utf-8"))
-profiles = d["Profiles"]
-assert len(profiles) == 2, len(profiles)
-print(profiles[0]["Normal Font"])
-PY
-  )"; then
-    report ok "iterm2 profiles" "$prof"
+  elif ! command -v python3 >/dev/null 2>&1; then
+    # No parser, so nothing is known about the file. That is not evidence the
+    # profiles are wrong, so it warns rather than failing the whole doctor.
+    report warn "iterm2 profiles" "python3 missing; $prof not checked"
   else
-    report fail "iterm2 profiles" "unreadable: re-run: nekoshell terminal apply"
+    font="$(python3 - "$prof" 2>/dev/null <<'PY'
+import json, sys
+try:
+    profiles = json.load(open(sys.argv[1], encoding="utf-8"))["Profiles"]
+except Exception:
+    sys.exit(1)
+if len(profiles) != 2:
+    sys.exit(1)
+print(profiles[0].get("Normal Font", ""))
+PY
+    )" || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+      report ok "iterm2 profiles" "$prof"
+    else
+      report fail "iterm2 profiles" "unreadable or not two profiles; run: nekoshell terminal apply"
+    fi
   fi
 
   if iterm_prefs_pending; then
@@ -184,7 +228,7 @@ PY
 
   case "$font" in
     JetBrainsMonoNF*) report ok "iterm2 font" "$font" ;;
-    "")               report warn "iterm2 font" "no profile to read the font from" ;;
+    "")               report warn "iterm2 font" "no font to read (see the profiles row)" ;;
     *)                report fail "iterm2 font" "$font is not a JetBrainsMono Nerd Font" ;;
   esac
 }

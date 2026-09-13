@@ -9,6 +9,7 @@
 #   terminal_apply FLAVOR               write font + colours into the terminal's config
 #   terminal_background PATH|none [OPACITY]
 #   terminal_panel CMD...               open CMD in a panel/overlay
+#   terminal_panel_default CMD...       the fallback panel, for adapters to reuse
 #   terminal_doctor                     report rows (report is defined by the doctor)
 # Needs log.sh. Source this file; do not execute it.
 
@@ -22,6 +23,9 @@ terminal_apply()        { _terminal_unsupported "theme"; }
 terminal_background()   { _terminal_unsupported "background"; }
 terminal_doctor()       { :; }
 # Inside tmux a popup works everywhere; outside, run the command in this window.
-terminal_panel() {
+# The body lives in terminal_panel_default so an adapter that overrides
+# terminal_panel can still reach the fallback for the half it does not replace.
+terminal_panel_default() {
   if [[ -n "${TMUX:-}" ]]; then tmux display-popup -E -w 80% -h 80% "$*"; else "$@"; fi
 }
+terminal_panel() { terminal_panel_default "$@"; }
