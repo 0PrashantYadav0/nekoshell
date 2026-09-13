@@ -2,14 +2,16 @@
 # install: link the zshrc, pick a terminal and profile, apply the theme, enable plugins
 # Idempotent: a second run changes nothing and backs up nothing new.
 # --check implies --dry-run and mutates nothing.
-usage_install() { cat <<'EOF'
+usage_install() {
+  cat <<'EOF'
 usage: nekoshell install [--profile P] [--with a,b] [--without c] [--yes] [--check] [--dry-run] [--terminal ID]
 EOF
 }
 
 # _install_in_list NEEDLE HAY...: true when NEEDLE is one of HAY.
 _install_in_list() {
-  local needle="$1" hay; shift
+  local needle="$1" hay
+  shift
   for hay in "$@"; do [[ "$hay" == "$needle" ]] && return 0; done
   return 1
 }
@@ -29,7 +31,7 @@ _install_detect_terminal() {
     return 0
   fi
   for id in $(terminal_all); do
-    if ( terminal_load "$id" 2>/dev/null && terminal_detect 2>/dev/null ); then
+    if (terminal_load "$id" 2>/dev/null && terminal_detect 2>/dev/null); then
       printf '%s\n' "$id"
       return 0
     fi
@@ -41,7 +43,8 @@ _install_detect_terminal() {
 # input reprompts (select's own behaviour), and a blank line or a closed
 # stdin gives up with nothing printed. Prints the chosen item, or nothing.
 _install_pick_from_list() {
-  local prompt="$1" choice=""; shift
+  local prompt="$1" choice=""
+  shift
   PS3="$prompt "
   select choice in "$@"; do
     [[ -n "$choice" ]] && break
@@ -69,7 +72,11 @@ _install_pick_plugins() {
     found=0
     if [[ ${#chosen[@]} -gt 0 ]]; then
       for idx in "${!chosen[@]}"; do
-        if [[ "${chosen[$idx]}" == "$name" ]]; then unset 'chosen[idx]'; found=1; break; fi
+        if [[ "${chosen[$idx]}" == "$name" ]]; then
+          unset 'chosen[idx]'
+          found=1
+          break
+        fi
       done
     fi
     [[ "$found" == 0 ]] && chosen+=("$name")
@@ -137,18 +144,49 @@ cmd_install() {
   local PROFILE="" WITH="" WITHOUT="" YES=0 CHECK=0 TERMINAL_FLAG=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --profile) PROFILE="${2:-}"; shift 2 ;;
-      --with) WITH="${2:-}"; shift 2 ;;
-      --without) WITHOUT="${2:-}"; shift 2 ;;
-      --yes) YES=1; shift ;;
-      --check) CHECK=1; shift ;;
-      --dry-run) NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN; shift ;;
-      --terminal) TERMINAL_FLAG="${2:-}"; shift 2 ;;
-      -h|--help|help) usage_install; return 0 ;;
-      *) usage_install; return 2 ;;
+      --profile)
+        PROFILE="${2:-}"
+        shift 2
+        ;;
+      --with)
+        WITH="${2:-}"
+        shift 2
+        ;;
+      --without)
+        WITHOUT="${2:-}"
+        shift 2
+        ;;
+      --yes)
+        YES=1
+        shift
+        ;;
+      --check)
+        CHECK=1
+        shift
+        ;;
+      --dry-run)
+        NEKOSHELL_DRY_RUN=1
+        export NEKOSHELL_DRY_RUN
+        shift
+        ;;
+      --terminal)
+        TERMINAL_FLAG="${2:-}"
+        shift 2
+        ;;
+      -h | --help | help)
+        usage_install
+        return 0
+        ;;
+      *)
+        usage_install
+        return 2
+        ;;
     esac
   done
-  if [[ "$CHECK" == 1 ]]; then NEKOSHELL_DRY_RUN=1; export NEKOSHELL_DRY_RUN; fi
+  if [[ "$CHECK" == 1 ]]; then
+    NEKOSHELL_DRY_RUN=1
+    export NEKOSHELL_DRY_RUN
+  fi
 
   local TOTAL=7
   # Read before step 4 deletes it: ~/.config/nekoshell/theme is v0.1's marker.
@@ -157,15 +195,24 @@ cmd_install() {
 
   # --- Preflight (unnumbered; skippable). ---------------------------------
   if [[ -z "${NEKOSHELL_SKIP_PREFLIGHT:-}" ]]; then
-    [[ "$(uname -s)" == "Darwin" ]] || { log_fail "nekoshell supports macOS only"; return 1; }
+    [[ "$(uname -s)" == "Darwin" ]] || {
+      log_fail "nekoshell supports macOS only"
+      return 1
+    }
     if ! command -v brew >/dev/null 2>&1; then
       log_fail "Homebrew is required. Install it first:"
       # shellcheck disable=SC2016
       echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
       return 1
     fi
-    command -v zsh >/dev/null 2>&1 || { log_fail "zsh not found"; return 1; }
-    command -v git >/dev/null 2>&1 || { log_fail "git not found"; return 1; }
+    command -v zsh >/dev/null 2>&1 || {
+      log_fail "zsh not found"
+      return 1
+    }
+    command -v git >/dev/null 2>&1 || {
+      log_fail "git not found"
+      return 1
+    }
   fi
 
   # --- 1: Terminal. --------------------------------------------------------
@@ -215,12 +262,15 @@ cmd_install() {
     while IFS= read -r p; do [[ -n "$p" ]] && profile_plugins+=("$p"); done < <(_install_pick_plugins)
   else
     local profile_file="$profiles_dir/$chosen_profile.txt"
-    [[ -f "$profile_file" ]] || { log_fail "no profile named $chosen_profile"; return 1; }
-    while IFS= read -r p; do [[ -n "$p" ]] && profile_plugins+=("$p"); done < "$profile_file"
+    [[ -f "$profile_file" ]] || {
+      log_fail "no profile named $chosen_profile"
+      return 1
+    }
+    while IFS= read -r p; do [[ -n "$p" ]] && profile_plugins+=("$p"); done <"$profile_file"
   fi
   local -a with_arr=() without_arr=()
-  [[ -n "$WITH" ]] && IFS=',' read -r -a with_arr <<< "$WITH"
-  [[ -n "$WITHOUT" ]] && IFS=',' read -r -a without_arr <<< "$WITHOUT"
+  [[ -n "$WITH" ]] && IFS=',' read -r -a with_arr <<<"$WITH"
+  [[ -n "$WITHOUT" ]] && IFS=',' read -r -a without_arr <<<"$WITHOUT"
   if [[ ${#with_arr[@]} -gt 0 ]]; then
     local w
     for w in "${with_arr[@]}"; do [[ -n "$w" ]] && profile_plugins+=("$w"); done
@@ -237,7 +287,10 @@ cmd_install() {
   if [[ ${#final_plugins[@]} -gt 0 ]]; then
     local pchk
     for pchk in "${final_plugins[@]}"; do
-      plugin_exists "$pchk" || { log_fail "no plugin named $pchk"; return 1; }
+      plugin_exists "$pchk" || {
+        log_fail "no plugin named $pchk"
+        return 1
+      }
     done
   fi
   log_ok "profile: $chosen_profile (${final_plugins[*]:-none})"
@@ -247,7 +300,10 @@ cmd_install() {
   if [[ "$CHECK" == 1 || "$YES" == 1 ]]; then
     log_info "skipped (--yes or --check)"
   else
-    confirm "Install nekoshell into $HOME?" || { log_warn "aborted"; return 1; }
+    confirm "Install nekoshell into $HOME?" || {
+      log_warn "aborted"
+      return 1
+    }
   fi
 
   # --- 4: Backup + core. -------------------------------------------------
@@ -352,7 +408,10 @@ cmd_install() {
   elif [[ ${#final_plugins[@]} -gt 0 ]]; then
     local name
     for name in "${final_plugins[@]}"; do
-      plugin_add "$name" || { log_fail "stopped at $name; re-run nekoshell install to continue"; return 1; }
+      plugin_add "$name" || {
+        log_fail "stopped at $name; re-run nekoshell install to continue"
+        return 1
+      }
     done
   fi
 

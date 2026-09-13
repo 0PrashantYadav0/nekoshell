@@ -3,15 +3,32 @@
 # what is "installed". FAKE_BREW_FAIL=1 makes `brew install` (formula or
 # --cask) fail, to exercise a plugin_add that has to handle a failed install.
 case "${1:-}" in
-  --prefix) echo "/opt/homebrew"; exit 0 ;;
+  --prefix)
+    echo "/opt/homebrew"
+    exit 0
+    ;;
   list)
     shift
-    if [[ "${1:-}" == "--cask" ]]; then shift; for c in ${FAKE_BREW_CASKS:-}; do [[ "$c" == "$1" ]] && exit 0; done; exit 1; fi
+    if [[ "${1:-}" == "--cask" ]]; then
+      shift
+      for c in ${FAKE_BREW_CASKS:-}; do [[ "$c" == "$1" ]] && exit 0; done
+      exit 1
+    fi
     [[ "${1:-}" == "--formula" ]] && shift
-    for f in ${FAKE_BREW_INSTALLED:-}; do [[ "$f" == "$1" ]] && exit 0; done; exit 1 ;;
+    for f in ${FAKE_BREW_INSTALLED:-}; do [[ "$f" == "$1" ]] && exit 0; done
+    exit 1
+    ;;
   install)
-    if [[ "${FAKE_BREW_FAIL:-}" == "1" ]]; then echo "brew $*" >&2; exit 1; fi ;;
+    if [[ "${FAKE_BREW_FAIL:-}" == "1" ]]; then
+      echo "brew $*" >&2
+      exit 1
+    fi
+    ;;
   tap)
-    if [[ $# -eq 1 ]]; then for t in ${FAKE_BREW_TAPS:-}; do printf '%s\n' "$t"; done; exit 0; fi ;;
+    if [[ $# -eq 1 ]]; then
+      for t in ${FAKE_BREW_TAPS:-}; do printf '%s\n' "$t"; done
+      exit 0
+    fi
+    ;;
 esac
 echo "brew $*"

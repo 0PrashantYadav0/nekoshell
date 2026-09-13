@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # greet: print the terminal greeting now
-usage_greet() { cat <<'USAGE'
+usage_greet() {
+  cat <<'USAGE'
 usage: nekoshell greet [--image|--text]
 
   --image   use the art pack, if this terminal can draw images
@@ -15,10 +16,22 @@ cmd_greet() {
   local mode="auto"
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --image) mode="image"; shift ;;
-      --text)  mode="text"; shift ;;
-      -h|--help|help) usage_greet; return 0 ;;
-      *) usage_greet >&2; return 2 ;;
+      --image)
+        mode="image"
+        shift
+        ;;
+      --text)
+        mode="text"
+        shift
+        ;;
+      -h | --help | help)
+        usage_greet
+        return 0
+        ;;
+      *)
+        usage_greet >&2
+        return 2
+        ;;
     esac
   done
   # exec, not a call: the greeting is the last thing this process has to do,

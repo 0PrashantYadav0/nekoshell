@@ -14,11 +14,11 @@ ITERM_SHELL_INTEGRATION="$HOME/.iterm2_shell_integration.zsh"
 export NEKOSHELL_MAIN_GUID NEKOSHELL_PANEL_GUID NEKOSHELL_PANEL_WINDOW_TYPE
 export ITERM_DYNAMIC_DIR ITERM_SHELL_INTEGRATION
 
-terminal_name()         { echo "iterm2"; }
-terminal_detect()       { [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; }
-terminal_installed()    { [[ -e "/Applications/iTerm.app" || -e "$HOME/Applications/iTerm.app" ]]; }
+terminal_name() { echo "iterm2"; }
+terminal_detect() { [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; }
+terminal_installed() { [[ -e "/Applications/iTerm.app" || -e "$HOME/Applications/iTerm.app" ]]; }
 terminal_capabilities() { echo "truecolor images background panel hotkey"; }
-terminal_font_name()    { echo "JetBrainsMono NF"; }
+terminal_font_name() { echo "JetBrainsMono NF"; }
 
 iterm_is_running() { pgrep -xq iTerm2; }
 
@@ -165,12 +165,18 @@ terminal_remove() {
 # and the OSC 1337 escape for this one.
 terminal_background() {
   local path="${1:-}" opacity="${2:-0.85}" flavor b64=""
-  [[ -n "$path" ]] || { log_fail "usage: nekoshell terminal background PATH|none [OPACITY]"; return 1; }
+  [[ -n "$path" ]] || {
+    log_fail "usage: nekoshell terminal background PATH|none [OPACITY]"
+    return 1
+  }
   flavor="$(_iterm_flavor)"
   if [[ "$path" == "none" ]]; then
     iterm_write_profiles "$flavor" --background ""
   else
-    _iterm_opacity_ok "$opacity" || { log_fail "opacity must be between 0 and 1"; return 1; }
+    _iterm_opacity_ok "$opacity" || {
+      log_fail "opacity must be between 0 and 1"
+      return 1
+    }
     path="$(_iterm_abspath "$path")"
     [[ -e "$path" ]] || log_warn "$path does not exist yet; writing it into the profiles anyway"
     iterm_write_profiles "$flavor" --background "$path" --blend "$(_iterm_blend "$opacity")"
@@ -208,7 +214,8 @@ terminal_doctor() {
     # profiles are wrong, so it warns rather than failing the whole doctor.
     report warn "iterm2 profiles" "python3 missing; $prof not checked"
   else
-    font="$(python3 - "$prof" 2>/dev/null <<'PY'
+    font="$(
+      python3 - "$prof" 2>/dev/null <<'PY'
 import json, sys
 try:
     profiles = json.load(open(sys.argv[1], encoding="utf-8"))["Profiles"]
@@ -240,7 +247,7 @@ PY
 
   case "$font" in
     JetBrainsMonoNF*) report ok "iterm2 font" "$font" ;;
-    "")               report warn "iterm2 font" "no font to read (see the profiles row)" ;;
-    *)                report fail "iterm2 font" "$font is not a JetBrainsMono Nerd Font" ;;
+    "") report warn "iterm2 font" "no font to read (see the profiles row)" ;;
+    *) report fail "iterm2 font" "$font is not a JetBrainsMono Nerd Font" ;;
   esac
 }

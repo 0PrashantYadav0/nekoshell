@@ -9,6 +9,6 @@
 # drawn with, and the next `C-a r` (or the next server) picks it up.
 
 mkdir -p "$HOME/.config/tmux"
-printf 'set -g @catppuccin_flavor "%s"\n' "$FLAVOR" > "$HOME/.config/tmux/nekoshell-theme.conf"
+printf 'set -g @catppuccin_flavor "%s"\n' "$FLAVOR" >"$HOME/.config/tmux/nekoshell-theme.conf"
 
 true

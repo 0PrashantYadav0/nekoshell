@@ -49,8 +49,11 @@ backup_link_target_lexical() {
   local IFS='/'
   for seg in $target; do
     case "$seg" in
-      ''|.) ;;
-      ..) out="${out%/*}"; [[ -n "$out" ]] || out="/" ;;
+      '' | .) ;;
+      ..)
+        out="${out%/*}"
+        [[ -n "$out" ]] || out="/"
+        ;;
       *) out="${out%/}/$seg" ;;
     esac
   done
@@ -71,7 +74,7 @@ backup_path() {
   run mkdir -p "$NEKOSHELL_BACKUP_DIR/$(dirname "$rel")"
   run mv "$src" "$NEKOSHELL_BACKUP_DIR/$rel"
   if [[ "$NEKOSHELL_DRY_RUN" != "1" ]]; then
-    printf '%s\n' "$rel" >> "$NEKOSHELL_BACKUP_DIR/manifest.txt"
+    printf '%s\n' "$rel" >>"$NEKOSHELL_BACKUP_DIR/manifest.txt"
   fi
 }
 
@@ -90,8 +93,8 @@ _backup_restore_one() {
     run rm -rf "$HOME/$rel"
     run mkdir -p "$HOME/$(dirname "$rel")"
     run mv "$dir/$rel" "$HOME/$rel"
-  done < "$dir/manifest.txt"
-  log_ok "restored $(wc -l < "$dir/manifest.txt" | tr -d ' ') paths from $dir"
+  done <"$dir/manifest.txt"
+  log_ok "restored $(wc -l <"$dir/manifest.txt" | tr -d ' ') paths from $dir"
   run mv "$dir/manifest.txt" "$dir/manifest.restored"
 }
 
@@ -109,8 +112,11 @@ backup_restore_all() {
     [[ -d "$dir" && -r "${dir%/}/manifest.txt" ]] || continue
     dirs+=("${dir%/}")
   done
-  if [[ ${#dirs[@]} -eq 0 ]]; then log_warn "no backup to restore"; return 0; fi
-  for (( i = ${#dirs[@]} - 1; i >= 0; i-- )); do
+  if [[ ${#dirs[@]} -eq 0 ]]; then
+    log_warn "no backup to restore"
+    return 0
+  fi
+  for ((i = ${#dirs[@]} - 1; i >= 0; i--)); do
     _backup_restore_one "${dirs[$i]}"
   done
 }
@@ -122,6 +128,9 @@ backup_restore_latest() {
   for dir in "$NEKOSHELL_BACKUP_ROOT"/*/; do
     [[ -d "$dir" ]] && latest="${dir%/}"
   done
-  [[ -n "$latest" && -r "$latest/manifest.txt" ]] || { log_warn "no backup to restore"; return 0; }
+  [[ -n "$latest" && -r "$latest/manifest.txt" ]] || {
+    log_warn "no backup to restore"
+    return 0
+  }
   _backup_restore_one "$latest"
 }

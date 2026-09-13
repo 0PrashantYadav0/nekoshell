@@ -39,7 +39,7 @@ if command -v fastfetch >/dev/null 2>&1; then
     | tr -d '\r' | sed -n 's/^.*greet: \([0-9][0-9]*\) ms$/\1/p')"
   if [[ -z "$gr_ms" ]]; then
     report warn "greet time" "could not measure"
-  elif (( gr_ms <= 150 )); then
+  elif ((gr_ms <= 150)); then
     report ok "greet time" "${gr_ms} ms"
   else
     report warn "greet time" "${gr_ms} ms (budget 150)"

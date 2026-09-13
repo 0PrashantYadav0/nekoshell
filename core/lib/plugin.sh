@@ -5,12 +5,16 @@ NEKOSHELL_PLUGINS_DIR="${NEKOSHELL_PLUGINS_DIR:-$NEKOSHELL_ROOT/plugins}"
 NEKOSHELL_CORE_ANTIDOTE="${NEKOSHELL_CORE_ANTIDOTE:-$NEKOSHELL_ROOT/core/zsh/.config/nekoshell/zsh/plugins.txt}"
 export NEKOSHELL_PLUGINS_DIR NEKOSHELL_CORE_ANTIDOTE
 
-plugin_dir()       { printf '%s/%s\n' "$NEKOSHELL_PLUGINS_DIR" "$1"; }
-plugin_exists()    { [[ -f "$(plugin_dir "$1")/plugin.toml" ]]; }
-plugin_all()       { local d; for d in "$NEKOSHELL_PLUGINS_DIR"/*/; do [[ -f "$d/plugin.toml" ]] && basename "$d"; done; return 0; }
-plugin_meta()      { toml_get "$(plugin_dir "$1")/plugin.toml" "$2"; }
+plugin_dir() { printf '%s/%s\n' "$NEKOSHELL_PLUGINS_DIR" "$1"; }
+plugin_exists() { [[ -f "$(plugin_dir "$1")/plugin.toml" ]]; }
+plugin_all() {
+  local d
+  for d in "$NEKOSHELL_PLUGINS_DIR"/*/; do [[ -f "$d/plugin.toml" ]] && basename "$d"; done
+  return 0
+}
+plugin_meta() { toml_get "$(plugin_dir "$1")/plugin.toml" "$2"; }
 plugin_meta_list() { toml_list "$(plugin_dir "$1")/plugin.toml" "$2"; }
-plugin_enabled()   { config_list plugins | grep -Fqx "$1"; }
+plugin_enabled() { config_list plugins | grep -Fqx "$1"; }
 plugin_enabled_all() { config_list plugins; }
 
 plugin_supports_terminal() {
@@ -22,7 +26,8 @@ plugin_supports_terminal() {
 }
 
 plugin_env() {
-  PLUGIN_NAME="$1"; PLUGIN_DIR="$(plugin_dir "$1")"
+  PLUGIN_NAME="$1"
+  PLUGIN_DIR="$(plugin_dir "$1")"
   FLAVOR="$(config_get theme_resolved 2>/dev/null || echo mocha)"
   export PLUGIN_NAME PLUGIN_DIR FLAVOR
 }
@@ -44,15 +49,23 @@ plugin_run_hook() {
 plugin_regen_antidote() {
   local out="$NEKOSHELL_CONFIG/antidote.txt" p f
   mkdir -p "$NEKOSHELL_CONFIG"
-  { [[ -r "$NEKOSHELL_CORE_ANTIDOTE" ]] && cat "$NEKOSHELL_CORE_ANTIDOTE"
-    for p in $(plugin_enabled_all); do f="$(plugin_dir "$p")/antidote.txt"; [[ -r "$f" ]] && cat "$f"; done
-    true; } > "$out.tmp" && mv "$out.tmp" "$out"
+  {
+    [[ -r "$NEKOSHELL_CORE_ANTIDOTE" ]] && cat "$NEKOSHELL_CORE_ANTIDOTE"
+    for p in $(plugin_enabled_all); do
+      f="$(plugin_dir "$p")/antidote.txt"
+      [[ -r "$f" ]] && cat "$f"
+    done
+    true
+  } >"$out.tmp" && mv "$out.tmp" "$out"
 }
 
 plugin_providing_cmd() {
   local d
   for d in "$NEKOSHELL_PLUGINS_DIR"/*/; do
-    [[ -f "$d/cmd/$1.sh" ]] && { basename "$d"; return 0; }
+    [[ -f "$d/cmd/$1.sh" ]] && {
+      basename "$d"
+      return 0
+    }
   done
   return 0
 }
@@ -61,25 +74,37 @@ _plugin_doctor_rows() {
   local hook
   hook="$(plugin_dir "$1")/doctor.sh"
   [[ -f "$hook" ]] || return 0
-  ( plugin_env "$1"
+  (
+    plugin_env "$1"
     # shellcheck disable=SC2329 # invoked indirectly by the sourced doctor.sh
     report() { printf '%-4s %-28s %s\n' "$1" "$2" "$3"; }
     # shellcheck source=/dev/null
-    source "$hook" )
+    source "$hook"
+  )
 }
 
 plugin_add() {
   local name="$1" term dep c t g skip_copy=0
-  plugin_exists "$name" || { log_fail "no plugin named $name (nekoshell plugin list)"; return 1; }
+  plugin_exists "$name" || {
+    log_fail "no plugin named $name (nekoshell plugin list)"
+    return 1
+  }
   term="$(terminal_current || true)"
   if [[ -n "$term" ]] && ! plugin_supports_terminal "$name" "$term"; then
-    log_fail "$name works on: $(plugin_meta_list "$name" terminals | tr '\n' ' ')(you use $term)"; return 1
+    log_fail "$name works on: $(plugin_meta_list "$name" terminals | tr '\n' ' ')(you use $term)"
+    return 1
   fi
   for c in $(plugin_meta_list "$name" conflicts); do
-    plugin_enabled "$c" && { log_fail "$name conflicts with $c; remove it first"; return 1; }
+    plugin_enabled "$c" && {
+      log_fail "$name conflicts with $c; remove it first"
+      return 1
+    }
   done
   for dep in $(plugin_meta_list "$name" requires_plugins); do
-    plugin_enabled "$dep" || { log_info "$name needs $dep; adding it first"; plugin_add "$dep" || return 1; }
+    plugin_enabled "$dep" || {
+      log_info "$name needs $dep; adding it first"
+      plugin_add "$dep" || return 1
+    }
   done
   log_head "$name: $(plugin_meta "$name" summary)"
   for t in $(plugin_meta_list "$name" taps); do brew_tap "$t"; done
@@ -87,12 +112,21 @@ plugin_add() {
   while IFS= read -r f; do [[ -n "$f" ]] && formulas+=("$f"); done < <(plugin_meta_list "$name" requires)
   while IFS= read -r f; do [[ -n "$f" ]] && casks+=("$f"); done < <(plugin_meta_list "$name" casks)
   if [[ ${#formulas[@]} -gt 0 ]]; then
-    brew_install "${formulas[@]}" || { log_fail "$name: Homebrew install failed"; return 1; }
+    brew_install "${formulas[@]}" || {
+      log_fail "$name: Homebrew install failed"
+      return 1
+    }
   fi
   if [[ ${#casks[@]} -gt 0 ]]; then
-    brew_cask_install "${casks[@]}" || { log_fail "$name: Homebrew install failed"; return 1; }
+    brew_cask_install "${casks[@]}" || {
+      log_fail "$name: Homebrew install failed"
+      return 1
+    }
   fi
-  link_tree "$(plugin_dir "$name")/files/link" "$HOME" || { log_fail "$name: linking files failed"; return 1; }
+  link_tree "$(plugin_dir "$name")/files/link" "$HOME" || {
+    log_fail "$name: linking files failed"
+    return 1
+  }
   # copy_guard: paths (relative to $HOME) that mean the user already has a
   # config of their own for this plugin. copy_once alone would keep each file
   # it finds, but a plugin's copy tree is a set: half of ours layered under an
@@ -106,7 +140,10 @@ plugin_add() {
     fi
   done
   if [[ "$skip_copy" -eq 0 ]]; then
-    copy_once "$(plugin_dir "$name")/files/copy" "$HOME" || { log_fail "$name: copying files failed"; return 1; }
+    copy_once "$(plugin_dir "$name")/files/copy" "$HOME" || {
+      log_fail "$name: copying files failed"
+      return 1
+    }
   fi
   plugin_run_hook "$name" install || return 1
   # A dry run stops here. Everything above reports through run() and changes
@@ -132,11 +169,20 @@ plugin_add() {
 # plugin_remove NAME [purge]
 plugin_remove() {
   local name="$1" purge="${2:-}" other f
-  plugin_exists "$name" || { log_fail "no plugin named $name"; return 1; }
-  plugin_enabled "$name" || { log_warn "$name is not enabled"; return 0; }
+  plugin_exists "$name" || {
+    log_fail "no plugin named $name"
+    return 1
+  }
+  plugin_enabled "$name" || {
+    log_warn "$name is not enabled"
+    return 0
+  }
   for other in $(plugin_enabled_all); do
     [[ "$other" == "$name" ]] && continue
-    plugin_meta_list "$other" requires_plugins | grep -Fqx "$name" && { log_fail "$other needs $name; remove $other first"; return 1; }
+    plugin_meta_list "$other" requires_plugins | grep -Fqx "$name" && {
+      log_fail "$other needs $name; remove $other first"
+      return 1
+    }
   done
   plugin_run_hook "$name" uninstall || return 1
   unlink_tree "$(plugin_dir "$name")/files/link" "$HOME"

@@ -119,19 +119,20 @@ show_pokemon() {
   local args=(-r) out name
   [[ -n "$GENERATIONS" ]] && args+=("$GENERATIONS")
   local shiny=""
-  if (( SHINY_ODDS > 0 )) && (( RANDOM % SHINY_ODDS == 0 )); then
-    args+=(-s); shiny=" ✦ shiny"
+  if ((SHINY_ODDS > 0)) && ((RANDOM % SHINY_ODDS == 0)); then
+    args+=(-s)
+    shiny=" ✦ shiny"
   fi
   out="$(pokemon-colorscripts "${args[@]}" 2>/dev/null)" || return 0
   [[ "$out" == *$'\n'* ]] || return 0
   name="${out%%$'\n'*}"
-  printf '%s%s\n' "$(pokemon_facts "$name")" "$shiny" > "$NEKOSHELL_CACHE/art-name"
+  printf '%s%s\n' "$(pokemon_facts "$name")" "$shiny" >"$NEKOSHELL_CACHE/art-name"
   printf '%s\n' "${out#*$'\n'}" | fastfetch --config "$ff_config" --file-raw -
 }
 
 show_image() {
   local img="$1" flag="$2"
-  basename "$img" > "$NEKOSHELL_CACHE/art-name"
+  basename "$img" >"$NEKOSHELL_CACHE/art-name"
   fastfetch --config "$ff_config" "$flag" "$img" --logo-width "$IMAGE_WIDTH" --logo-height "$IMAGE_HEIGHT" </dev/null
 }
 
@@ -142,11 +143,14 @@ img=""
 flag=""
 case "${NEKOSHELL_GREET_MODE:-auto}" in
   text) ;;
-  image) flag="$(image_flag)"; [[ -n "$flag" ]] && img="$(pick_image)" ;;
-  *) if (( roll >= POKEMON_SHARE )); then
-       flag="$(image_flag)"
-       [[ -n "$flag" ]] && img="$(pick_image)"
-     fi ;;
+  image)
+    flag="$(image_flag)"
+    [[ -n "$flag" ]] && img="$(pick_image)"
+    ;;
+  *) if ((roll >= POKEMON_SHARE)); then
+    flag="$(image_flag)"
+    [[ -n "$flag" ]] && img="$(pick_image)"
+  fi ;;
 esac
 
 if [[ -n "$img" ]]; then
@@ -157,6 +161,6 @@ fi
 
 if [[ -n "${NEKOSHELL_GREET_TIME:-}" ]]; then
   end_ms="$(now_ms)"
-  printf 'greet: %d ms\n' $(( end_ms - start_ms ))
+  printf 'greet: %d ms\n' $((end_ms - start_ms))
 fi
 exit 0

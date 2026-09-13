@@ -43,11 +43,11 @@ for arg in "$@"; do
       tpm)
         # The real TPM clone lands in ~/.config/tmux/plugins/tpm, because that
         # is where TPM itself looks when the config lives under ~/.config/tmux.
-        printf '#!/usr/bin/env bash\nexit 0\n' > "$dest/tpm"
+        printf '#!/usr/bin/env bash\nexit 0\n' >"$dest/tpm"
         chmod +x "$dest/tpm"
         ;;
       *)
-        printf '#!/usr/bin/env bash\necho pikachu\n' > "$dest/pokemon-colorscripts.py"
+        printf '#!/usr/bin/env bash\necho pikachu\n' >"$dest/pokemon-colorscripts.py"
         chmod +x "$dest/pokemon-colorscripts.py"
         ;;
     esac

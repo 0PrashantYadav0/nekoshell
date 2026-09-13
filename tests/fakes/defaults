@@ -10,8 +10,8 @@
 # unset, it falls through to the "NONE" read below, which is what an
 # unconfigured machine looks like. Every other invocation keeps the old
 # behaviour.
-if [[ "${1:-}" == "read" && "${2:-}" == "com.googlecode.iterm2" && "${3:-}" == "Default Bookmark Guid" \
-      && -n "${FAKE_ITERM_DEFAULT_GUID:-}" ]]; then
+if [[ "${1:-}" == "read" && "${2:-}" == "com.googlecode.iterm2" && "${3:-}" == "Default Bookmark Guid" &&
+  -n "${FAKE_ITERM_DEFAULT_GUID:-}" ]]; then
   printf '%s\n' "$FAKE_ITERM_DEFAULT_GUID"
   exit 0
 fi

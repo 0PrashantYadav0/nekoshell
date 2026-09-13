@@ -2,7 +2,7 @@
 # Homebrew helpers. Every function is a no-op for what is already installed.
 # Needs log.sh (run). Source this file; do not execute it.
 
-brew_has()      { brew list --formula "$1" >/dev/null 2>&1; }
+brew_has() { brew list --formula "$1" >/dev/null 2>&1; }
 brew_cask_has() { brew list --cask "$1" >/dev/null 2>&1; }
 
 # brew_install FORMULA...: install the missing ones in one brew call.

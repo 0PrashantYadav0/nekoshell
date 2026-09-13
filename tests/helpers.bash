@@ -32,7 +32,7 @@ teardown_tmp_home() {
 # non-zero return stops the test, and they print what they expected next to what
 # they got instead of leaving a bare line number.
 assert_contains() {
-  case "$1" in *"$2"*) return 0;; esac
+  case "$1" in *"$2"*) return 0 ;; esac
   echo "expected to contain: $2" >&2
   echo "actual: $1" >&2
   return 1
