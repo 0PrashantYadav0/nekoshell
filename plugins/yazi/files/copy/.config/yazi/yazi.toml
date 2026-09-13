@@ -1,0 +1,8 @@
+# yazi settings. Yours from the moment nekoshell copied it: it is never
+# overwritten. The colours are in theme.toml beside it, which nekoshell
+# renders on every theme switch. Reference:
+# https://yazi-rs.github.io/docs/configuration/yazi
+[mgr]
+show_hidden = false
+sort_by = "natural"
+sort_dir_first = true

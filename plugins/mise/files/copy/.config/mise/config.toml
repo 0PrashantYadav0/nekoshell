@@ -1,0 +1,4 @@
+# mise: global tool versions. Yours from the moment nekoshell copied it: it is
+# never overwritten. Add tools here or with `mise use -g node@lts`. Reference:
+# https://mise.jdx.dev/configuration.html
+[tools]

@@ -1,0 +1,11 @@
+name = "yazi"
+summary = "yazi, a terminal file manager, in the flavour, with y that lands you where you quit"
+requires = ["yazi"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
+# yazi.toml is copied once and is then the user's; theme.toml is rendered.
+copy_guard = [".config/yazi/yazi.toml"]

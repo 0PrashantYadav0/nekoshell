@@ -1,0 +1,11 @@
+name = "mise"
+summary = "mise, one tool for every runtime version (node, python, go, ...), activated in every shell"
+requires = ["mise"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
+# config.toml is copied once and is then the user's: their tool versions go in it.
+copy_guard = [".config/mise/config.toml"]
