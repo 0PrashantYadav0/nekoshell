@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Fake `open`: records the call instead of launching anything.
+echo "open $*"

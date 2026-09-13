@@ -10,6 +10,81 @@
 # unset, it falls through to the "NONE" read below, which is what an
 # unconfigured machine looks like. Every other invocation keeps the old
 # behaviour.
+#
+# The com.apple.Terminal domain is the exception: it is a real store, kept in
+# $FAKE_DEFAULTS_DIR/com.apple.Terminal.plist ($HOME/.fake-defaults by default,
+# so it starts empty in every throwaway HOME). The Terminal.app adapter keeps
+# its profile inside that domain rather than in a file of its own, so its
+# apply, doctor and remove paths can only be exercised against something that
+# remembers what was written. Supported, with the real tool's behaviour:
+#   write DOMAIN KEY -string V          set KEY
+#   write DOMAIN KEY -dict-add K XML    set KEY[K] from an XML plist document
+#   read DOMAIN KEY                     print KEY as a string; exit 1 when absent
+#   export DOMAIN -                     the domain as an XML plist on stdout
+#   import DOMAIN -                     replace the domain from a plist on stdin
+#   delete DOMAIN [KEY]                 drop KEY, or the whole domain
+# Writes, imports and deletes still echo the call first, the way every other
+# branch does, except that a -dict-add's XML document is echoed as "<plist>":
+# the whole profile is thousands of characters nobody asserts on. Reads and
+# exports print only the value, as the real tool does.
+if [[ "${2:-}" == "com.apple.Terminal" ]]; then
+  store="${FAKE_DEFAULTS_DIR:-$HOME/.fake-defaults}/com.apple.Terminal.plist"
+  case "${1:-}" in
+    write)
+      if [[ "${4:-}" == "-dict-add" ]]; then echo "defaults $1 $2 $3 $4 ${5:-} <plist>"; else echo "defaults $*"; fi
+      ;;
+    import | delete) echo "defaults $*" ;;
+  esac
+  mkdir -p "$(dirname "$store")"
+  # The script goes in through -c, not `python3 -`: a heredoc on stdin would
+  # take the place of the plist `import DOMAIN -` reads there.
+  py="$(
+    cat <<'PY'
+import os, plistlib, sys
+store, action, _domain, *args = sys.argv[1:]
+prefs = {}
+if os.path.exists(store):
+    with open(store, "rb") as f:
+        prefs = plistlib.load(f)
+
+def save():
+    with open(store, "wb") as f:
+        plistlib.dump(prefs, f)
+
+if action == "read":
+    v = prefs.get(args[0]) if args else prefs
+    if v is None:
+        print(f"The domain/default pair of (com.apple.Terminal, {args[0]}) does not exist", file=sys.stderr)
+        sys.exit(1)
+    print(v)
+elif action == "export":
+    sys.stdout.buffer.write(plistlib.dumps(prefs))
+elif action == "import":
+    prefs = plistlib.loads(sys.stdin.buffer.read())
+    save()
+elif action == "delete":
+    if args:
+        if args[0] not in prefs:
+            sys.exit(1)
+        del prefs[args[0]]
+        save()
+    elif os.path.exists(store):
+        os.remove(store)
+elif action == "write":
+    key, kind = args[0], args[1]
+    if kind == "-string":
+        prefs[key] = args[2]
+    elif kind == "-dict-add":
+        prefs.setdefault(key, {})[args[2]] = plistlib.loads(args[3].encode())
+    else:
+        raise SystemExit(f"fake defaults: unsupported write form {kind}")
+    save()
+else:
+    raise SystemExit(f"fake defaults: unsupported action {action}")
+PY
+  )"
+  exec python3 -c "$py" "$store" "$@"
+fi
 if [[ "${1:-}" == "read" && "${2:-}" == "com.googlecode.iterm2" && "${3:-}" == "Default Bookmark Guid" &&
   -n "${FAKE_ITERM_DEFAULT_GUID:-}" ]]; then
   printf '%s\n' "$FAKE_ITERM_DEFAULT_GUID"
