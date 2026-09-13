@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Fake kitten: never opens a quick-access terminal and never talks to a kitty
+# socket. Echoes the invocation so a test can assert on the command the
+# adapter built. A remote-control call (`kitten @ ...`) fails when
+# FAKE_KITTEN_RC_FAILS=1, which is what a kitty without remote control
+# enabled answers.
+echo "kitten $*"
+if [[ "${1:-}" == "@" && "${FAKE_KITTEN_RC_FAILS:-0}" == "1" ]]; then exit 1; fi
+exit 0

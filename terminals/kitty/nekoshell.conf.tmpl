@@ -1,0 +1,77 @@
+# nekoshell kitty config, flavour @@FLAVOR@@ (Catppuccin @@TITLE@@).
+# Rendered from terminals/kitty/nekoshell.conf.tmpl by `nekoshell terminal
+# apply` and `nekoshell theme`; edits here are lost on the next render. Your
+# own settings go in kitty.conf. kitty reads that file top to bottom and the
+# last value wins, so anything placed after the include line overrides this.
+
+# Font. The family is the name kitty lists for the Nerd Font build of
+# JetBrains Mono; the bold and italic faces are found from it.
+font_family      @@FONT@@
+bold_font        auto
+italic_font      auto
+bold_italic_font auto
+font_size        15
+
+# Colours, from core/theme/palettes.json.
+foreground           @@HEX:text@@
+background           @@HEX:base@@
+selection_foreground @@HEX:text@@
+selection_background @@HEX:surface2@@
+cursor               @@HEX:rosewater@@
+cursor_text_color    @@HEX:base@@
+url_color            @@HEX:blue@@
+
+active_border_color   @@HEX:lavender@@
+inactive_border_color @@HEX:overlay0@@
+bell_border_color     @@HEX:yellow@@
+
+active_tab_foreground   @@HEX:base@@
+active_tab_background   @@HEX:mauve@@
+inactive_tab_foreground @@HEX:subtext0@@
+inactive_tab_background @@HEX:mantle@@
+tab_bar_background      @@HEX:crust@@
+
+mark1_foreground @@HEX:base@@
+mark1_background @@HEX:lavender@@
+mark2_foreground @@HEX:base@@
+mark2_background @@HEX:mauve@@
+mark3_foreground @@HEX:base@@
+mark3_background @@HEX:sapphire@@
+
+# The 16 ANSI colours, in the same role order every nekoshell adapter uses.
+color0  @@HEX:surface1@@
+color1  @@HEX:red@@
+color2  @@HEX:green@@
+color3  @@HEX:yellow@@
+color4  @@HEX:blue@@
+color5  @@HEX:pink@@
+color6  @@HEX:teal@@
+color7  @@HEX:subtext1@@
+color8  @@HEX:surface2@@
+color9  @@HEX:red@@
+color10 @@HEX:green@@
+color11 @@HEX:yellow@@
+color12 @@HEX:blue@@
+color13 @@HEX:pink@@
+color14 @@HEX:teal@@
+color15 @@HEX:subtext0@@
+
+# Window and tab bar.
+window_padding_width    12
+hide_window_decorations titlebar-only
+tab_bar_style           powerline
+tab_powerline_style     slanted
+confirm_os_window_close 0
+
+# Option is Alt, so alt+m reaches kitty (and alt+key reaches programs).
+macos_option_as_alt yes
+
+# Remote control over a socket only, for `kitten @` from a shell inside kitty.
+# kitty appends its own pid to the path, so every window has its own socket.
+allow_remote_control socket-only
+listen_on            unix:/tmp/kitty-nekoshell
+
+# The music panel: alt+m toggles a quick-access terminal docked to the right
+# edge, running the player. The kitten shows the panel the first time and
+# toggles it after that, so the same key opens and hides it.
+map alt+m launch --type=background kitten quick-access-terminal --config="@@PANEL_CONF@@" /usr/bin/env NEKOSHELL_PANEL=1 "@@ROOT@@/bin/nekoshell" music --here
