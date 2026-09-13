@@ -1,0 +1,35 @@
+{
+  "tracks": [
+    {
+      "id": "0nGs9LxrUfQY8SPDnZL9AD",
+      "name": "Hello Hello",
+      "artists": [{"id": "2zPbgeprcP9vP4hbb0xQUX", "name": "V. Harikrishna"}, {"id": "4iA6bUhiZyvRKJf4FNVX39", "name": "Vijay Prakash"}],
+      "album": {"id": "0XkFPeeRjXvCXRED2Eltns", "release_date": "2013-04-15", "name": "Bachchan (Original Motion Picture Soundtrack)", "artists": [], "typ": "single", "added_at": 0},
+      "duration": {"secs": 259, "nanos": 4000000},
+      "explicit": false
+    },
+    {
+      "id": "14TtpYFT2Bvsk7xsVnfk2W",
+      "name": "Hello",
+      "artists": [{"id": "4dpARuHxo51G3z768sgnrY", "name": "Adele"}],
+      "album": {"id": "3AvPX1B1HiFROvYjLb5Qwi", "release_date": "2015-11-20", "name": "25", "artists": [], "typ": "album", "added_at": 0},
+      "duration": {"secs": 295, "nanos": 0},
+      "explicit": false
+    }
+  ],
+  "albums": [
+    {"id": "682WNO7d7IHFmLIro3NOz2", "release_date": "2017-12-06", "name": "Hello!", "artists": [{"id": "05ppw2jwDfW9zo4mj6HNXp", "name": "Anup Rubens"}], "typ": "single", "added_at": 0}
+  ],
+  "artists": [
+    {"id": "2THK0oboxhbn3I1qT7c1i4", "name": "Hellow Raja"}
+  ],
+  "playlists": [
+    {"id": "0KbFgvlSFTI2878PjwOvEv", "collaborative": false, "name": "abhi toh party shuru hui hai", "owner": ["shreeya", "1255226742"], "desc": "", "current_folder_id": 0, "snapshot_id": "AAAAfewknlZ/rY9ritq6BExcn01z+O4N"}
+  ],
+  "shows": [
+    {"id": "5G9n1D5d3AqEkgXkq5R1sf", "name": "Hello Monday", "publisher": "LinkedIn"}
+  ],
+  "episodes": [
+    {"id": "1ZhZ2nS4Wz9E9k1yQ5nGqR", "name": "Hello, episode one"}
+  ]
+}

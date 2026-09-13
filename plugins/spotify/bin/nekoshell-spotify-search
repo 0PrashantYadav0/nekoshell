@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# nekoshell-spotify-search: a search bar over Spotify in the shell.
+#
+#   nekoshell-spotify-search [QUERY]      fzf: the list refills as you type; Enter plays
+#   nekoshell-spotify-search --rows QUERY  the rows for QUERY (what fzf reloads with)
+#   nekoshell-spotify-search --play ROW    play one row
+#
+# Rows are "ICON label<TAB>type<TAB>id": ♪ track, ▣ album, ♩ artist,
+# ≡ playlist. Shows and episodes are left out: the CLI cannot start them.
+# Playback goes to the active Spotify device, so the player window
+# (`nekoshell music`) or the desktop app has to be running.
+set -uo pipefail
+
+self="${BASH_SOURCE[0]}"
+[[ "$self" == /* ]] || self="$(cd "$(dirname "$self")" && pwd -P)/$(basename "$self")"
+
+# rows QUERY: one row per result. spotify_player 0.25.1 fails to parse some
+# of Spotify's answers (a null where it expects a boolean); that comes back
+# as one error row so the bar can show it, and status 1.
+rows() {
+  local q="$1" json
+  [[ -n "$q" ]] || return 0
+  if ! json="$(spotify_player search "$q" 2>&1)"; then
+    printf '! spotify_player could not read Spotify'"'"'s answer for "%s" (try other words)\terror\t-\n' "$q"
+    return 1
+  fi
+  printf '%s' "$json" | python3 -c '
+import json, sys
+try:
+    d = json.load(sys.stdin)
+except ValueError:
+    print("! spotify_player returned something that is not JSON\terror\t-")
+    sys.exit(1)
+def names(x):
+    return ", ".join(a.get("name", "") for a in x.get("artists", []))
+def owner_of(p):
+    o = p.get("owner")
+    if isinstance(o, dict):
+        return o.get("name") or o.get("display_name") or ""
+    if isinstance(o, list) and o:
+        return str(o[0])
+    return str(o or "")
+for t in d.get("tracks", []):
+    print("♪ %s · %s · %s\ttrack\t%s" % (t.get("name", ""), names(t), (t.get("album") or {}).get("name", ""), t.get("id", "")))
+for a in d.get("albums", []):
+    print("▣ %s · %s\talbum\t%s" % (a.get("name", ""), names(a), a.get("id", "")))
+for a in d.get("artists", []):
+    print("♩ %s\tartist\t%s" % (a.get("name", ""), a.get("id", "")))
+for p in d.get("playlists", []):
+    print("≡ %s · %s\tplaylist\t%s" % (p.get("name", ""), owner_of(p), p.get("id", "")))
+'
+}
+
+# play ROW: start playback for the row on the active device. The error row
+# and an empty pick play nothing.
+play() {
+  local row="$1" label type id ok=1
+  IFS=$'\t' read -r label type id <<<"$row"
+  [[ -n "${id:-}" && "${type:-}" != "error" ]] || return 0
+  if [[ "$type" == "track" ]]; then
+    spotify_player playback start track --id "$id" || ok=0
+  else
+    spotify_player playback start context --id "$id" "$type" || ok=0
+  fi
+  if [[ "$ok" == 0 ]]; then
+    echo "no Spotify device is active; start nekoshell music first" >&2
+    return 1
+  fi
+  printf 'playing: %s\n' "$label"
+}
+
+case "${1:-}" in
+  --rows)
+    rows "${2:-}"
+    exit $?
+    ;;
+  --play)
+    play "${2:-}"
+    exit $?
+    ;;
+  -h | --help)
+    sed -n '2,11p' "$self" | sed 's/^# \{0,1\}//'
+    exit 0
+    ;;
+esac
+
+query="$*"
+if command -v fzf >/dev/null 2>&1; then
+  # --disabled: fzf never filters the rows itself, so everything Spotify
+  # answered for the typed words is shown. The reload waits a quarter of a
+  # second, so a word typed quickly costs one search, not one per letter.
+  pick="$({
+    [[ -n "$query" ]] && rows "$query"
+    true
+  } | fzf --disabled --delimiter $'\t' --with-nth 1 --prompt 'Spotify › ' --query "$query" \
+    --header 'type to search · enter plays · esc quits' \
+    --bind "change:reload:sleep 0.25; \"$self\" --rows {q} 2>/dev/null || true")" || exit 0
+else
+  rows_out="$(rows "$query")" || {
+    printf '%s\n' "${rows_out%%$'\t'*}" >&2
+    exit 1
+  }
+  [[ -n "$rows_out" ]] || exit 0
+  i=0
+  while IFS= read -r line; do
+    i=$((i + 1))
+    printf '%2d) %s\n' "$i" "${line%%$'\t'*}"
+  done <<<"$rows_out"
+  printf 'play which? '
+  read -r n || exit 0
+  [[ "$n" =~ ^[0-9]+$ ]] || exit 0
+  pick="$(sed -n "${n}p" <<<"$rows_out")"
+fi
+[[ -n "${pick:-}" ]] || exit 0
+play "$pick"
