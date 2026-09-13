@@ -21,13 +21,15 @@ cmd_theme() {
       return 0
       ;;
     auto)
-      config_set theme auto
+      # theme_apply reports and returns under a dry run, so recording the
+      # setting here would leave the toml naming a theme nothing rendered.
+      [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]] || config_set theme auto
       theme_apply "$(theme_resolve)"
       ;;
     -h|--help|help) usage_theme ;;
     *)
       theme_is_flavor "$action" || { log_fail "unknown flavour: $action"; return 1; }
-      config_set theme "$action"
+      [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]] || config_set theme "$action"
       theme_apply "$action"
       ;;
   esac
