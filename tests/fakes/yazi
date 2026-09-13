@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Fake yazi: records the directory it "quit in" where --cwd-file points, so
+# the y wrapper can be tested; FAKE_YAZI_CWD is that directory.
+for a in "$@"; do
+  case "$a" in
+    --cwd-file=*)
+      f="${a#--cwd-file=}"
+      [[ -n "${FAKE_YAZI_CWD:-}" ]] && printf '%s' "$FAKE_YAZI_CWD" >"$f"
+      ;;
+  esac
+done
+if [[ "${1:-}" == "--version" ]]; then
+  echo "Yazi 26.9.1"
+  exit 0
+fi
+echo "yazi $*"

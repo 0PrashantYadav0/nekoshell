@@ -1,0 +1,220 @@
+# nekoshell: rendered for the @@TITLE@@ flavour by the yazi plugin.
+# Changed by `nekoshell theme <flavour>`, not by hand: edit
+# plugins/yazi/files/theme.toml.tmpl instead. Derived from yazi-rs/flavors
+# catppuccin-mocha (MIT), see THIRD_PARTY.md.
+
+# vim:fileencoding=utf-8:foldmethod=marker
+
+# : Manager {{{
+
+[mgr]
+cwd = { fg = "@@HEX:teal@@" }
+
+# Find
+find_keyword  = { fg = "@@HEX:yellow@@", bold = true, italic = true, underline = true }
+find_position = { fg = "@@HEX:pink@@", bg = "reset", bold = true, italic = true }
+
+# Marker
+marker_copied   = { fg = "@@HEX:green@@", bg = "@@HEX:green@@" }
+marker_cut      = { fg = "@@HEX:red@@", bg = "@@HEX:red@@" }
+marker_marked   = { fg = "@@HEX:teal@@", bg = "@@HEX:teal@@" }
+marker_selected = { fg = "@@HEX:yellow@@", bg = "@@HEX:yellow@@" }
+
+# Count
+count_copied   = { fg = "@@HEX:base@@", bg = "@@HEX:green@@" }
+count_cut      = { fg = "@@HEX:base@@", bg = "@@HEX:red@@" }
+count_selected = { fg = "@@HEX:base@@", bg = "@@HEX:yellow@@" }
+
+# Border
+border_symbol = "│"
+border_style  = { fg = "@@HEX:overlay1@@" }
+
+# : }}}
+
+
+# : Tabs {{{
+
+[tabs]
+active   = { fg = "@@HEX:base@@", bg = "@@HEX:blue@@", bold = true }
+inactive = { fg = "@@HEX:blue@@", bg = "@@HEX:surface0@@" }
+
+# : }}}
+
+
+# : Mode {{{
+
+[mode]
+
+normal_main = { fg = "@@HEX:base@@", bg = "@@HEX:blue@@", bold = true }
+normal_alt  = { fg = "@@HEX:blue@@", bg = "@@HEX:surface0@@" }
+
+# Select mode
+select_main = { fg = "@@HEX:base@@", bg = "@@HEX:teal@@", bold = true }
+select_alt  = { fg = "@@HEX:teal@@", bg = "@@HEX:surface0@@" }
+
+# Unset mode
+unset_main = { fg = "@@HEX:base@@", bg = "@@HEX:flamingo@@", bold = true }
+unset_alt  = { fg = "@@HEX:flamingo@@", bg = "@@HEX:surface0@@" }
+
+# : }}}
+
+
+# : Status bar {{{
+
+[status]
+# Permissions
+perm_sep   = { fg = "@@HEX:overlay1@@" }
+perm_type  = { fg = "@@HEX:blue@@" }
+perm_read  = { fg = "@@HEX:yellow@@" }
+perm_write = { fg = "@@HEX:red@@" }
+perm_exec  = { fg = "@@HEX:green@@" }
+
+# Progress
+progress_label  = { fg = "@@HEX:text@@", bold = true }
+progress_normal = { fg = "@@HEX:green@@", bg = "@@HEX:surface1@@" }
+progress_error  = { fg = "@@HEX:yellow@@", bg = "@@HEX:red@@" }
+
+# : }}}
+
+
+# : Pick {{{
+
+[pick]
+border   = { fg = "@@HEX:blue@@" }
+active   = { fg = "@@HEX:pink@@", bold = true }
+inactive = {}
+
+# : }}}
+
+
+# : Input {{{
+
+[input]
+border   = { fg = "@@HEX:blue@@" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+# : }}}
+
+
+# : Completion {{{
+
+[cmp]
+border = { fg = "@@HEX:blue@@" }
+
+# : }}}
+
+
+# : Tasks {{{
+
+[tasks]
+border  = { fg = "@@HEX:blue@@" }
+title   = {}
+hovered = { fg = "@@HEX:pink@@", bold = true }
+
+# : }}}
+
+
+# : Which {{{
+
+[which]
+border          = { fg = "@@HEX:blue@@" }
+cand            = { fg = "@@HEX:teal@@" }
+rest            = { fg = "@@HEX:overlay2@@" }
+desc            = { fg = "@@HEX:pink@@" }
+separator       = "  "
+separator_style = { fg = "@@HEX:surface2@@" }
+
+# : }}}
+
+
+# : Help {{{
+
+[help]
+on      = { fg = "@@HEX:teal@@" }
+run     = { fg = "@@HEX:pink@@" }
+hovered = { reversed = true, bold = true }
+footer  = { fg = "@@HEX:surface0@@", bg = "@@HEX:text@@" }
+
+# : }}}
+
+
+# : Spotter {{{
+
+[spot]
+border   = { fg = "@@HEX:blue@@" }
+title    = { fg = "@@HEX:blue@@" }
+tbl_col  = { fg = "@@HEX:teal@@" }
+tbl_cell = { fg = "@@HEX:pink@@", bg = "@@HEX:surface1@@" }
+
+# : }}}
+
+
+# : Notification {{{
+
+[notify]
+title_info  = { fg = "@@HEX:green@@" }
+title_warn  = { fg = "@@HEX:yellow@@" }
+title_error = { fg = "@@HEX:red@@" }
+
+# : }}}
+
+
+# : File-specific styles {{{
+
+[filetype]
+
+rules = [
+	# Image
+	{ mime = "**/image/*", fg = "@@HEX:teal@@" },
+	# Media
+	{ mime = "**/{audio,video}/*", fg = "@@HEX:yellow@@" },
+	# Archive
+	{ mime = "**/application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "@@HEX:pink@@" },
+	# Document
+	{ mime = "**/application/{pdf,doc,rtf}", fg = "@@HEX:green@@" },
+	# Virtual file system
+	{ mime = "vfs/{absent,stale}", fg = "@@HEX:overlay2@@" },
+	# Fallback
+	{ url = "*", fg = "@@HEX:text@@" },
+	{ url = "*/", fg = "@@HEX:blue@@" },
+]
+
+# : }}}
+
+[icon]
+
+dirs = [
+	{ name = ".config", text = "", fg = "@@HEX:pink@@" },
+	{ name = ".git", text = "", fg = "@@HEX:teal@@" },
+	{ name = ".github", text = "", fg = "@@HEX:blue@@" },
+	{ name = ".npm", text = "", fg = "@@HEX:blue@@" },
+	{ name = "Desktop", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Development", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Documents", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Downloads", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Library", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Movies", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Music", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Pictures", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Public", text = "", fg = "@@HEX:teal@@" },
+	{ name = "Videos", text = "", fg = "@@HEX:teal@@" },
+]
+conds = [
+	# Special files
+	{ if = "orphan", text = "", fg = "@@HEX:text@@" },
+	{ if = "link", text = "", fg = "@@HEX:overlay1@@" },
+	{ if = "block", text = "", fg = "@@HEX:flamingo@@" },
+	{ if = "char", text = "", fg = "@@HEX:flamingo@@" },
+	{ if = "fifo", text = "", fg = "@@HEX:flamingo@@" },
+	{ if = "sock", text = "", fg = "@@HEX:flamingo@@" },
+	{ if = "sticky", text = "", fg = "@@HEX:flamingo@@" },
+	{ if = "dummy", text = "", fg = "@@HEX:red@@" },
+
+	# Fallback
+	{ if = "dir & hovered", text = "", fg = "@@HEX:blue@@" },
+	{ if = "dir", text = "", fg = "@@HEX:blue@@" },
+	{ if = "exec", text = "", fg = "@@HEX:green@@" },
+	{ if = "!dir", text = "", fg = "@@HEX:text@@" },
+]

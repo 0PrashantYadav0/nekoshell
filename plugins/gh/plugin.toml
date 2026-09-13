@@ -1,0 +1,9 @@
+name = "gh"
+summary = "The GitHub CLI, with completions cached for a quick shell and delta as its pager"
+requires = ["gh"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Fake gh: completions a zsh can source, a login state, a version.
+# FAKE_GH_LOGGED_OUT=1 makes `auth status` fail the way a logged-out gh does.
+case "${1:-} ${2:-}" in
+  "completion -s")
+    printf '#compdef gh\n_gh() { :; }\ncompdef _gh gh 2>/dev/null\n'
+    exit 0
+    ;;
+  "auth status")
+    if [[ "${FAKE_GH_LOGGED_OUT:-}" == 1 ]]; then
+      echo "You are not logged into any GitHub hosts. To log in, run: gh auth login" >&2
+      exit 1
+    fi
+    echo "Logged in to github.com account someone"
+    exit 0
+    ;;
+esac
+if [[ "${1:-}" == "--version" ]]; then
+  echo "gh version 2.100.0"
+  exit 0
+fi
+echo "gh $*"

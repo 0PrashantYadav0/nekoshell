@@ -30,13 +30,13 @@ The installer asks for a profile, or takes `--profile`:
 | `full` | dev plus spotify |
 | `pick` | a menu that toggles plugins one by one |
 
-`--with a,b` and `--without c` adjust any of them. anime, minecraft, colorscripts, aerospace, p10k and omz are in no profile: add them by hand.
+`--with a,b` and `--without c` adjust any of them. anime, minecraft, colorscripts, yazi, gh, mise, pure, aerospace, p10k and omz are in no profile: add them by hand.
 
 ## What a plugin puts in your home
 
 - **Linked.** Files under `plugins/<name>/files/link/` are symlinked into `$HOME` at the same relative path. A real file already there is moved into `~/.local/share/nekoshell/backup/<timestamp>/` first. The link points into the checkout, so editing the file edits the repository copy, and `git pull` changes it. Removing the plugin removes the link.
-- **Copied once.** Files under `plugins/<name>/files/copy/` are copied into `$HOME` when missing and never written again. They are yours: edit them freely, and removing the plugin leaves them in place. A plugin with a `copy_guard` (nvim, tmux, aerospace, p10k, spotify) skips the whole copy when a config of your own is already at the guarded path and says so; the shipped files stay readable in the checkout.
-- **Rendered.** Some plugins write a file from a template on `plugin add` and on every `nekoshell theme <flavour>`: the fastfetch config, the tmux flavour file, the p10k colours, the spotify theme. Each starts with a header that names nekoshell. Edits to a rendered file are lost on the next switch; a file of your own at the same path is backed up before the first render.
+- **Copied once.** Files under `plugins/<name>/files/copy/` are copied into `$HOME` when missing and never written again. They are yours: edit them freely, and removing the plugin leaves them in place. A plugin with a `copy_guard` (nvim, tmux, aerospace, p10k, spotify, yazi, mise) skips the whole copy when a config of your own is already at the guarded path and says so; the shipped files stay readable in the checkout.
+- **Rendered.** Some plugins write a file from a template on `plugin add` and on every `nekoshell theme <flavour>`: the fastfetch config, the tmux flavour file, the p10k and pure colours, the spotify theme, the yazi theme. Each starts with a header that names nekoshell. Edits to a rendered file are lost on the next switch; a file of your own at the same path is backed up before the first render.
 - **Touched in place.** Three plugins edit a line or a region of a file that is otherwise yours: modern-cli appends an `[include]` region to `~/.gitconfig`, btop rewrites the `color_theme` line of `~/.config/btop/btop.conf`, spotify rewrites the `theme` and `client_id` lines of `~/.config/spotify-player/app.toml`.
 
 ## Hooks you may notice
@@ -66,4 +66,8 @@ The installer asks for a profile, or takes `--profile`:
 | [spotify](spotify.md) | Spotify in the terminal: spotify_player, or a remote for the desktop app | media | spotify_player, shpotify; Spotify Premium to stream |
 | [aerospace](aerospace.md) | AeroSpace, an i3-style tiling window manager | system | the `aerospace` cask from `nikitabobko/tap`; an Accessibility grant |
 | [p10k](p10k.md) | Powerlevel10k as the prompt instead of Starship | prompt, shell | powerlevel10k |
+| [yazi](yazi.md) | yazi, a terminal file manager, in the flavour; `y` lands you where you quit | shell | yazi |
+| [gh](gh.md) | GitHub's CLI with cached completions and delta as its pager | shell | gh |
+| [mise](mise.md) | one tool for every runtime version, activated in every shell | shell | mise |
+| [pure](pure.md) | the pure prompt instead of Starship | prompt, shell | pure |
 | [omz](omz.md) | oh-my-zsh's git aliases and web-search, without oh-my-zsh | shell | nothing from Homebrew; antidote clones oh-my-zsh on the first shell |
