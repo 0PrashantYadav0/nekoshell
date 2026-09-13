@@ -24,7 +24,7 @@ teardown() { teardown_tmp_home; }
 # instead.
 
 @test "plugin_all lists fixture plugins sorted; plugin_meta reads toml" {
-  [ "$(plugin_all | tr '\n' ' ')" = "broken clash demo flaky-doctor kitty-only needs-demo " ]
+  [ "$(plugin_all | tr '\n' ' ')" = "broken clash demo flaky-doctor guarded kitty-only needs-demo " ]
   [ "$(plugin_meta demo summary)" = "A fixture plugin" ]
   [ "$(plugin_meta_list demo requires)" = "eza" ]
   plugin_exists demo; ! plugin_exists nope
@@ -124,6 +124,24 @@ teardown() { teardown_tmp_home; }
 }
 @test "plugin_run_hook on a missing hook returns 0" {
   plugin_run_hook clash install
+}
+@test "copy_guard leaves an existing config alone and says so" {
+  mkdir -p "$HOME/.config/guarded"
+  printf 'mine\n' > "$HOME/.config/guarded/mine"
+  status=0
+  output="$(plugin_add guarded 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  [ "$(cat "$HOME/.config/guarded/mine")" = "mine" ]
+  assert_contains "$output" "guarded: .config/guarded/mine exists; left your config alone"
+  assert_contains "$output" "plugins/guarded/files/copy"
+  plugin_enabled guarded
+}
+@test "copy_guard with no guard path present copies the plugin's file" {
+  status=0
+  output="$(plugin_add guarded 2>&1)" || status=$?
+  [ "$status" -eq 0 ]
+  [ "$(cat "$HOME/.config/guarded/mine")" = "theirs" ]
+  assert_not_contains "$output" "left your config alone"
 }
 @test "plugin_add survives a doctor hook that ends on a guarded, legitimately-false check" {
   status=0
