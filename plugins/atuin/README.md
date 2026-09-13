@@ -33,5 +33,5 @@ Nothing. Open a new shell and press Ctrl-R.
 ## Remove
 
 `nekoshell plugin remove atuin` unlinks the config and leaves the history
-database in place. Add `purge` to uninstall the formula too, as long as no
+database in place. Add `--purge` to uninstall the formula too, as long as no
 other enabled plugin needs it.

@@ -190,7 +190,18 @@ _doctor_core_block() {
     report fail "config" "stale root (run: nekoshell install)"
   fi
 
-  if _doctor_have starship; then report ok "starship" "$(command -v starship)"; else report fail "starship" "missing (brew bundle)"; fi
+  if _doctor_have starship; then report ok "starship" "$(command -v starship)"; else report fail "starship" "missing (run: nekoshell install)"; fi
+
+  # antidote is a zsh script under Homebrew's prefix, not a command, so the
+  # zshrc's own lookup is repeated here. The row warns rather than fails: the
+  # shell still starts without it, with no plugins loaded.
+  local prefix
+  prefix="${HOMEBREW_PREFIX:-$(brew --prefix 2>/dev/null || echo /opt/homebrew)}"
+  if [[ -r "$prefix/opt/antidote/share/antidote/antidote.zsh" ]]; then
+    report ok "zsh plugin manager" "antidote at $prefix/opt/antidote"
+  else
+    report warn "zsh plugin manager" "antidote not installed (run: nekoshell install)"
+  fi
 
   local fontfile=""
   fontfile="$(_doctor_font_file || true)"

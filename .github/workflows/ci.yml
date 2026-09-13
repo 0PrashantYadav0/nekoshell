@@ -25,11 +25,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pinned to the versions `make tools` installs on a Mac today, so a
+      # finding on CI is one a contributor can reproduce: apt's shellcheck is
+      # two years behind and shfmt changes its formatting between minors.
       - name: Install linters
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q shellcheck yamllint
-          curl -sSfL "https://github.com/mvdan/sh/releases/download/v3.10.0/shfmt_v3.10.0_linux_amd64" -o /usr/local/bin/shfmt
+          sudo apt-get install -y -q yamllint
+          curl -sSfL "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz" | tar -xJ
+          sudo mv shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
+          curl -sSfL "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_linux_amd64" -o /usr/local/bin/shfmt
           chmod +x /usr/local/bin/shfmt
           bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.7 /usr/local/bin
           npm install -g markdownlint-cli2@0.17.2

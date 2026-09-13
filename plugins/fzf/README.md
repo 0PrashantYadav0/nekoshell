@@ -36,5 +36,5 @@ Nothing. Open a new shell and press Ctrl-T.
 
 ## Remove
 
-`nekoshell plugin remove fzf`. Add `purge` to uninstall the formula too, as
+`nekoshell plugin remove fzf`. Add `--purge` to uninstall the formula too, as
 long as no other enabled plugin needs it.

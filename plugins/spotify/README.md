@@ -38,7 +38,7 @@ the same thing directly. `nekoshell doctor` warns until that file exists.
 ## Remove
 
 `nekoshell plugin remove spotify` unlinks the configs and drops the plugin, so
-`nekoshell music` no longer finds a player. Add `purge` to uninstall the
+`nekoshell music` no longer finds a player. Add `--purge` to uninstall the
 formulas too, as long as no other enabled plugin needs them. Your cached
 Spotify credentials are left alone; delete `~/.cache/spotify-player` to log
 out for good.

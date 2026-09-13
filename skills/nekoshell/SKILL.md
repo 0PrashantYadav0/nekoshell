@@ -1,21 +1,24 @@
 ---
 name: nekoshell
-description: Install the nekoshell terminal rig (Catppuccin iTerm2 look, Pokémon greeting with machine stats, hotkey Spotify panel) on a Mac by running its installer and doctor, then handing the human the steps only they can do.
+description: Install the nekoshell terminal rig (Catppuccin look, Pokémon greeting with machine stats, a music panel, five macOS terminals) on a Mac by running its installer and doctor, then handing the human the steps only they can do.
 ---
 
 # nekoshell
 
-Follow `AGENTS.md` in https://github.com/0PrashantYadav0/nekoshell exactly. In short:
+Follow `AGENTS.md` in <https://github.com/0PrashantYadav0/nekoshell> exactly. In short:
 
-1. Check preconditions: macOS, Homebrew, iTerm2, zsh.
-2. `[ -d ~/.nekoshell ] || git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell; cd ~/.nekoshell && git pull --ff-only && ./install.sh --yes`
-3. `bin/nekoshell-doctor --json`; exit 0 is success. `warn` on `spotify`, `iterm2 prefs` or `greet time` is expected on a fresh machine; only `fail` blocks.
-4. Tell the human: restart iTerm2, run `spotify_player authenticate`, press ⌥M, then run `tmux` and press `C-a I` once to install the tmux plugins. If prefs are pending, they run `install.sh --iterm-prefs` with iTerm2 closed. Do not start a tmux session yourself.
+1. Check preconditions: macOS, Homebrew, zsh, git. The installer itself brings Starship, antidote and the Nerd Font through Homebrew.
+2. Install, non-interactively:
 
-The look is Catppuccin mocha by default; `nekoshell-theme latte` (or frappe, or macchiato) switches
-every themed file at once. Run it only when the human asks for a different flavour: it overwrites
-`~/.config/starship.toml` and `~/.config/fastfetch/config.jsonc`, which are otherwise theirs.
+   ```bash
+   [ -d ~/.nekoshell ] || git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
+   cd ~/.nekoshell && git pull --ff-only && ./install.sh --yes --profile full --terminal installed
+   ```
 
-Never delete `~/.local/share/nekoshell/backup/`. Roll back with `./uninstall.sh --yes`; it restores the
-backup but leaves the user's own files in `~/.config/nekoshell/`, the pokemon-colorscripts install, the
-`~/.gitconfig` include and the Homebrew packages in place.
+   `--terminal all` configures every terminal with an adapter instead of only the installed ones. Do not add the `aerospace` plugin unless the human asked for it.
+3. Verify with `nekoshell doctor --json`; exit 0 is success. `warn` rows on `iterm2 prefs`, `terminal-app default`, `ghostty hotkey`, `spotify login` and `greet time` are expected on a fresh machine; only a `fail` row blocks, and its detail names the fix.
+4. Tell the human the steps that apply, then stop: quit iTerm2 and run `nekoshell terminal apply`; quit and reopen Terminal.app; grant Ghostty Accessibility and restart it; sign in to Warp; run `spotify_player authenticate`; run `tmux` and press `C-a I` once; open `nvim` once. Do not start a tmux session yourself.
+
+The look is Catppuccin mocha by default; `nekoshell theme latte` (or frappe, macchiato, `auto`) switches every themed file at once. Run it only when the human asks for a different flavour.
+
+Never delete `~/.local/share/nekoshell/backup/`. Roll back with `./uninstall.sh --yes`; it restores the backups and leaves the user's own files in `~/.config/nekoshell/`, the copied configs, the pokemon-colorscripts checkout and the Homebrew packages in place.
