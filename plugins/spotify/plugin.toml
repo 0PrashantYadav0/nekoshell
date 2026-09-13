@@ -7,3 +7,6 @@ requires_plugins = []
 terminals = ["any"]
 conflicts = []
 tags = ["media"]
+# app.toml is copied once and is then the user's: it is where their own Spotify
+# client id goes. One already there (from any spotify_player setup) is kept.
+copy_guard = [".config/spotify-player/app.toml"]

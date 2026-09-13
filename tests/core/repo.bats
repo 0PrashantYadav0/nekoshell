@@ -51,7 +51,9 @@ $id/adapter.sh: missing $fn()"
   # leading "/" keeps them out of the match. Docs are exempt: Phase C
   # rewrites them.
   cd "$REPO_ROOT"
-  run grep -rnIE '(^|[^/A-Za-z0-9_.-])(stow|lib|templates|iterm2)/' \
+  # A ":" before the name is excluded too: antidote's `path:lib/git.zsh`
+  # names a directory inside oh-my-zsh, not the old core library tree.
+  run grep -rnIE '(^|[^/A-Za-z0-9_.:-])(stow|lib|templates|iterm2)/' \
     bin core plugins terminals install.sh uninstall.sh \
     tests/core tests/plugins tests/terminals tests/fixtures tests/helpers.bash
   if [[ "$status" -eq 0 ]]; then

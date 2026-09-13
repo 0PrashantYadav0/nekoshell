@@ -24,7 +24,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Pinned to the versions `make tools` installs on a Mac today, so a
       # finding on CI is one a contributor can reproduce: apt's shellcheck is
       # two years behind and shfmt changes its formatting between minors.
@@ -45,7 +45,7 @@ jobs:
     name: test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install test tools
         run: brew install bats-core
       - name: Tests
@@ -59,7 +59,7 @@ jobs:
       matrix:
         terminal: [iterm2, kitty, ghostty, warp, terminal-app]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The installer against a throwaway HOME. --check mutates nothing, and
       # NEKOSHELL_SKIP_PREFLIGHT drops the app checks the runner cannot
       # satisfy, so this is the end-to-end proof that every profile still
@@ -79,7 +79,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Every commit message is a conventional commit

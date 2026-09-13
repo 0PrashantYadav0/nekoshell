@@ -8,9 +8,9 @@ A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with
 
 **Greeting.** A new interactive shell prints art next to the machine stats fastfetch collects. The art is a Pokémon sprite 70 percent of the time and a picture from your art pack the rest, when the terminal can draw images. It stays silent inside tmux, inside the panel, over SSH and under Claude Code.
 
-**Prompt.** Starship, two lines: the working directory, git and language status on top, the last command's duration, exit status and the clock on the right.
+**Prompt.** Starship, two lines: the working directory, git and language status on top, the last command's duration, exit status and the clock on the right. The p10k plugin puts Powerlevel10k in its place, in the flavour's colours.
 
-**Panel.** `nekoshell music` opens the music player in whatever panel the running terminal has: a hotkey window in iTerm2, a quick-access terminal in kitty, the quick terminal in Ghostty, a new window in Warp and Terminal.app, a popup inside tmux. The spotify plugin is the player: spotify_player, which streams on its own and needs Premium, or a keyboard remote for the Spotify desktop app when spotify_player is missing or you ask for `--remote`.
+**Music.** `nekoshell music` runs the music player in the current window. `nekoshell music --panel` opens it in whatever panel the running terminal has instead: a hotkey window in iTerm2, a quick-access terminal in kitty, the quick terminal in Ghostty, a popup inside tmux, a new window in Warp and Terminal.app. The spotify plugin is the player: spotify_player, which streams on its own and needs Premium, or a keyboard remote for the Spotify desktop app when spotify_player is missing or you ask for `--remote`.
 
 **Editor and multiplexer.** Neovim with lazy.nvim, in the flavour the shell is wearing, and tmux with a `C-a` prefix, vim-style panes and a Catppuccin status line. Both are copied into your home once and are yours from then on; a config you already have is left alone.
 
@@ -18,7 +18,7 @@ A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with
 
 **Five terminals.** iTerm2, kitty, Ghostty, Warp and Apple Terminal.app each have an adapter. Every one gets the font, the colours and a music panel; what differs is in the table below.
 
-Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the ten that ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify and aerospace.
+Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the twelve that ship: modern-cli, greet, fzf, atuin, lazygit, btop, nvim, tmux, spotify, aerospace, p10k and omz. [docs/plugins/README.md](docs/plugins/README.md) is the user manual, one page per plugin.
 
 ## Install
 
@@ -52,7 +52,7 @@ Some steps only a person can do, and the installer prints the ones that apply at
 - Terminal.app: quit and reopen it. It reads its profiles once, at launch.
 - iTerm2: if it was running during the install, quit it and run `nekoshell terminal apply` to write the global preferences.
 - Warp: sign in. Warp shows nothing until you do.
-- spotify: run `spotify_player authenticate` (needs Premium).
+- spotify: run `nekoshell spotify login` (needs Premium), and `nekoshell spotify client-id <id>` with a Spotify app of your own so start-up is not rate-limited.
 - tmux: start `tmux` and press `C-a I` once so TPM fetches the plugins.
 - nvim: open it once and let lazy.nvim fetch its plugins.
 
@@ -67,12 +67,13 @@ Some steps only a person can do, and the installer prints the ones that apply at
 | `nekoshell theme list\|current\|auto\|FLAVOUR` | switch or inspect the colour theme |
 | `nekoshell terminal list\|use\|remove\|apply\|background` | detect, configure and theme the terminals you use |
 | `nekoshell plugin list\|info\|add\|remove` | manage plugins |
-| `nekoshell music [PLAYER] [--here]` | open the music player, in a panel or right here |
+| `nekoshell music [PLAYER] [--panel]` | run the music player here, or in the terminal's panel |
+| `nekoshell spotify client-id\|login\|logout` | your Spotify client id and login (spotify plugin) |
 | `nekoshell greet [--image\|--text]` | print the greeting now (greet plugin) |
 | `nekoshell art list\|add\|sample` | manage the greeting's art pack (greet plugin) |
 | `nekoshell uninstall [--yes] [--purge]` | remove plugins, unlink the zshrc, restore your files |
 
-`nekoshell help` lists them, with the commands enabled plugins add.
+`nekoshell help` lists them, with the commands enabled plugins add. What each plugin does, its keys and its files: [docs/plugins/README.md](docs/plugins/README.md).
 
 ## Terminals
 
@@ -81,8 +82,8 @@ Some steps only a person can do, and the installer prints the ones that apply at
 | iTerm2 | yes | yes | ⌥M, from any app (hotkey window) |
 | kitty | yes | yes, PNG (others converted) | alt+m, inside kitty |
 | Ghostty | yes | yes | ⌥M, from any app, after Accessibility is granted |
-| Warp | yes | JPEG only | none; `nekoshell music` or the `+` menu opens a new window |
-| Terminal.app | no | no | none; `nekoshell music` opens a new window |
+| Warp | yes | JPEG only | none; `nekoshell music --panel` or the `+` menu opens a new window |
+| Terminal.app | no | no | none; `nekoshell music --panel` opens a new window |
 
 `nekoshell terminal use all` configures every terminal with an adapter, `use installed` every one whose app is present, and `use kitty,ghostty` a named few. The running terminal is always the one the greeting and the panel act on. `nekoshell terminal background PICTURE [OPACITY]` sets a background on every configured terminal that can draw one; `none` takes it away. Each terminal's own file, `terminals/<id>/README.md`, says exactly what is written and what it cannot do.
 
@@ -104,7 +105,7 @@ Four Catppuccin flavours: latte, frappe, macchiato and mocha. `nekoshell theme <
 | `theme_auto_dark`, `theme_auto_light` | what `auto` maps the two appearances to (mocha and latte) |
 | `profile` | the profile the installer used |
 | `plugins` | the enabled plugins, in the order they were enabled |
-| `music_player` | the plugin `nekoshell music` opens; `auto` takes the first one tagged `media` |
+| `music_player` | the plugin `nekoshell music` runs; `auto` takes the first one tagged `media` |
 | `background`, `background_opacity` | the background image, re-applied on every theme switch |
 | `ghostty_quick_terminal` | `"shell"` keeps Ghostty's quick terminal a plain shell |
 | `terminal_app_previous_default` | the Terminal.app profile to put back on removal |
