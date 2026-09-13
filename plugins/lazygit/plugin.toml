@@ -1,0 +1,9 @@
+name = "lazygit"
+summary = "A terminal UI for git, in Catppuccin, paged through delta"
+requires = ["lazygit"]
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["shell"]
