@@ -4,4 +4,5 @@
 .cache/
 tests/tmp/
 stow/config/.config/nekoshell/zsh/local.zsh
+stow/config/.config/nekoshell/greet.conf
 /backup/

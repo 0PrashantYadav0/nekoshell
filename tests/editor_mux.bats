@@ -114,6 +114,45 @@ NVIM_FILES="init.lua lua/nekoshell/options.lua lua/nekoshell/keymaps.lua lua/nek
   [ "$(cat "$HOME/.config/tmux/nekoshell-theme.conf")" = 'set -g @catppuccin_flavor "mocha"' ]
 }
 
+# A symlink to a real file OUTSIDE the checkout is the user's own dotfiles
+# setup (their init.lua lives elsewhere and this is how they link it in). It is
+# not stale, so it must count as present and be left alone, same as a real file.
+@test "a symlink to a real file outside the checkout is left alone" {
+  mkdir -p "$HOME/.config/nvim" "$HOME/dotfiles"
+  echo '-- my real init' > "$HOME/dotfiles/init.lua"
+  ln -s "$HOME/dotfiles/init.lua" "$HOME/.config/nvim/init.lua"
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "existing Neovim config found at ~/.config/nvim"
+  [ -L "$HOME/.config/nvim/init.lua" ]
+  [ "$(cat "$HOME/.config/nvim/init.lua")" = '-- my real init' ]
+  [ ! -e "$HOME/.config/nvim/lua/nekoshell" ]
+}
+
+# A machine that ran an older nekoshell can have tmux.conf as a stow symlink
+# whose target moved to templates/ in a later commit: `-e` sees the dangling
+# link as absent, and a plain `cp` then writes THROUGH it into the checkout
+# instead of at $HOME. The link has to be cleared first, so the copy lands as a
+# real file the user owns, the same guard greet.conf and init.lua need.
+@test "a dangling stow link at tmux.conf is cleared before the template is copied" {
+  mkdir -p "$HOME/.config/tmux"
+  # ~/.config/tmux/tmux.conf -> ../../<checkout>/stow/config/.config/tmux/tmux.conf
+  ln -s "$(relpath "$REPO_ROOT/stow/config/.config/tmux/tmux.conf" "$HOME/.config/tmux")" \
+    "$HOME/.config/tmux/tmux.conf"
+  [ -L "$HOME/.config/tmux/tmux.conf" ]
+  [ ! -e "$HOME/.config/tmux/tmux.conf" ]
+
+  run "$REPO_ROOT/install.sh" --yes
+  [ "$status" -eq 0 ]
+
+  [ -f "$HOME/.config/tmux/tmux.conf" ]
+  [ ! -L "$HOME/.config/tmux/tmux.conf" ]
+  diff -q "$HOME/.config/tmux/tmux.conf" "$REPO_ROOT/templates/tmux/tmux.conf"
+  run real_git -C "$REPO_ROOT" status --porcelain stow/
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
 @test "a fresh HOME gets the whole nvim tree, not a handful of files" {
   "$REPO_ROOT/install.sh" --yes >/dev/null
   for rel in $NVIM_FILES; do
