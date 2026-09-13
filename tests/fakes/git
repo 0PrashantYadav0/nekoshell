@@ -1,9 +1,38 @@
 #!/usr/bin/env bash
 # Fake git for the installer tests: `clone` fabricates whichever checkout the
 # destination names, `fetch`/`checkout`/`-C` are no-ops. Everything else echoes.
+#
+# Three switches let a test play the failures a real clone runs into:
+#   FAKE_GIT_NOT_REPO=1    every `git -C ...` fails the way git does when the
+#                          directory is not a checkout (exit 128)
+#   FAKE_GIT_FAIL_FETCH=1  `fetch` fails, the way an offline machine's does
+#   FAKE_GIT_HAS_COMMIT=1  `cat-file -e <sha>^{commit}` succeeds, i.e. the
+#                          pinned commit is already in the clone
+# `cat-file` fails by default, because a clone this fake fabricated holds no
+# commits at all — which is what makes the fetch path the default one.
+in_repo=0
+for arg in "$@"; do
+  [[ "$arg" == "-C" ]] && in_repo=1
+done
+
+if [[ "${FAKE_GIT_NOT_REPO:-}" == "1" && "$in_repo" == "1" ]]; then
+  echo "fatal: not a git repository: $*" >&2
+  exit 128
+fi
+
+# Before the echo: a real `cat-file -e` says nothing, it only sets a status,
+# and a test asserting on what the install hook printed must not see a probe.
+for arg in "$@"; do
+  if [[ "$arg" == "cat-file" ]]; then
+    [[ "${FAKE_GIT_HAS_COMMIT:-}" == "1" ]] && exit 0
+    exit 1
+  fi
+done
+
 echo "git $*"
 for arg in "$@"; do
   if [[ "$arg" == "fetch" ]]; then
+    [[ "${FAKE_GIT_FAIL_FETCH:-}" == "1" ]] && exit 1
     exit 0
   fi
   if [[ "$arg" == "clone" ]]; then

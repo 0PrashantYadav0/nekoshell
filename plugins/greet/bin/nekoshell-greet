@@ -3,12 +3,20 @@
 # Never fails a fresh shell: every problem exits 0 quietly.
 set -uo pipefail
 
-[[ -t 1 ]] || exit 0
+# The tty check is about the automatic greeting only: a shell startup that is
+# not looking at a terminal (a script, a command substitution) must not have a
+# picture pushed into its output. Someone who typed `nekoshell greet` asked for
+# it, and asking for it sets NEKOSHELL_GREET_MODE, so `nekoshell greet --text
+# | cat` prints rather than silently doing nothing.
+[[ -t 1 || -n "${NEKOSHELL_GREET_MODE:-}" ]] || exit 0
 [[ -n "${NEKOSHELL_NO_GREET:-}" ]] && exit 0
 [[ -n "${CLAUDECODE:-}" ]] && exit 0
 [[ -n "${TMUX:-}" ]] && exit 0
 [[ -n "${NEKOSHELL_PANEL:-}" ]] && exit 0
-if [[ -n "${SSH_CONNECTION:-}" && -z "${NEKOSHELL_GREET_SSH:-}" ]]; then exit 0; fi
+# Exactly 1, the same value late.zsh looks for: NEKOSHELL_GREET_SSH=0 reads as
+# "no" to anyone who writes it, and a knob that means yes either way is worse
+# than no knob at all.
+if [[ -n "${SSH_CONNECTION:-}" && "${NEKOSHELL_GREET_SSH:-}" != 1 ]]; then exit 0; fi
 
 command -v fastfetch >/dev/null 2>&1 || exit 0
 

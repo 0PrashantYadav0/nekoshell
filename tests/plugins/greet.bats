@@ -95,6 +95,43 @@ print(d["display"]["color"]["title"])'
   [ -L "$HOME/.local/bin/pokemon-colorscripts" ]
 }
 
+@test "a checkout that already holds the pinned commit is not fetched" {
+  "$NK" plugin add greet >/dev/null
+  run env FAKE_GIT_HAS_COMMIT=1 "$NK" plugin add greet
+  [ "$status" -eq 0 ]
+  # the precise flag, not the bare word: "fastfetch" contains "fetch"
+  assert_not_contains "$output" "fetch --quiet"
+}
+
+# Offline is not broken: an older set of sprites is still a greeting.
+@test "a fetch that fails warns and the add still succeeds" {
+  "$NK" plugin add greet >/dev/null
+  run env FAKE_GIT_FAIL_FETCH=1 "$NK" plugin add greet
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "greet: could not fetch pokemon-colorscripts; keeping what is there"
+  assert_contains "$output" "greet enabled"
+  [ -L "$HOME/.local/bin/pokemon-colorscripts" ]
+}
+
+# A directory that is there but is not a checkout fails every git command that
+# reaches into it — the probe, the fetch and the checkout — and has no script
+# to make executable either. All four are notes: the greeting drops the sprite
+# and everything else about the plugin still works.
+@test "a pokemon directory that is not a checkout warns and the add still succeeds" {
+  mkdir -p "$HOME/.local/share/pokemon-colorscripts"
+  echo 'not a checkout' > "$HOME/.local/share/pokemon-colorscripts/notes.txt"
+  run env FAKE_GIT_NOT_REPO=1 "$NK" plugin add greet
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "greet: could not fetch pokemon-colorscripts; keeping what is there"
+  assert_contains "$output" "greet: could not check out pokemon-colorscripts at"
+  assert_contains "$output" "greet: pokemon-colorscripts.py is missing"
+  assert_contains "$output" "greet enabled"
+  assert_not_contains "$output" "clone --quiet"
+  [ "$(cat "$HOME/.local/share/pokemon-colorscripts/notes.txt")" = "not a checkout" ]
+  [ -f "$HOME/.config/fastfetch/config.jsonc" ]
+  [ "$(grep '^plugins' "$HOME/.config/nekoshell/nekoshell.toml")" = 'plugins = ["greet"]' ]
+}
+
 @test "greet.conf is yours: a second add keeps your edit" {
   "$NK" plugin add greet >/dev/null
   printf 'POKEMON_SHARE=5\n' >> "$HOME/.config/nekoshell/greet.conf"
@@ -166,11 +203,32 @@ print(d["display"]["color"]["title"])'
   assert_contains "$output" "fastfetch"
 }
 
+# The opt-in is exactly 1, the value late.zsh looks for too. Anything else,
+# `0` most of all, has to read as the no it looks like.
+@test "the ssh opt-in is exactly 1" {
+  "$NK" plugin add greet >/dev/null
+  SSH_CONNECTION="1 2 3 4" NEKOSHELL_GREET_SSH=0 NEKOSHELL_SEED=1 run greet
+  [ -z "$output" ]
+  SSH_CONNECTION="1 2 3 4" NEKOSHELL_GREET_SSH=yes NEKOSHELL_SEED=1 run greet
+  [ -z "$output" ]
+  grep -q 'NEKOSHELL_GREET_SSH:-}" != 1' "$P/bin/nekoshell-greet"
+  grep -q 'NEKOSHELL_GREET_SSH:-}" == 1' "$P/late.zsh"
+}
+
 @test "silent when stdout is not a tty" {
   "$NK" plugin add greet >/dev/null
   run "$P/bin/nekoshell-greet"
   [ "$status" -eq 0 ]
   [ -z "$output" ]
+}
+
+# The tty gate is for the automatic greeting only. Someone who typed the
+# command asked for the output and should get it, pipe or no pipe.
+@test "an asked-for greeting prints into a pipe" {
+  "$NK" plugin add greet >/dev/null
+  run bash -c "'$NK' greet --text | cat"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "--file-raw -"
 }
 
 @test "prints nothing when fastfetch is missing" {
@@ -328,6 +386,19 @@ print(d["display"]["color"]["title"])'
   assert_matches "$output" 'ok +pokemon-colorscripts'
   assert_matches "$output" 'greet time +[0-9]+ ms'
   assert_not_contains "$output" "could not measure"
+}
+
+# The doctor is run from a real shell, and that shell may be over SSH, inside
+# tmux, or inside the panel — each of which silences the greeting. The probe
+# has to clear all of them, or the row measures where the doctor was run from
+# instead of how long the greeting takes.
+@test "doctor measures the greet time from a silenced shell" {
+  "$NK" plugin add greet >/dev/null
+  for env_var in SSH_CONNECTION=1 NEKOSHELL_PANEL=1 TMUX=/tmp/x CLAUDECODE=1 NEKOSHELL_GREET_MODE=text; do
+    run env "$env_var" "$NK" doctor --plugin greet
+    [ "$status" -eq 0 ]
+    assert_matches "$output" "ok +greet time +[0-9]+ ms"
+  done
 }
 
 @test "doctor fails a missing fastfetch" {

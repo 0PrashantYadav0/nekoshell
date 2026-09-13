@@ -170,3 +170,14 @@ print(t['themes'][0]['name'], t['themes'][0]['palette']['background'])"
   [ "$status" -eq 1 ]
   assert_matches "$output" 'fail +tool: spotify_player'
 }
+
+# The formula is shpotify; the command it installs is spotify. A row naming
+# only one of them sends you looking for the wrong missing thing.
+@test "the shpotify row names both the formula and the command" {
+  "$NK" plugin add spotify >/dev/null
+  run "$NK" doctor --plugin spotify
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +tool: shpotify \(spotify\)'
+  run env PATH="/usr/bin:/bin" "$NK" doctor --plugin spotify
+  assert_matches "$output" 'fail +tool: shpotify \(spotify\)'
+}

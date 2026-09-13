@@ -102,6 +102,44 @@ set_flavour() {
   [ -d "$HOME/.config/tmux/plugins/tpm" ]
 }
 
+# The network is only worth touching when there is something to get: a clone
+# that already holds the pinned commit is the state every add after the first
+# one is in.
+@test "a clone that already holds the pinned commit is not fetched" {
+  "$NK" plugin add tmux >/dev/null
+  run env FAKE_GIT_HAS_COMMIT=1 "$NK" plugin add tmux
+  [ "$status" -eq 0 ]
+  # the precise flag, not the bare word: "fastfetch" contains "fetch"
+  assert_not_contains "$output" "fetch --quiet"
+}
+
+# Offline is not broken: TPM manages plugins perfectly well at whatever commit
+# it is already on, so a failed fetch is a note and the add carries on.
+@test "a fetch that fails warns and the add still succeeds" {
+  "$NK" plugin add tmux >/dev/null
+  run env FAKE_GIT_FAIL_FETCH=1 "$NK" plugin add tmux
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "tmux: could not fetch TPM; keeping what is there"
+  assert_contains "$output" "tmux enabled"
+  [ -d "$HOME/.config/tmux/plugins/tpm" ]
+}
+
+# A plugins/tpm that is a directory but not a checkout fails every git command
+# that reaches into it, the checkout included. It must still leave the plugin
+# enabled and the config copied.
+@test "a tpm directory that is not a checkout warns and the add still succeeds" {
+  mkdir -p "$HOME/.config/tmux/plugins/tpm"
+  echo 'not a checkout' > "$HOME/.config/tmux/plugins/tpm/notes.txt"
+  run env FAKE_GIT_NOT_REPO=1 "$NK" plugin add tmux
+  [ "$status" -eq 0 ]
+  assert_not_contains "$output" "clone --quiet"
+  assert_contains "$output" "tmux: could not fetch TPM; keeping what is there"
+  assert_contains "$output" "tmux: could not check out TPM at"
+  assert_contains "$output" "tmux enabled"
+  [ -f "$HOME/.config/tmux/tmux.conf" ]
+  [ "$(grep '^plugins' "$HOME/.config/nekoshell/nekoshell.toml")" = 'plugins = ["tmux"]' ]
+}
+
 # A clone in the wrong place is never read, and TPM fetches itself again with
 # no pin at all. The config and the install hook have to name the same place.
 @test "the config and the install hook agree on where the plugins live" {
@@ -125,8 +163,19 @@ set_flavour() {
 # Later plugins drop nekoshell-truecolor.conf and nekoshell-statusbar.conf next
 # to the theme file, so the config sources the whole set rather than one name.
 @test "the config sources every nekoshell-*.conf, not just the theme one" {
-  grep -q "run-shell 'for f in ~/.config/tmux/nekoshell-\*.conf; do \[ -r \"\$f\" \] && tmux source-file \"\$f\"; done'" "$CONF"
+  grep -q "run-shell 'for f in ~/.config/tmux/nekoshell-\*.conf; do \[ -r \"\$f\" \] && tmux source-file \"\$f\"; done; true'" "$CONF"
   ! grep -q '^source-file -q ~/.config/tmux/nekoshell-theme.conf$' "$CONF"
+}
+
+# With no generated file yet, the loop ends on a false `[ -r ]`; without the
+# trailing `true` tmux reports that as a failed run-shell on a fresh install.
+@test "the sourcing loop ends true, so a fresh config reports nothing" {
+  have_real tmux || skip "tmux is not installed"
+  [ ! -e "$HOME/.config/tmux/nekoshell-theme.conf" ]
+  run env PATH="$NEKO_REAL_PATH" HOME="$HOME" \
+    tmux -f "$CONF" -L nekoplugtest start-server ";" kill-server
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
 }
 
 @test "doctor reports tmux" {
