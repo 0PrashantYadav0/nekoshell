@@ -26,6 +26,17 @@ teardown() { teardown_tmp_home; }
   [ -f "$HOME/.config/starship.toml" ]
   assert_contains "$output" "ok   demo"
 }
+@test "install --terminal all configures every adapter and keeps the running one primary" {
+  run "$NK" install --yes --profile minimal --terminal all
+  [ "$status" -eq 0 ]
+  grep -q '^terminals = \["bare", "fake"\]' "$HOME/.config/nekoshell/nekoshell.toml"
+  grep -q '^terminal = "bare"' "$HOME/.config/nekoshell/nekoshell.toml"
+  grep -q 'fake apply mocha' "$HOME/.cache/nekoshell/hooks.log"
+  assert_contains "$output" "terminal: bare fake"
+  run "$NK" install --yes --profile minimal --terminal fake,nope
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "no terminal adapter named nope"
+}
 @test "install backs up an existing zshrc and migrates its aliases" {
   printf 'alias k=kubectl\nexport FOO=bar\n' > "$HOME/.zshrc"
   "$NK" install --yes --profile minimal >/dev/null

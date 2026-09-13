@@ -4,7 +4,7 @@
 # --check implies --dry-run and mutates nothing.
 usage_install() {
   cat <<'EOF'
-usage: nekoshell install [--profile P] [--with a,b] [--without c] [--yes] [--check] [--dry-run] [--terminal ID]
+usage: nekoshell install [--profile P] [--with a,b] [--without c] [--yes] [--check] [--dry-run] [--terminal ID|a,b|all|installed]
 EOF
 }
 
@@ -142,6 +142,7 @@ EOF
 
 cmd_install() {
   local PROFILE="" WITH="" WITHOUT="" YES=0 CHECK=0 TERMINAL_FLAG=""
+  local id p
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --profile)
@@ -217,24 +218,38 @@ cmd_install() {
 
   # --- 1: Terminal. --------------------------------------------------------
   log_step 1 "$TOTAL" "Terminal"
+  # terms is every terminal this install configures; term is the primary one,
+  # the running terminal when it is among them and the first otherwise.
   local term=""
+  local -a terms=()
   if [[ -n "$TERMINAL_FLAG" ]]; then
-    terminal_load "$TERMINAL_FLAG" || return 1
-    term="$TERMINAL_FLAG"
+    local expanded
+    # Into a variable first: a process substitution's status never reaches
+    # the loop reading it, and an unknown id has to stop the install here.
+    expanded="$(terminal_expand_ids "$TERMINAL_FLAG")" || return 1
+    while IFS= read -r id; do [[ -n "$id" ]] && terms+=("$id"); done <<<"$expanded"
+    [[ ${#terms[@]} -gt 0 ]] || {
+      log_fail "no terminal matched --terminal $TERMINAL_FLAG"
+      return 1
+    }
+    term="$(terminal_detect_env 2>/dev/null || true)"
+    _install_in_list "$term" "${terms[@]}" || term="${terms[0]}"
   else
     term="$(_install_detect_terminal || true)"
+    [[ -n "$term" ]] && terms=("$term")
   fi
   if [[ -z "$term" && -t 0 ]]; then
     local -a installed=()
     while IFS= read -r id; do [[ -n "$id" ]] && installed+=("$id"); done < <(terminal_installed_all)
     if [[ ${#installed[@]} -gt 0 ]]; then
       term="$(_install_pick_from_list "terminal?" "${installed[@]}")"
+      [[ -n "$term" ]] && terms=("$term")
     fi
   fi
   if [[ -z "$term" ]]; then
     log_warn "no terminal detected; run nekoshell terminal use <id> later"
   else
-    log_ok "terminal: $term"
+    log_ok "terminal: ${terms[*]}"
   fi
 
   # --- 2: Profile. -----------------------------------------------------------
@@ -277,7 +292,6 @@ cmd_install() {
   fi
   local -a final_plugins=()
   if [[ ${#profile_plugins[@]} -gt 0 ]]; then
-    local p
     for p in "${profile_plugins[@]}"; do
       if [[ ${#without_arr[@]} -gt 0 ]] && _install_in_list "$p" "${without_arr[@]}"; then continue; fi
       if [[ ${#final_plugins[@]} -gt 0 ]] && _install_in_list "$p" "${final_plugins[@]}"; then continue; fi
@@ -373,6 +387,9 @@ cmd_install() {
   else
     config_set root "$NEKOSHELL_ROOT"
     [[ -n "$term" ]] && config_set terminal "$term"
+    # The list is what theme_apply, the doctor and uninstall walk; the
+    # primary key above is what a shell in none of them falls back to.
+    [[ ${#terms[@]} -gt 0 ]] && toml_set_list "$NEKOSHELL_TOML" terminals "${terms[@]}"
     local theme_val
     theme_val="$(config_get theme 2>/dev/null || true)"
     if [[ -z "$theme_val" ]]; then

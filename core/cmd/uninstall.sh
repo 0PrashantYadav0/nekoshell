@@ -57,15 +57,16 @@ cmd_uninstall() {
 
   # starship.toml is only ours to remove if we rendered it; a user's own
   # config, or one left by something else, is never touched.
-  if [[ -f "$HOME/.config/starship.toml" ]] && grep -qF 'nekoshell Starship config' "$HOME/.config/starship.toml" 2>/dev/null; then
+  if [[ ! -L "$HOME/.config/starship.toml" ]] && theme_is_rendered "$HOME/.config/starship.toml"; then
     run rm -f "$HOME/.config/starship.toml"
   fi
-  # The terminal's own config, while the toml still says which terminal it is.
+  # Every terminal's own config, while the toml still says which they are.
   local term=""
-  term="$(terminal_current 2>/dev/null || true)"
-  if [[ -n "$term" ]] && terminal_load "$term" 2>/dev/null; then
-    terminal_remove || log_warn "terminal $term: could not remove its config"
-  fi
+  for term in $(terminal_configured_all); do
+    if terminal_load "$term" 2>/dev/null; then
+      terminal_remove || log_warn "terminal $term: could not remove its config"
+    fi
+  done
   run rm -f "$NEKOSHELL_CONFIG/theme.zsh" "$NEKOSHELL_CONFIG/antidote.txt" "$NEKOSHELL_TOML"
 
   log_ok "nekoshell removed."

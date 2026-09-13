@@ -39,6 +39,27 @@ fi
 [[ -r "$NEKOSHELL_CONFIG/zsh/env.zsh" ]] && source "$NEKOSHELL_CONFIG/zsh/env.zsh"
 [[ -r "$NEKOSHELL_CONFIG/theme.zsh" ]] && source "$NEKOSHELL_CONFIG/theme.zsh"
 
+# The running terminal's own zsh hook, terminals/<id>/zsh.zsh, when the
+# adapter ships one (Ghostty's turns its quick terminal into the music
+# panel). Detected from the environment the same way core/lib/terminal.sh
+# does it, with no process started. This runs early on purpose: a hook that
+# replaces the shell should not wait for the plugins to load first.
+_nk_term=""
+if [[ -n "${KITTY_WINDOW_ID:-}" || "${TERM:-}" == "xterm-kitty" ]]; then _nk_term=kitty
+elif [[ -n "${GHOSTTY_RESOURCES_DIR:-}" || "${TERM_PROGRAM:-}" == "ghostty" ]]; then _nk_term=ghostty
+else
+  case "${TERM_PROGRAM:-}" in
+    iTerm.app) _nk_term=iterm2 ;;
+    Apple_Terminal) _nk_term=terminal-app ;;
+    WarpTerminal) _nk_term=warp ;;
+    WezTerm) _nk_term=wezterm ;;
+  esac
+fi
+NEKOSHELL_TERMINALS_DIR="${NEKOSHELL_TERMINALS_DIR:-$NEKOSHELL_ROOT/terminals}"
+if [[ -n "$_nk_term" && -r "$NEKOSHELL_TERMINALS_DIR/$_nk_term/zsh.zsh" ]]; then
+  source "$NEKOSHELL_TERMINALS_DIR/$_nk_term/zsh.zsh"
+fi
+
 HISTFILE="$HOME/.zsh_history"; HISTSIZE=50000; SAVEHIST=50000
 setopt HIST_IGNORE_ALL_DUPS SHARE_HISTORY HIST_IGNORE_SPACE
 autoload -Uz compinit && compinit -C
@@ -73,6 +94,6 @@ done
 for _p in $_nk_plugins; do
   [[ -r "$NEKOSHELL_PLUGINS_DIR/$_p/late.zsh" ]] && source "$NEKOSHELL_PLUGINS_DIR/$_p/late.zsh"
 done
-unset _p _nk_line _nk_theme_line _nk_theme
+unset _p _nk_line _nk_theme_line _nk_theme _nk_term
 
 [[ -r "$NEKOSHELL_CONFIG/zsh/local.zsh" ]] && source "$NEKOSHELL_CONFIG/zsh/local.zsh"
