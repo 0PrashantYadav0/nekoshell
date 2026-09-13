@@ -4,7 +4,17 @@
 # $FAKE_DEFAULTS_APPEARANCE and exits 1 when that variable is empty or unset
 # (macOS behaviour: the key is absent in light mode), without echoing the call
 # first, so a caller that captures its stdout gets exactly the appearance
-# string. Every other invocation keeps the old behaviour.
+# string. `defaults read com.googlecode.iterm2 "Default Bookmark Guid"` is
+# special-cased the same way, so a test can say the global prefs are already
+# applied by setting $FAKE_ITERM_DEFAULT_GUID to the guid the adapter writes;
+# unset, it falls through to the "NONE" read below, which is what an
+# unconfigured machine looks like. Every other invocation keeps the old
+# behaviour.
+if [[ "${1:-}" == "read" && "${2:-}" == "com.googlecode.iterm2" && "${3:-}" == "Default Bookmark Guid" \
+      && -n "${FAKE_ITERM_DEFAULT_GUID:-}" ]]; then
+  printf '%s\n' "$FAKE_ITERM_DEFAULT_GUID"
+  exit 0
+fi
 if [[ "${1:-}" == "read" && "${2:-}" == "-g" && "${3:-}" == "AppleInterfaceStyle" ]]; then
   if [[ -n "${FAKE_DEFAULTS_APPEARANCE:-}" ]]; then
     printf '%s\n' "$FAKE_DEFAULTS_APPEARANCE"
