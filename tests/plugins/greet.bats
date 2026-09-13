@@ -174,9 +174,12 @@ print(d["display"]["color"]["title"])'
 }
 
 @test "fastfetch accepts the rendered config" {
-  command -v fastfetch >/dev/null || skip "fastfetch not installed"
+  # The fakes dir is on PATH, so look for the real binary on the PATH the
+  # run below uses; CI has no fastfetch and must skip, not fail.
+  local real_path="/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin"
+  PATH="$real_path" command -v fastfetch >/dev/null || skip "fastfetch not installed"
   "$NK" plugin add greet >/dev/null
-  run env PATH="/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin" \
+  run env PATH="$real_path" \
     fastfetch --config "$HOME/.config/fastfetch/config.jsonc" --logo none --pipe
   [ "$status" -eq 0 ]
   assert_contains "$output" "Storage"
