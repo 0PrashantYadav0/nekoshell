@@ -43,5 +43,5 @@ and only happens on the first run.
 
 `nekoshell plugin remove nvim` stops the aliases and the `EDITOR` export. The
 copied config stays where it is — it is yours — so delete `~/.config/nvim`
-yourself if you want it gone. Add `purge` to uninstall the formula too, as
+yourself if you want it gone. Add `--purge` to uninstall the formula too, as
 long as no other enabled plugin needs it.

@@ -57,5 +57,5 @@ Nothing. Open a new terminal and the greeting is there.
 `nekoshell plugin remove greet` stops the greeting and takes `nekoshell greet`
 and `nekoshell art` away with it. Your `greet.conf` and your art pack stay
 where they are — they are yours — as does the pokemon-colorscripts checkout.
-Add `purge` to uninstall fastfetch too, as long as no other enabled plugin
+Add `--purge` to uninstall fastfetch too, as long as no other enabled plugin
 needs it.

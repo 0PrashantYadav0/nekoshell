@@ -26,5 +26,5 @@ Nothing. Open a new shell and type `lg` inside a repository.
 
 ## Remove
 
-`nekoshell plugin remove lazygit` unlinks the config. Add `purge` to uninstall
+`nekoshell plugin remove lazygit` unlinks the config. Add `--purge` to uninstall
 the formula too, as long as no other enabled plugin needs it.

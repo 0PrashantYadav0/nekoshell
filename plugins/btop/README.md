@@ -31,5 +31,5 @@ Nothing. Open a new shell and type `top`.
 ## Remove
 
 `nekoshell plugin remove btop` unlinks the themes and leaves `btop.conf`
-alone — it is btop's file, not ours. Add `purge` to uninstall the formula too,
+alone — it is btop's file, not ours. Add `--purge` to uninstall the formula too,
 as long as no other enabled plugin needs it.
