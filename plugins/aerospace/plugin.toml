@@ -1,0 +1,12 @@
+name = "aerospace"
+summary = "AeroSpace, an i3-style tiling window manager for macOS"
+requires = []
+casks = ["aerospace"]
+taps = ["nikitabobko/tap"]
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["system"]
+# A window manager's config is a set of personal habits; one already at this
+# path means the whole copy is skipped rather than merged into.
+copy_guard = [".config/aerospace/aerospace.toml"]
