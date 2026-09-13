@@ -24,6 +24,7 @@ Keys in `~/.config/nekoshell/greet.conf`:
 | Path | How | Edit it? |
 | --- | --- | --- |
 | `~/.local/share/anime-colorscripts/` | the release tarball, unpacked by the install hook; `.nekoshell-version` records which | no |
+| `~/.local/share/anime-colorscripts/.nekoshell-list.txt` | written by the install hook: the sprites no wider than 80 columns, which is what the greeting draws from; the doctor says how many fit | no |
 
 ## Theme
 

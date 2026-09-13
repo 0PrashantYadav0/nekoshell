@@ -17,8 +17,10 @@ which the default skips). `nekoshell greet --art anime` forces one now.
 
 Nothing from Homebrew. The pack's git tree holds no sprites, so the install
 hook downloads the pinned release tarball (v1.1.3, checked against a
-recorded sha256) into `~/.local/share/anime-colorscripts`. Offline, it warns
-and the greeting skips this provider.
+recorded sha256) into `~/.local/share/anime-colorscripts` and writes
+`.nekoshell-list.txt` there: the sprites no wider than 80 columns, the ones
+that fit next to the stats (a few in the pack are 250 columns wide). Offline,
+it warns and the greeting skips this provider.
 
 ## Files
 

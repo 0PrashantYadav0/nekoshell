@@ -20,6 +20,8 @@ setup() {
   for n in 2997-hatsune-miku 1-naruto-uzumaki 9-fuck-you; do
     printf 'ART %s\nline2\n' "$n" > "$HOME/src/anime-colorscripts/colorscripts/$n.txt"
   done
+  # One sprite too wide to sit next to the stats: 90 columns behind an escape.
+  printf '\033[38;2;1;2;3m%090d\n' 0 > "$HOME/src/anime-colorscripts/colorscripts/5-wide-one.txt"
   (cd "$HOME/src" && tar czf "$HOME/anime.tar.gz" ./anime-colorscripts)
   export FAKE_CURL_SOURCE="$HOME/anime.tar.gz"
   NEKOSHELL_ANIME_SHA256="$(shasum -a 256 "$HOME/anime.tar.gz" | cut -d' ' -f1)"
@@ -47,6 +49,7 @@ teardown() { teardown_tmp_home; }
   [ -f "$ANIME_DIR/colorscripts/2997-hatsune-miku.txt" ]
   [ -f "$ANIME_DIR/charalist.txt" ]
   [ "$(cat "$ANIME_DIR/.nekoshell-version")" = "v1.1.3" ]
+  [ "$(cat "$ANIME_DIR/.nekoshell-list.txt" | tr '\n' ' ')" = "1-naruto-uzumaki 2997-hatsune-miku 9-fuck-you " ]
   assert_contains "$output" "anime enabled"
 }
 
@@ -99,6 +102,7 @@ teardown() { teardown_tmp_home; }
     seen="$seen $(NEKOSHELL_SEED=$seed "$P/greet-art" | head -1)"
   done
   assert_not_contains "$seen" "Fuck"
+  assert_not_contains "$seen" "Wide One"
   assert_contains "$seen" "Hatsune Miku"
   assert_contains "$seen" "Naruto Uzumaki"
   ANIME_SKIP="miku naruto" run "$P/greet-art"
@@ -106,6 +110,21 @@ teardown() { teardown_tmp_home; }
   [ "${lines[0]}" = "Fuck You" ]
   ANIME_SKIP="miku naruto fuck" run "$P/greet-art"
   [ "$status" -eq 1 ]
+}
+
+@test "without the list every sprite is a candidate" {
+  "$NK" plugin add anime >/dev/null
+  rm "$ANIME_DIR/.nekoshell-list.txt"
+  ANIME_ONLY=wide run "$P/greet-art"
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "Wide One" ]
+}
+
+@test "greet-art is quick: no process per sprite" {
+  "$NK" plugin add anime >/dev/null
+  local ms
+  ms="$(python3 -c 'import subprocess,time,sys;t=time.time();subprocess.run([sys.argv[1]],capture_output=True);print(int((time.time()-t)*1000))' "$P/greet-art")"
+  [ "$ms" -lt 100 ]
 }
 
 @test "greet-art is silent and non-zero before the pack is there" {
@@ -125,7 +144,7 @@ teardown() { teardown_tmp_home; }
   "$NK" plugin add anime >/dev/null
   run "$NK" doctor --plugin anime
   [ "$status" -eq 0 ]
-  assert_matches "$output" 'ok +anime-colorscripts +v1\.1\.3, 3 sprites'
+  assert_matches "$output" 'ok +anime-colorscripts +v1\.1\.3, 3 of 4 sprites fit'
   rm -rf "$ANIME_DIR"
   run "$NK" doctor --plugin anime
   [ "$status" -eq 1 ]
