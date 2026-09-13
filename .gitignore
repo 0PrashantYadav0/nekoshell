@@ -8,4 +8,5 @@ core/zsh/.config/nekoshell/zsh/local.zsh
 
 # Local planning notes (specs, plans, ledgers). Never committed.
 .planning/
+docs/superpowers/
 __pycache__/
