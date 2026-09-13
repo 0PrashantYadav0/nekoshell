@@ -2,7 +2,7 @@
 load ../helpers
 setup() {
   setup_tmp_home
-  unset ZDOTDIR
+  unset ZDOTDIR TERM_PROGRAM
   export NEKOSHELL_PLUGINS_DIR="$REPO_ROOT/tests/fixtures/plugins"
   mkdir -p "$HOME/.config/nekoshell/zsh"
   printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = ["demo"]\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
@@ -38,4 +38,26 @@ teardown() { teardown_tmp_home; }
   [ -n "$late_line" ]
   [ -n "$local_line" ]
   [ "$late_line" -lt "$local_line" ]
+}
+
+# `nekoshell terminal apply` downloads iTerm2's shell integration; nothing
+# sourced it, so the status bar's directory and git components stayed blank.
+@test "zshrc sources the iTerm2 shell integration inside iTerm2" {
+  printf 'iterm2_marker() { echo marker; }\n' > "$HOME/.iterm2_shell_integration.zsh"
+  export TERM_PROGRAM=iTerm.app
+  run zsh -o NO_GLOBAL_RCS -ic 'iterm2_marker'
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "marker"
+}
+@test "zshrc leaves the iTerm2 shell integration alone in another terminal" {
+  printf 'iterm2_marker() { echo marker; }\n' > "$HOME/.iterm2_shell_integration.zsh"
+  run zsh -o NO_GLOBAL_RCS -ic 'if (( $+functions[iterm2_marker] )); then echo LOADED; else echo NOT-LOADED; fi'
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "NOT-LOADED"
+}
+@test "zshrc reads a toml written with unusual spacing around the equals sign" {
+  printf 'root="%s"\nterminal="fake"\ntheme   =   "mocha"\nplugins=["demo"]\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
+  run zsh -o NO_GLOBAL_RCS -ic 'echo "plugins=$_nk_plugins"; alias demo'
+  assert_contains "$output" "plugins=demo"
+  assert_contains "$output" "demo=true"
 }

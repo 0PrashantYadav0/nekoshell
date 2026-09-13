@@ -2,7 +2,16 @@
 # nekoshell: the one command. `nekoshell help` lists what it can do.
 set -euo pipefail
 _self="${BASH_SOURCE[0]}"
-[[ -L "$_self" ]] && _self="$(readlink "$_self")"
+# readlink prints the target as written, which for a relative link is relative
+# to the link's own directory, not to $PWD. Resolving it anywhere else finds
+# the wrong checkout, or none.
+if [[ -L "$_self" ]]; then
+  _target="$(readlink "$_self")"
+  case "$_target" in
+    /*) _self="$_target" ;;
+    *)  _self="$(cd "$(dirname "$_self")" && pwd -P)/$_target" ;;
+  esac
+fi
 NEKOSHELL_ROOT="$(cd "$(dirname "$_self")/.." && pwd -P)"
 export NEKOSHELL_ROOT
 for _lib in log paths backup config link brew terminal plugin theme zsh_migrate; do

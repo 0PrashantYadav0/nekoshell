@@ -149,6 +149,18 @@ terminal_apply() {
   return 0
 }
 
+# terminal_remove: take the dynamic profile back out. iTerm2 drops the two
+# profiles as soon as the file goes, so this is all that is needed for the half
+# that is a file. The global preferences are the other half and cannot be
+# touched from here: iTerm2 rewrites the whole plist from memory when it quits,
+# so a `defaults delete` while it runs is undone a moment later. That one is a
+# human step, printed rather than attempted.
+terminal_remove() {
+  run rm -f "$ITERM_DYNAMIC_DIR/nekoshell.json"
+  log_info "quit iTerm2, then run: defaults delete com.googlecode.iterm2 'Default Bookmark Guid'"
+  return 0
+}
+
 # terminal_background PATH|none [OPACITY]: the profile keys for the next window,
 # and the OSC 1337 escape for this one.
 terminal_background() {

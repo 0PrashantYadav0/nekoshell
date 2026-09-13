@@ -13,9 +13,17 @@ path=("$NEKOSHELL_ROOT/bin" "$HOME/.local/bin" $path)
 _nk_plugins=()
 _nk_theme=""
 if [[ -r "$NEKOSHELL_CONFIG/nekoshell.toml" ]]; then
-  _nk_line=${${(M)${(f)"$(<"$NEKOSHELL_CONFIG/nekoshell.toml")"}:#plugins\ =*}[1]}
+  # An anonymous function so the `[[:space:]]#` closures get extended_glob
+  # without turning the option on in the user's shell. Any spacing around the
+  # `=` matches, so a toml a person edited by hand still parses.
+  () {
+    emulate -L zsh -o extended_glob
+    local -a _nk_lines
+    _nk_lines=(${(f)"$(<"$NEKOSHELL_CONFIG/nekoshell.toml")"})
+    _nk_line=${${(M)_nk_lines:#plugins[[:space:]]#=*}[1]}
+    _nk_theme_line=${${(M)_nk_lines:#theme[[:space:]]#=*}[1]}
+  }
   _nk_plugins=(${(s:,:)${${_nk_line#*\[}%\]*}//[\" ]/})
-  _nk_theme_line=${${(M)${(f)"$(<"$NEKOSHELL_CONFIG/nekoshell.toml")"}:#theme\ =*}[1]}
   # Strip "theme = " and any quotes/spaces, leaving just the value, so this
   # does not depend on the exact spacing toml_set happens to write.
   _nk_theme=${${_nk_theme_line#*=}//[\" ]/}
@@ -55,6 +63,12 @@ for _p in $_nk_plugins; do
 done
 
 (( $+commands[starship] )) && eval "$(starship init zsh)"
+
+# iTerm2's own zsh hooks, which `nekoshell terminal apply` downloads. They are
+# what reports the working directory and the last command's status to the
+# status bar, so without this the bar's directory and git components stay
+# blank. Only inside iTerm2: elsewhere the escapes they emit are noise.
+[[ "${TERM_PROGRAM:-}" == "iTerm.app" && -r "$HOME/.iterm2_shell_integration.zsh" ]] && source "$HOME/.iterm2_shell_integration.zsh"
 
 for _p in $_nk_plugins; do
   [[ -r "$NEKOSHELL_PLUGINS_DIR/$_p/late.zsh" ]] && source "$NEKOSHELL_PLUGINS_DIR/$_p/late.zsh"

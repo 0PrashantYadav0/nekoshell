@@ -55,3 +55,15 @@ assert_matches() {
   echo "actual: $1" >&2
   return 1
 }
+
+# The negative of assert_matches. A negative assertion on log output wants a
+# regex, not a literal: the columns are padded with a run of spaces whose width
+# the caller cannot know, so a literal can never match and never fails.
+assert_not_matches() {
+  if [[ "$1" =~ $2 ]]; then
+    echo "expected NOT to match: $2" >&2
+    echo "actual: $1" >&2
+    return 1
+  fi
+  return 0
+}
