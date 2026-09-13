@@ -37,6 +37,18 @@ teardown() { teardown_tmp_home; }
   [ "$status" -eq 1 ]
   assert_contains "$output" "no terminal adapter named nope"
 }
+# Plugins bring their own formulas; starship, antidote and the font are
+# core's, and only what is missing is asked of Homebrew.
+@test "install puts starship, antidote and the Nerd Font in through Homebrew, only when missing" {
+  run "$NK" install --yes --profile empty
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "\$ brew install starship antidote"
+  assert_contains "$output" "\$ brew install --cask font-jetbrains-mono-nerd-font"
+  FAKE_BREW_INSTALLED="starship antidote" FAKE_BREW_CASKS="font-jetbrains-mono-nerd-font" run "$NK" install --yes --profile empty
+  [ "$status" -eq 0 ]
+  # The doctor's font row still names the cask; what must be gone is the call.
+  assert_not_contains "$output" "\$ brew install"
+}
 @test "install backs up an existing zshrc and migrates its aliases" {
   printf 'alias k=kubectl\nexport FOO=bar\n' > "$HOME/.zshrc"
   "$NK" install --yes --profile minimal >/dev/null
