@@ -5,7 +5,9 @@
 #
 # nekoshell-greet makes the same checks itself — it has to, because a login
 # shell is not the only thing that runs it — but they are cheap here, and this
-# way the common non-interactive case never starts a process at all.
+# way the common non-interactive case never starts a process at all. The SSH
+# opt-in is spelled the same way in both places: exactly 1, so that setting it
+# to 0 means what it looks like it means.
 if (( $+commands[nekoshell-greet] )); then
   [[ -o interactive && -t 1 ]] && {
     [[ -z "${SSH_CONNECTION:-}" || "${NEKOSHELL_GREET_SSH:-}" == 1 ]] && nekoshell-greet
