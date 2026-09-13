@@ -11,7 +11,8 @@ export NEKOSHELL_CONFIG NEKOSHELL_CACHE NEKOSHELL_DATA NEKOSHELL_BACKUP_ROOT
 NEKOSHELL_TOML="$NEKOSHELL_CONFIG/nekoshell.toml"
 export NEKOSHELL_TOML
 
-# nekoshell_root_from PATH: given a path to a file inside bin/ or lib/, print the repo root.
+# nekoshell_root_from PATH: given a path to a file one directory below the
+# checkout root (bin/nekoshell, say), print the repo root.
 nekoshell_root_from() {
   local p="$1"
   (cd "$(dirname "$(dirname "$p")")" && pwd -P)

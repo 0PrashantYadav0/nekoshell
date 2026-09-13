@@ -213,7 +213,7 @@ cmd_install() {
     zshrc_target="$(backup_link_target "$HOME/.zshrc" 2>/dev/null || true)"
     if [[ -n "$zshrc_target" && "$zshrc_target" == "$NEKOSHELL_ROOT"/* ]]; then
       # Already nekoshell's: the old stow-era file was never the user's (its
-      # aliases lived in stow/zsh/.zshrc itself, not something to migrate),
+      # aliases lived in the stowed .zshrc itself, not something to migrate),
       # so it is simply dropped. A link already at the current core/zsh path
       # is left for link_tree's own idempotent check.
       if [[ "$zshrc_target" == "$NEKOSHELL_ROOT/stow"* ]]; then

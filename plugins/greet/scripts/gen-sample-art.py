@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the sample pixel-art PNGs in art/. Original artwork, MIT."""
+"""Generate the sample pixel-art PNGs in plugins/greet/art/. Original artwork, MIT."""
 import struct
 import zlib
 from pathlib import Path

@@ -1,3 +1,2 @@
-truecolor
 modern-cli
 greet
