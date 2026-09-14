@@ -58,8 +58,8 @@ Three rules the shipped adapters keep:
 
 `terminal_detect` is only consulted once an adapter is loaded. Two other places have to recognise the terminal from the environment alone, and both need editing:
 
-- `terminal_detect_env` in `core/lib/terminal.sh` (the function at line 25). It tests `KITTY_WINDOW_ID` and `TERM`, then `GHOSTTY_RESOURCES_DIR`, then `WEZTERM_EXECUTABLE`, then a `case` on `TERM_PROGRAM` for `iTerm.app`, `Apple_Terminal` and `WarpTerminal`.
-- The same tests inline in `core/zsh/.zshrc`, lines 54 to 64, which pick the `terminals/<id>/zsh.zsh` to source. They are written out again there rather than shared, because the zshrc must not start a process to find out which terminal it is in.
+- `terminal_detect_env` in `core/lib/terminal.sh`. It tests `KITTY_WINDOW_ID` and `TERM`, then `GHOSTTY_RESOURCES_DIR`, then `WEZTERM_EXECUTABLE`, then a `case` on `TERM_PROGRAM` for `iTerm.app`, `Apple_Terminal` and `WarpTerminal`.
+- The same tests inline in `core/zsh/.zshrc`, in the block that sets `_nk_term`, which picks the `terminals/<id>/zsh.zsh` to source. They are written out again there rather than shared, because the zshrc must not start a process to find out which terminal it is in.
 
 ## 4. Add a template for the colours
 

@@ -2,7 +2,7 @@
 
 A plugin is a directory under `plugins/` with a `plugin.toml` in it. Everything else is optional, and every optional file is picked up by name: `core/lib/plugin.sh` runs the hooks, the core zshrc sources the zsh files, `bin/nekoshell` finds the commands, and the greet plugin finds the art providers. There is no registry to edit.
 
-`tests/fixtures/plugins/demo` is a working plugin with one of everything. Copy it to start.
+`tests/fixtures/plugins/demo` is a working plugin carrying most of these: `install.sh`, `uninstall.sh`, `doctor.sh`, `plugin.zsh`, `late.zsh`, `antidote.txt`, `bin/`, `cmd/` and both file trees. Copy it to start.
 
 ## The directory
 

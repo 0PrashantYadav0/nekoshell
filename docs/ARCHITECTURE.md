@@ -73,14 +73,14 @@ Everything is under `$HOME`, so a test can redirect `HOME` and touch nothing rea
 | `~/.cache/nekoshell` | created by the dispatcher; plugins use it for their own caches |
 | `~/.local/share/nekoshell/backup/<timestamp>/` | one set per install or `plugin add`, plus `manifest.txt` |
 
-The keys the code reads and writes in `nekoshell.toml`:
+The keys core reads and writes in `nekoshell.toml`. Terminal adapters record a few of their own beside them: ghostty and kitty write `background` and `background_opacity`, and terminal-app writes `terminal_app_previous_default`.
 
 | Key | Written by | Meaning |
 | --- | --- | --- |
 | `root` | `cmd_install` | the checkout; the doctor fails when it does not match |
 | `terminal` | `cmd_install`, `terminal_configure` | the primary terminal, for a shell in none of the configured ones |
 | `terminals` | `cmd_install`, `config_list_add` in `terminal_configure` | every configured terminal |
-| `theme` | `cmd_theme` | `auto` or a flavour |
+| `theme` | `cmd_install`, `cmd_theme` | `auto` or a flavour |
 | `theme_resolved` | `theme_apply` | the flavour the last render actually used |
 | `theme_auto_dark`, `theme_auto_light` | nothing; read by `theme_resolve` | what `auto` maps dark and light to, defaulting to mocha and latte |
 | `profile` | `cmd_install` | the profile that run used |
