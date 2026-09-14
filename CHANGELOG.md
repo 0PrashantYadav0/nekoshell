@@ -34,6 +34,7 @@ A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`,
 - A fifth CI job, `secrets`, runs gitleaks over the whole history.
 - `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue forms for bugs, plugin requests and terminal adapter requests, and a `.gitattributes` that keeps development files out of the release tarball.
 - Tests for the preflight in `install.sh` and `uninstall.sh`, the shape rules in `scripts/lint.sh`, the docs and profiles staying in step with `plugins/`, and one sweep that adds, checks and removes every plugin.
+- `docs/ARCHITECTURE.md`, `docs/plugins/ARCHITECTURE.md`, `docs/contributing/` and `docs/ai/`; a root `CLAUDE.md` and `llms.txt`. The README leads with the Homebrew tap and the one-line installer.
 
 ### Install
 
