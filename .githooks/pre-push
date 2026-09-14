@@ -4,6 +4,11 @@
 # a reviewer's time; the suite takes about two minutes on a laptop. Skip once
 # with `git push --no-verify` when the push is a work-in-progress branch.
 set -euo pipefail
+# A hook run from a linked worktree inherits GIT_DIR (and sometimes
+# GIT_WORK_TREE and GIT_INDEX_FILE) from git. Every git call below, and every
+# test that builds a throwaway repository, would then act on this repository
+# instead of its own. Drop them; the scripts find the repository themselves.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 command -v bats >/dev/null 2>&1 || {
