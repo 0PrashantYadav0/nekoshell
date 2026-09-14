@@ -13,6 +13,8 @@
 #   3. The message ends with a Co-Authored-By trailer when it was written with
 #      an AI assistant (checked only for presence of a well-formed trailer if
 #      the word "Co-Authored-By" appears at all).
+#   4. The message ends with a Signed-off-by trailer (git commit -s): the
+#      Developer Certificate of Origin, https://developercertificate.org.
 # Merge commits, reverts git wrote itself, and fixup!/squash! commits are
 # accepted as they are.
 set -euo pipefail
@@ -49,6 +51,10 @@ check_message() {
     echo "the Co-Authored-By trailer must read: Co-Authored-By: Name <email>" >&2
     rc=1
   fi
+  if ! printf '%s\n' "$msg" | grep -qE '^Signed-off-by: .+ <[^>]+>$'; then
+    echo "missing Signed-off-by trailer; commit with: git commit -s" >&2
+    rc=1
+  fi
   return "$rc"
 }
 
@@ -76,7 +82,7 @@ case "${1:-}" in
     exit "$failed"
     ;;
   -h | --help | "")
-    sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
     exit 0
     ;;
   *)
