@@ -91,3 +91,53 @@ $name/plugin.toml: an art provider must list greet in requires_plugins"
   assert_not_contains "$output" ".githooks/"
   assert_not_contains "$output" ".shellcheckrc"
 }
+
+# The user manual is one page per plugin plus a table that links them, and a
+# profile is a list of plugin names. Each of those goes stale silently.
+@test "every plugin has a docs page and a row in docs/plugins/README.md" {
+  local bad="" dir name
+  for dir in "$REPO_ROOT"/plugins/*/; do
+    name="$(basename "$dir")"
+    [[ -f "$REPO_ROOT/docs/plugins/$name.md" ]] || bad="$bad
+docs/plugins/$name.md: missing"
+    grep -qE "\($name\.md\)" "$REPO_ROOT/docs/plugins/README.md" || bad="$bad
+docs/plugins/README.md: no link to $name.md"
+  done
+  if [[ -n "$bad" ]]; then echo "plugin docs out of step:$bad" >&2; false; fi
+}
+
+@test "every docs page has the five user headings" {
+  local bad="" page h
+  for page in "$REPO_ROOT"/docs/plugins/*.md; do
+    [[ "$(basename "$page")" == "README.md" || "$(basename "$page")" == "ARCHITECTURE.md" ]] && continue
+    for h in "## What you get" "## Using it" "## Files" "## Theme" "## Turning it off"; do
+      grep -qF "$h" "$page" || bad="$bad
+$(basename "$page"): missing '$h'"
+    done
+  done
+  if [[ -n "$bad" ]]; then echo "plugin page headings:$bad" >&2; false; fi
+}
+
+@test "every profile names plugins that exist" {
+  local bad="" profile name
+  for profile in "$REPO_ROOT"/profiles/*.txt; do
+    while IFS= read -r name; do
+      [[ -n "$name" ]] || continue
+      [[ -d "$REPO_ROOT/plugins/$name" ]] || bad="$bad
+$(basename "$profile"): no plugin named $name"
+    done < "$profile"
+  done
+  if [[ -n "$bad" ]]; then echo "profile violations:$bad" >&2; false; fi
+}
+
+# macOS grep (BSD) has no \b; GNU does. grep -w works on both, and "-" is a
+# non-word character on either side so modern-cli still matches with -w.
+@test "the README names every plugin" {
+  local bad="" dir name
+  for dir in "$REPO_ROOT"/plugins/*/; do
+    name="$(basename "$dir")"
+    grep -qw "$name" "$REPO_ROOT/README.md" || bad="$bad
+README.md does not mention $name"
+  done
+  if [[ -n "$bad" ]]; then echo "readme:$bad" >&2; false; fi
+}
