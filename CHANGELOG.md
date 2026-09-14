@@ -33,6 +33,7 @@ A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`,
 - Every commit carries a `Signed-off-by` trailer (`git commit -s`); the commit-msg hook and the `commits` job refuse one without it. `tests/core/commit-msg.bats` covers the checker.
 - A fifth CI job, `secrets`, runs gitleaks over the whole history.
 - `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue forms for bugs, plugin requests and terminal adapter requests, and a `.gitattributes` that keeps development files out of the release tarball.
+- Tests for the preflight in `install.sh` and `uninstall.sh`, the shape rules in `scripts/lint.sh`, the docs and profiles staying in step with `plugins/`, and one sweep that adds, checks and removes every plugin.
 
 ### Fixes
 
