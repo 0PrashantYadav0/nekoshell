@@ -79,6 +79,10 @@ set +a
 # SPRITE_SHARE used to be POKEMON_SHARE, when the Pokémon was the only sprite.
 [[ -n "$SPRITE_SHARE" ]] || SPRITE_SHARE="${POKEMON_SHARE:-70}"
 
+# Seeds RANDOM in this, the main, shell. bash 5.1 and later reseed RANDOM on
+# entry to every subshell, so a value drawn inside pick_image or
+# pick_provider (both run through $(...), a subshell) would never see this
+# seed there; the draw has to happen here and be passed in as an argument.
 [[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
 mkdir -p "$NEKOSHELL_CACHE"
 ff_config="$HOME/.config/fastfetch/config.jsonc"
@@ -116,13 +120,16 @@ image_flag() {
 }
 
 pick_image() {
-  # Print a random image path from the art pack, or nothing.
+  # Print a random image path from the art pack, or nothing. $1 is the random
+  # value, drawn by the caller in the main shell: this runs inside a $(...)
+  # subshell, and bash 5.1+ reseeds RANDOM on every subshell entry, so a draw
+  # made in here would ignore NEKOSHELL_SEED.
   local files=() f
   for f in "$NEKOSHELL_CONFIG"/art/*.png "$NEKOSHELL_CONFIG"/art/*.jpg "$NEKOSHELL_CONFIG"/art/*.jpeg; do
     [[ -f "$f" ]] && files+=("$f")
   done
   [[ ${#files[@]} -eq 0 ]] && return 0
-  printf '%s\n' "${files[$((RANDOM % ${#files[@]}))]}"
+  printf '%s\n' "${files[$(($1 % ${#files[@]}))]}"
 }
 
 # enabled_plugins: the names on the plugins line of nekoshell.toml, in order.
@@ -152,9 +159,11 @@ providers() {
 # "auto" gives every enabled provider the same odds. A list such as
 # "pokemon:70,anime:30" weights them; a name without a weight counts 1, a
 # name that is not an enabled provider is dropped, and a weight of 0 never
-# draws.
+# draws. $1 is the random value, drawn by the caller in the main shell: this
+# runs inside a $(...) subshell, and bash 5.1+ reseeds RANDOM on every
+# subshell entry, so a draw made in here would ignore NEKOSHELL_SEED.
 pick_provider() {
-  local names=() weights=() total=0 entry name w p roll acc i avail
+  local rand="$1" names=() weights=() total=0 entry name w p roll acc i avail
   if [[ -z "$ART" || "$ART" == "auto" ]]; then
     for p in $(providers); do
       names+=("$p")
@@ -176,7 +185,7 @@ pick_provider() {
     done
   fi
   [[ ${#names[@]} -gt 0 ]] || return 0
-  roll=$((RANDOM % total))
+  roll=$((rand % total))
   acc=0
   for i in "${!names[@]}"; do
     acc=$((acc + weights[i]))
@@ -222,11 +231,11 @@ case "$mode" in
   text) ;;
   image)
     flag="$(image_flag)"
-    [[ -n "$flag" ]] && img="$(pick_image)"
+    [[ -n "$flag" ]] && img="$(pick_image "$RANDOM")"
     ;;
   *) if ((roll >= SPRITE_SHARE)); then
     flag="$(image_flag)"
-    [[ -n "$flag" ]] && img="$(pick_image)"
+    [[ -n "$flag" ]] && img="$(pick_image "$RANDOM")"
   fi ;;
 esac
 
@@ -234,7 +243,7 @@ if [[ -n "$img" ]]; then
   show_image "$img" "$flag"
 else
   provider="${NEKOSHELL_GREET_ART:-}"
-  [[ -n "$provider" ]] || provider="$(pick_provider)"
+  [[ -n "$provider" ]] || provider="$(pick_provider "$RANDOM")"
   if [[ -z "$provider" ]] || ! show_sprite "$provider"; then
     show_stats
   fi
