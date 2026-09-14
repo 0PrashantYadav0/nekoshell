@@ -53,6 +53,18 @@ teardown() { teardown_tmp_home; }
   assert_matches "$output" 'ok +flaky +row one'
   assert_not_contains "$output" "flaky extra"
 }
+@test "doctor accepts a recorded root that is a symlink to the current root" {
+  ln -s "$REPO_ROOT" "$HOME/root-link"
+  printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = ["demo"]\n' "$HOME/root-link" > "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" doctor
+  assert_matches "$output" 'ok +config'
+}
+@test "doctor fails when the recorded root no longer exists" {
+  printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = ["demo"]\n' "$HOME/gone" > "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" doctor
+  [ "$status" -eq 1 ]
+  assert_matches "$output" 'fail +config +recorded root .* is gone'
+}
 @test "font glyph check warns rather than fails when the font file cannot be parsed" {
   mkdir -p "$HOME/Library/Fonts"
   printf 'not a real font, just garbage bytes' > "$HOME/Library/Fonts/JetBrainsMonoNerdFont-Regular.ttf"
