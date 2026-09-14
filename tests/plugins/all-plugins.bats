@@ -17,12 +17,20 @@ setup() {
   export PATH="$FAKES_PATH"
   export NEKOSHELL_TERMINALS_DIR="$REPO_ROOT/tests/fixtures/terminals"
   export FAKE_TERM=1 FAKE_BREW_INSTALLED="" FAKE_BREW_CASKS="" FAKE_BREW_TAPS=""
-  # pure's doctor looks for Homebrew's prompt_pure_setup under
-  # $HOMEBREW_PREFIX; pure.bats fakes the same two files for the same reason.
+  # pure's and p10k's doctors look for what Homebrew installed under
+  # $HOMEBREW_PREFIX (then /opt/homebrew, then /usr/local); on a bare CI
+  # runner none of that exists, so both would show a doctor "fail" row that
+  # only ever passed here because this Mac happens to have the real formulas.
+  # pure.bats fakes prompt_pure_setup and async the same way; p10k.bats itself
+  # accepts either ok or fail for this row (it does not fake the path), but
+  # the sweep wants a deterministic pass regardless of the runner, so it fakes
+  # the theme file too.
   export HOMEBREW_PREFIX="$HOME/fakebrew"
   mkdir -p "$HOMEBREW_PREFIX/share/zsh/site-functions"
   printf "PROMPT='pure> '\n" >"$HOMEBREW_PREFIX/share/zsh/site-functions/prompt_pure_setup"
   printf ':\n' >"$HOMEBREW_PREFIX/share/zsh/site-functions/async"
+  mkdir -p "$HOMEBREW_PREFIX/share/powerlevel10k"
+  printf '# fake powerlevel10k theme file\n' >"$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme"
   # anime fetches a real tarball over (faked) curl and checks it against a
   # recorded sha256; anime.bats builds one of its own for the same reason, so
   # the sweep does too, rather than leave anime's install to warn and skip.
