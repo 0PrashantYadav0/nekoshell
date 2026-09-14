@@ -22,7 +22,23 @@ Everything past the shell and the prompt is a plugin. `nekoshell plugin list` sh
 
 ## Install
 
-You need macOS, Homebrew, zsh and git. Then:
+You need macOS, Homebrew, zsh and git. Then one of three ways.
+
+With Homebrew:
+
+```bash
+brew tap 0PrashantYadav0/nekoshell
+brew install nekoshell
+nekoshell install
+```
+
+With one line, which clones `~/.nekoshell` and runs the installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash
+```
+
+From a checkout, which is what contributors do:
 
 ```bash
 git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
@@ -35,10 +51,12 @@ The installer runs seven steps: terminal, profile, confirm, backup and core, the
 The flags, for a run that should not ask:
 
 ```bash
-./install.sh --yes --profile full --terminal all
-./install.sh --check                      # print what would change; change nothing
-./install.sh --profile dev --with spotify --without btop
+nekoshell install --yes --profile full --terminal all
+nekoshell install --check                      # print what would change; change nothing
+nekoshell install --profile dev --with spotify --without btop
 ```
+
+`./install.sh` from a checkout is the same run: it checks macOS and Homebrew, then execs `bin/nekoshell install` with the flags it was given.
 
 `--terminal` takes one id, a comma-separated list, `all` for every terminal that has an adapter, or `installed` for every one whose app is on this Mac. `--yes` skips the confirmation and, with no `--profile`, picks `minimal`. `--check` implies `--dry-run`.
 
@@ -112,9 +130,19 @@ Four Catppuccin flavours: latte, frappe, macchiato and mocha. `nekoshell theme <
 
 Your own shell additions go in `~/.config/nekoshell/zsh/local.zsh`, which is sourced last and never overwritten; the installer moves aliases out of an old `.zshrc` into it. The greeting's mix, shiny odds and image size are in `~/.config/nekoshell/greet.conf`, copied once and then yours.
 
+## Docs
+
+- [docs/INSTALL.md](docs/INSTALL.md): the long install, upgrading, uninstalling, troubleshooting.
+- [docs/plugins/README.md](docs/plugins/README.md): one page per plugin. [How a plugin works](docs/plugins/ARCHITECTURE.md).
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the pieces fit.
+- [docs/contributing/](docs/contributing/README.md): writing a plugin, a terminal adapter, a test.
+- [docs/ci-checks/](docs/ci-checks/README.md): every check a pull request runs, and how a release is cut.
+- [docs/ai/](docs/ai/README.md): installing nekoshell through an AI agent.
+- [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md): the tap, the one-liner, the tarball.
+
 ## For AI agents
 
-[AGENTS.md](AGENTS.md) is the contract: the exact non-interactive install line, how to verify with `nekoshell doctor --json`, how to add a plugin or a terminal adapter, and what never to do. The skill in `skills/nekoshell/` says the same thing in the shape an agent loads.
+[AGENTS.md](AGENTS.md) is the contract: the exact non-interactive install line, how to verify with `nekoshell doctor --json`, how to add a plugin or a terminal adapter, and what never to do. The skill in `skills/nekoshell/` says the same thing in the shape an agent loads. [docs/ai/](docs/ai/README.md) explains the skill, the agent plugins and the rules.
 
 ## Contributing
 
