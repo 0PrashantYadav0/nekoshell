@@ -35,6 +35,11 @@ A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`,
 - `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue forms for bugs, plugin requests and terminal adapter requests, and a `.gitattributes` that keeps development files out of the release tarball.
 - Tests for the preflight in `install.sh` and `uninstall.sh`, the shape rules in `scripts/lint.sh`, the docs and profiles staying in step with `plugins/`, and one sweep that adds, checks and removes every plugin.
 
+### Install
+
+- `bootstrap.sh`: `curl -fsSL .../bootstrap.sh | bash` clones or updates `~/.nekoshell` and runs the installer. `NEKOSHELL_REF` pins a tag.
+- Under a Homebrew install the root is `opt/nekoshell/libexec`, not the versioned Cellar directory, so `brew upgrade` keeps every link valid. `nekoshell doctor` compares the recorded root by directory.
+
 ### Fixes
 
 - A user's own `~/.config/starship.toml` or fastfetch config is backed up before the first render, and uninstall restores every backup set, not only the newest.
