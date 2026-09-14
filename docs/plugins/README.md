@@ -2,6 +2,8 @@
 
 How the plugins work from a user's side, then one page per plugin. Each plugin's own README (`plugins/<name>/README.md`, printed by `nekoshell plugin info NAME`) is the contract: what it installs, which files it touches, what removing it leaves. The pages here are the manual: what you get day to day, the keys, commands and aliases, which files are yours to edit, how each follows the theme, and how to turn it off.
 
+How a plugin is built, hook by hook: [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Managing plugins
 
 ```bash
@@ -15,7 +17,7 @@ nekoshell doctor --plugin spotify     # one plugin's doctor rows only
 
 `add` installs the Homebrew taps, formulas and casks the plugin names, links and copies its files, runs its install hook, renders its themed files for the flavour in force, records the plugin in `~/.config/nekoshell/nekoshell.toml`, regenerates `~/.config/nekoshell/antidote.txt` and prints the plugin's doctor rows. A plugin that needs another (`requires_plugins`) adds it first; one that conflicts with an enabled plugin refuses; one that does not support the terminal you run it from refuses too, and `plugin list` shows it as `unavailable`.
 
-`remove` runs the uninstall hook, removes the symlinks that point into the checkout, drops the plugin from the enabled list and regenerates the antidote bundle. Copied and rendered files stay unless the plugin's page says otherwise. `--purge` uninstalls the Homebrew formulas in the plugin's `requires` list when no other enabled plugin lists them; casks are not uninstalled.
+`remove` runs the uninstall hook, removes the symlinks that point into the checkout, drops the plugin from the enabled list and regenerates the antidote bundle. Copied and rendered files stay unless the plugin's page says otherwise. `--purge` uninstalls the Homebrew formulas in the plugin's `requires` list, and then its casks, whenever no other enabled plugin lists them.
 
 A new shell picks up the change. Plugins load in the order they were enabled.
 
