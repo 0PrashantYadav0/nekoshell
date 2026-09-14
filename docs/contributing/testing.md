@@ -63,7 +63,7 @@ The fakes that do more than echo their arguments:
 | `fastfetch`, `nvim`, `tmux`, `aerospace`, `pokemon-colorscripts` | enough for a doctor row and for `command -v` |
 | `btop`, `delta`, `eza`, `fd`, `lazygit`, `open`, `rg`, `spotify`, `starship` | echo their arguments |
 
-`tests/fakes-ai` and `tests/fakes-nofzf` are small PATH directories built from symlinks into `tests/fakes`, for tests that need one tool present or absent: the AI plugin tests use the first, the spotify search tests the second.
+`tests/fakes-ai` and `tests/fakes-nofzf` are small PATH directories of their own, for tests that need one tool present or absent. `fakes-nofzf` is symlinks to everything in `tests/fakes` except `fzf`, which is how the spotify search tests reach the no-fzf menu. `fakes-ai` holds only what the AI plugin tests need: its own `claude` and `opencode` fakes, plus symlinks to `brew`, `defaults` and `sw_vers`.
 
 ## tests/fixtures
 
