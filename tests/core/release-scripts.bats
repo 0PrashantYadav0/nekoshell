@@ -51,8 +51,13 @@ teardown() { teardown_tmp_home; }
 
 # A throwaway repo with the real scripts and a CHANGELOG at 0.2.0 unreleased.
 make_repo() {
-  R="$HOME/repo"; mkdir -p "$R"; cd "$R"
+  R="$HOME/repo"; mkdir -p "$R"
+  # Fatal, not best effort: every git command below writes config, commits and
+  # tags, so a cd or an init that quietly failed would aim all of them at the
+  # real checkout instead.
+  cd "$R" || return 1
   git init -q -b main . 2>/dev/null || { git init -q .; git checkout -q -b main; }
+  [ "$(git rev-parse --show-toplevel)" = "$R" ] || return 1
   git config user.name "A Person"; git config user.email "a@example.com"
   cp -R "$REPO_ROOT/scripts" "$R/scripts"
   printf '0.2.0\n' > VERSION
