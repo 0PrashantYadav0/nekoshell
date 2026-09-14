@@ -52,3 +52,5 @@ Every pull request runs five jobs in `.github/workflows/ci.yml`, and branch prot
 ## Adding a plugin or a terminal adapter
 
 [AGENTS.md](AGENTS.md) has the contract for both: the nine `plugin.toml` keys, the hook files and README sections a plugin needs, and the ten functions and README sections an adapter needs. `tests/core/repo.bats` checks them for every plugin and adapter, so a missing key, function or section fails the build.
+
+Longer walkthroughs: [docs/contributing/](docs/contributing/README.md). What each CI job runs and how to reproduce it: [docs/ci-checks/](docs/ci-checks/README.md).
