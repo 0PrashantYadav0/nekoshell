@@ -58,3 +58,30 @@ check() { printf '%b' "$1" > "$MSG"; run "$C" "$MSG"; }
   check 'feat: add a thing\n\nSigned-off-by: A Person <a@example.com>\n# Please enter the commit message\n# Changes to be committed:\n'
   [ "$status" -eq 0 ]
 }
+@test "a message without a Signed-off-by trailer is refused with the -s hint" {
+  check 'feat: add a thing\n'
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "missing Signed-off-by trailer; commit with: git commit -s"
+}
+@test "a malformed Signed-off-by trailer is refused" {
+  check 'feat: add a thing\n\nSigned-off-by: nobody\n'
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "missing Signed-off-by trailer"
+}
+@test "--range refuses an unsigned commit and names it" {
+  local repo="$HOME/repo"
+  mkdir -p "$repo" && cd "$repo"
+  git init -q -b main . 2>/dev/null || { git init -q .; git checkout -q -b main; }
+  git config user.name "A Person"; git config user.email "a@example.com"
+  echo a > a; git add a; git commit -q -s -m "feat: first"
+  base="$(git rev-parse HEAD)"
+  echo b > b; git add b; git commit -q -s -m "feat: second"
+  echo c > c; git add c; git commit -q -m "feat: third, unsigned"
+  run "$C" --range "$base..HEAD"
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "missing Signed-off-by"
+  assert_contains "$output" "feat: third, unsigned"
+  git reset -q --hard HEAD~1
+  run "$C" --range "$base..HEAD"
+  [ "$status" -eq 0 ]
+}
