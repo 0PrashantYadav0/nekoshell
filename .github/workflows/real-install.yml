@@ -1,0 +1,38 @@
+name: real-install
+
+# The only check that runs Homebrew for real. Once a week and on demand, not
+# on pull requests: it installs the minimal profile into a throwaway HOME on a
+# macOS runner, so a formula renamed upstream or a font cask that moved is
+# found here before a user finds it. ci.yml's install job is a dry run with
+# fakes and cannot see that.
+#
+# Preflight is left on: it wants Darwin, brew, zsh and git, and a macOS runner
+# has all four. Terminal.app ships with macOS, so --terminal terminal-app
+# picks an adapter whose application is really there.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: install (minimal, terminal-app)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the minimal profile into a throwaway HOME
+        run: |
+          export HOME
+          HOME="$(mktemp -d)"
+          ./install.sh --yes --profile minimal --terminal terminal-app
+      - name: Doctor
+        run: |
+          export HOME
+          HOME="$(mktemp -d)"
+          ./install.sh --yes --profile minimal --terminal terminal-app >/dev/null
+          ./bin/nekoshell doctor
+          ./bin/nekoshell plugin add fzf
+          ./bin/nekoshell doctor --plugin fzf
