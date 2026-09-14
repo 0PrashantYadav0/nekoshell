@@ -18,6 +18,16 @@ while [[ -L "$_self" && "$_hops" -lt 16 ]]; do
   _hops=$((_hops + 1))
 done
 NEKOSHELL_ROOT="$(cd "$(dirname "$_self")/.." && pwd -P)"
+# Under Homebrew the real file lives in a versioned Cellar directory that
+# `brew upgrade` deletes. Everything install records or links into $HOME
+# derives from this root, so prefer the opt link Homebrew keeps pointing at the
+# current version; a checkout anywhere else does not match and keeps its path.
+case "$NEKOSHELL_ROOT" in
+  */Cellar/nekoshell/*/libexec)
+    _prefix="${NEKOSHELL_ROOT%/Cellar/nekoshell/*}"
+    [[ -d "$_prefix/opt/nekoshell/libexec" ]] && NEKOSHELL_ROOT="$_prefix/opt/nekoshell/libexec"
+    ;;
+esac
 export NEKOSHELL_ROOT
 for _lib in log paths backup config link brew terminal plugin theme zsh_migrate; do
   # shellcheck source=/dev/null
