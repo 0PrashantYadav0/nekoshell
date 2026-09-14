@@ -1,0 +1,118 @@
+name: release
+
+# One tag, then hands off. A push of vX.Y.Z (what scripts/release.sh creates)
+# verifies the tag against VERSION and the CHANGELOG, runs every check, builds
+# the tarball and its checksum, publishes the GitHub Release with the
+# CHANGELOG section as its notes, and rewrites the formula in the Homebrew tap.
+# A failure in verify stops before anything is published: delete the tag, fix,
+# tag again.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        name: The tag matches VERSION and the CHANGELOG section is dated
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [ "$version" != "$(cat VERSION)" ]; then
+            echo "tag $GITHUB_REF_NAME does not match VERSION ($(cat VERSION)); run scripts/release.sh" >&2
+            exit 1
+          fi
+          if ! grep -qE "^## $version - [0-9]{4}-[0-9]{2}-[0-9]{2}$" CHANGELOG.md; then
+            echo "CHANGELOG.md has no dated '## $version - YYYY-MM-DD' heading; run scripts/release.sh" >&2
+            exit 1
+          fi
+          scripts/changelog-section.sh "$version" >/dev/null
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+
+  check:
+    name: check
+    needs: verify
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the linters and bats
+        run: brew install bats-core shellcheck shfmt actionlint yamllint markdownlint-cli2
+      - name: Lint
+        run: NEKOSHELL_LINT_STRICT=1 scripts/lint.sh
+      - name: Tests
+        run: bats -r tests
+
+  package:
+    name: package
+    needs: [verify, check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tarball and checksum
+        run: scripts/package.sh --ref "$GITHUB_REF_NAME" --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    name: release
+    needs: [verify, package]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          scripts/changelog-section.sh "$VERSION" >notes.md
+          gh release create "v$VERSION" \
+            --title "nekoshell $VERSION" \
+            --notes-file notes.md \
+            "dist/nekoshell-$VERSION.tar.gz" dist/SHA256SUMS
+
+  tap:
+    name: tap
+    needs: [verify, release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/checkout@v7
+        with:
+          repository: 0PrashantYadav0/homebrew-nekoshell
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+      - name: Render the formula and push it to the tap
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          sha="$(awk '{print $1}' dist/SHA256SUMS)"
+          mkdir -p tap/Formula
+          scripts/render-formula.sh --version "$VERSION" --sha256 "$sha" >tap/Formula/nekoshell.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/nekoshell.rb
+          if git diff --cached --quiet; then
+            echo "formula already at $VERSION"
+            exit 0
+          fi
+          git commit -m "nekoshell $VERSION"
+          git push origin HEAD:main
