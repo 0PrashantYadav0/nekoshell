@@ -31,8 +31,8 @@ skip into a failure, so CI can never pass because a tool was missing.
 
 ## When it runs
 
-Every push to `main` and every pull request. Required by the branch ruleset on
-`main`.
+Every push to `main` and every pull request. Will be required by the branch
+ruleset on `main`.
 
 ## Run it locally
 
