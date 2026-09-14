@@ -14,8 +14,8 @@ job.
 
 ## When it runs
 
-Every push to `main` and every pull request. Required by the branch ruleset on
-`main`.
+Every push to `main` and every pull request. Will be required by the branch
+ruleset on `main`.
 
 The runner is macOS because the code is: the adapters call `defaults`, `open`
 and `sips`, the installer refuses anything but Darwin, and a Linux runner would

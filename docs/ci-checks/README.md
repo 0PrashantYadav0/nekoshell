@@ -21,13 +21,15 @@ on a `v*` tag, and `.github/workflows/real-install.yml` on a schedule.
 
 ## The required checks and the branch ruleset
 
-The branch ruleset on `main` requires the nine check names `ci.yml` produces:
-`lint`, `test`, `install (iterm2)`, `install (kitty)`, `install (ghostty)`,
-`install (warp)`, `install (terminal-app)`, `commits` and `secrets`. The five
-`install` names come from the matrix, so a new terminal adapter adds a name that
-has to be added to the ruleset too. `commits` only runs on a pull request, which
-is why it is safe to require it: a push straight to `main` never waits for a job
-that does not start. Nothing in `release.yml` or `real-install.yml` is required,
+The branch ruleset does not exist yet. It is created on `main` once these check
+names are final, in the audit that precedes the first release, and it will
+require the nine names `ci.yml` produces: `lint`, `test`, `install (iterm2)`,
+`install (kitty)`, `install (ghostty)`, `install (warp)`,
+`install (terminal-app)`, `commits` and `secrets`. The five `install` names come
+from the matrix, so a new terminal adapter adds a name that will have to be
+added to the ruleset too. `commits` only runs on a pull request, which is why it
+is safe to require it: a push straight to `main` never waits for a job that does
+not start. Nothing in `release.yml` or `real-install.yml` will be required,
 because neither runs on a pull request at all.
 
 ## The same checks, earlier

@@ -31,8 +31,8 @@ regex, and say in a comment why the match is safe.
 
 ## When it runs
 
-Every push to `main` and every pull request. Required by the branch ruleset on
-`main`.
+Every push to `main` and every pull request. Will be required by the branch
+ruleset on `main`.
 
 ## Run it locally
 
