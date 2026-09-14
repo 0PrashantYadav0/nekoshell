@@ -79,11 +79,22 @@ set +a
 # SPRITE_SHARE used to be POKEMON_SHARE, when the Pokémon was the only sprite.
 [[ -n "$SPRITE_SHARE" ]] || SPRITE_SHARE="${POKEMON_SHARE:-70}"
 
-# Seeds RANDOM in this, the main, shell. bash 5.1 and later reseed RANDOM on
-# entry to every subshell, so a value drawn inside pick_image or
-# pick_provider (both run through $(...), a subshell) would never see this
-# seed there; the draw has to happen here and be passed in as an argument.
-[[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
+# A seeded run has to draw the same numbers on every bash: bash's own RANDOM
+# generator changed between versions, so a test seeded through it passes on
+# one runner and fails on another. When NEKOSHELL_SEED is set the draws come
+# from this generator instead, a plain LCG in shell arithmetic; otherwise
+# from RANDOM as before. draw sets DRAW; it runs in the main shell so the
+# state advances, which a $(...) call could not do.
+_draw_state="${NEKOSHELL_SEED:-}"
+[[ "$_draw_state" =~ ^[0-9]+$ ]] || _draw_state=""
+draw() {
+  if [[ -n "$_draw_state" ]]; then
+    _draw_state=$(((_draw_state * 1103515245 + 12345) % 2147483648))
+    DRAW=$((_draw_state >> 16))
+  else
+    DRAW=$RANDOM
+  fi
+}
 mkdir -p "$NEKOSHELL_CACHE"
 ff_config="$HOME/.config/fastfetch/config.jsonc"
 
@@ -221,8 +232,11 @@ show_image() {
 }
 
 # The roll is taken whatever the mode, so a forced greeting and an automatic
-# one draw the same sprite from the same seed.
-roll=$((RANDOM % 100))
+# one draw the same sprite from the same seed. draw runs here, in the main
+# shell, ahead of the image-or-provider draw below: a seeded run must draw
+# in the same order every time.
+draw
+roll=$((DRAW % 100))
 img=""
 flag=""
 mode="${NEKOSHELL_GREET_MODE:-auto}"
@@ -231,11 +245,17 @@ case "$mode" in
   text) ;;
   image)
     flag="$(image_flag)"
-    [[ -n "$flag" ]] && img="$(pick_image "$RANDOM")"
+    if [[ -n "$flag" ]]; then
+      draw
+      img="$(pick_image "$DRAW")"
+    fi
     ;;
   *) if ((roll >= SPRITE_SHARE)); then
     flag="$(image_flag)"
-    [[ -n "$flag" ]] && img="$(pick_image "$RANDOM")"
+    if [[ -n "$flag" ]]; then
+      draw
+      img="$(pick_image "$DRAW")"
+    fi
   fi ;;
 esac
 
@@ -243,7 +263,10 @@ if [[ -n "$img" ]]; then
   show_image "$img" "$flag"
 else
   provider="${NEKOSHELL_GREET_ART:-}"
-  [[ -n "$provider" ]] || provider="$(pick_provider "$RANDOM")"
+  if [[ -z "$provider" ]]; then
+    draw
+    provider="$(pick_provider "$DRAW")"
+  fi
   if [[ -z "$provider" ]] || ! show_sprite "$provider"; then
     show_stats
   fi
