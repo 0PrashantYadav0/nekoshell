@@ -22,6 +22,9 @@ check: lint test ## everything CI runs, in CI's order
 release: ## cut a release: make release VERSION=X.Y.Z
 	@scripts/release.sh $(VERSION)
 
+package: ## the release tarball and SHA256SUMS into dist/
+	@scripts/package.sh
+
 hooks: ## install the git hooks in .githooks (pre-commit lint, commit-msg, pre-push tests)
 	@git config core.hooksPath .githooks
 	@chmod +x .githooks/*
