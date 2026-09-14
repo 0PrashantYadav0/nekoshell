@@ -42,8 +42,22 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
+      # The four pinned linters are the ones ci.yml's lint job pins, in their
+      # macOS arm64 builds: these versions must match ci.yml exactly, or a tag
+      # push can fail on a finding a contributor and the pull request checks
+      # never saw. bats and yamllint come from Homebrew, the way ci.yml takes
+      # yamllint from apt unpinned.
       - name: Install the linters and bats
-        run: brew install bats-core shellcheck shfmt actionlint yamllint markdownlint-cli2
+        run: |
+          brew install bats-core yamllint
+          curl -sSfL "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.darwin.aarch64.tar.xz" | tar -xJ
+          sudo mv shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
+          curl -sSfL "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_darwin_arm64" -o shfmt
+          chmod +x shfmt
+          sudo mv shfmt /usr/local/bin/shfmt
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.7 "$RUNNER_TEMP"
+          sudo mv "$RUNNER_TEMP/actionlint" /usr/local/bin/actionlint
+          npm install -g markdownlint-cli2@0.17.2
       - name: Lint
         run: NEKOSHELL_LINT_STRICT=1 scripts/lint.sh
       - name: Tests
