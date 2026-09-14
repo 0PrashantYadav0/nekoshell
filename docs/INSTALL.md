@@ -12,6 +12,20 @@ Install the terminal you want before running the installer, so it can be detecte
 
 ## 2. Clone and run the installer
 
+### The one-line installer
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash
+```
+
+It clones `~/.nekoshell` (or updates it), then runs `install.sh` with any flags you pass after `bash -s --`, so the non-interactive form is:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash -s -- --yes --profile full --terminal installed
+```
+
+`NEKOSHELL_REF=v0.2.0` in front of the line pins a release instead of `main`; `NEKOSHELL_DIR` moves the checkout.
+
 ```bash
 git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
 cd ~/.nekoshell
@@ -106,6 +120,10 @@ cd ~/.nekoshell
 git pull --ff-only
 ./install.sh
 ```
+
+### With Homebrew
+
+`brew upgrade nekoshell`, then open a new shell. nekoshell records `$(brew --prefix)/opt/nekoshell/libexec` as its root rather than the versioned Cellar directory, so the links in your home keep resolving after the upgrade. `nekoshell doctor` confirms it with the `config` row.
 
 A second install asks the terminal and profile again (pass `--terminal` and `--profile`, or `--yes`, to skip that), keeps the recorded theme and every plugin already enabled, and re-renders everything from the new checkout. Configs that were copied into your home (Neovim, tmux, greet.conf, AeroSpace) are yours and are not touched; the shipped versions stay readable under `plugins/<name>/files/copy/`.
 
