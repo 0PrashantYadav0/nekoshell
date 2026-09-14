@@ -83,7 +83,7 @@ Write `terminals/<id>/README.md` with `## What it configures`, `## Panel`, `## I
 
 `make tools` installs the linters and bats; `make hooks` installs the git hooks (pre-commit lints the staged files, commit-msg checks the message, pre-push runs the suite). `make check` is what CI runs: `scripts/lint.sh` (shellcheck, shfmt with `-i 2 -ci -bn`, the repository shape rules, actionlint, yamllint, markdownlint) and `bats -r tests`. `scripts/lint.sh --fix` rewrites the shell files with shfmt.
 
-Commit messages follow `scripts/check-commit-msg.sh`: a conventional subject `type(scope): description` with the type one of feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, a lower-case description, no trailing full stop, 72 characters at most, a blank second line, and a trailer of the form `Co-Authored-By: Name <email>` when an AI assistant wrote it. Pull requests run four required jobs: lint, test, install (once per terminal adapter) and commits.
+Commit messages follow `scripts/check-commit-msg.sh`: a conventional subject `type(scope): description` with the type one of feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, a lower-case description, no trailing full stop, 72 characters at most, a blank second line, a `Signed-off-by: Name <email>` trailer (`git commit -s`), and a trailer of the form `Co-Authored-By: Name <email>` when an AI assistant wrote it. Pull requests run five required jobs: lint, test, install (once per terminal adapter), commits and secrets.
 
 ### Never
 

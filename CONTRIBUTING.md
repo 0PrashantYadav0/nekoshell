@@ -29,12 +29,13 @@ Tests never touch your real `$HOME`: `tests/helpers.bash` gives every test a thr
 - The description starts lower-case and has no trailing full stop. The subject is 72 characters at most.
 - The second line is blank; the body, when there is one, comes after it.
 - A message written with an AI assistant ends with a trailer of exactly this form: `Co-Authored-By: Name <email>`.
+- Every message ends with `Signed-off-by: Name <email>`, which `git commit -s` adds from your git config. By signing off you certify the [Developer Certificate of Origin 1.1](https://developercertificate.org): you wrote the change or have the right to submit it under the project's licence.
 
 Merge commits, git's own reverts and `fixup!`/`squash!` commits are accepted as they are.
 
 ## Pull request checks
 
-Every pull request runs four jobs in `.github/workflows/ci.yml`, and branch protection on `main` requires all four: `lint` (`scripts/lint.sh` on Linux), `test` (`bats -r tests` on macOS), `install` (`nekoshell install --check --profile full` against a throwaway `HOME`, once per terminal adapter) and `commits` (every commit message of the pull request). The pull request template asks for `make check` output, the terminals the change was tried in, a test for new behaviour, updated docs and a changelog line.
+Every pull request runs five jobs in `.github/workflows/ci.yml`, and branch protection on `main` requires all five: `lint` (`scripts/lint.sh` on Linux), `test` (`bats -r tests` on macOS), `install` (`nekoshell install --check --profile full` against a throwaway `HOME`, once per terminal adapter), `commits` (every commit message of the pull request, including its sign-off) and `secrets` (gitleaks over the whole history). The pull request template asks for `make check` output, the terminals the change was tried in, a test for new behaviour, updated docs and a changelog line.
 
 ## Code rules
 
