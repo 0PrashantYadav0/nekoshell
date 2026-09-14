@@ -2,7 +2,7 @@
 
 ## What you get
 
-`ls` is eza with icons and directories first, `cat` is bat with syntax highlighting and no pager, `cd` learns your habits through zoxide, and `git diff`, `git log` and `git show` are paged through delta with line numbers. `fd` and `rg` (ripgrep) are installed alongside and not aliased; the fzf plugin walks files with `fd` when it is present.
+`ls` is eza with icons and directories first, `cat` is bat with syntax highlighting and no pager, `z` jumps to a directory zoxide has learned, and `git diff`, `git log` and `git show` are paged through delta with line numbers. `fd` and `rg` (ripgrep) are installed alongside and not aliased; the fzf plugin walks files with `fd` when it is present.
 
 Man pages open through bat as well. That comes from the core `env.zsh`, which sets `MANPAGER` whenever `bat` is on the path.
 
