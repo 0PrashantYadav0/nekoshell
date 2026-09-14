@@ -76,7 +76,7 @@ export NEKOSHELL_TERMINALS_DIR="$REPO_ROOT/tests/fixtures/terminals"
 
 | Fixture plugin | What it is for |
 | --- | --- |
-| `demo` | one of everything: every hook, both file trees, `bin/`, `cmd/`, `antidote.txt`. Copy it to start a real plugin |
+| `demo` | `install.sh`, `uninstall.sh` and `doctor.sh`, both file trees, `plugin.zsh`, `late.zsh`, `antidote.txt`, `bin/` and `cmd/`. Copy it to start a real plugin |
 | `broken` | its install hook always fails, so a failed add can be tested |
 | `clash` | `conflicts = ["demo"]` |
 | `needs-demo` | `requires_plugins = ["demo"]` |

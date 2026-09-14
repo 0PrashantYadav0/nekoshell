@@ -127,7 +127,7 @@ Add a row to the table at the end of [docs/plugins/README.md](../plugins/README.
 
 ## 6. Add a fake for every tool the hooks call
 
-Tests never run a real tool. A fake is a short executable in `tests/fakes/` that answers what the code asks and reads `FAKE_*` variables for anything a test needs to vary. `tests/fakes/fzf` is the whole idea in fifteen lines:
+Tests never run a real tool. A fake is a short executable in `tests/fakes/` that answers what the code asks and reads `FAKE_*` variables for anything a test needs to vary. `tests/fakes/fzf` is the whole idea:
 
 ```bash
 #!/usr/bin/env bash
@@ -148,7 +148,7 @@ cat >/dev/null
 echo "fzf $*" >&2
 ```
 
-A fake that only has to exist is one line: `tests/fakes/btop` is `echo "btop $*"`. Make it executable; `scripts/lint.sh` checks that every file under `tests/fakes` is.
+A fake that only has to exist is a shebang and one line: `tests/fakes/btop` is `echo "btop $*"`. Make it executable; `scripts/lint.sh` checks that every file under `tests/fakes` is.
 
 ## 7. Write the bats file
 
