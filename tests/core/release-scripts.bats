@@ -101,3 +101,30 @@ make_repo() {
   run scripts/release.sh 0.4.0; [ "$status" -eq 1 ]; assert_contains "$output" "no '## 0.4.0 (unreleased)' section"
   run scripts/release.sh 1.2; [ "$status" -eq 2 ]
 }
+
+@test "package.sh writes the tarball and its checksum for a ref" {
+  make_repo
+  mkdir -p bin .github; printf '#!/usr/bin/env bash\necho hi\n' > bin/nekoshell; chmod +x bin/nekoshell
+  echo x > .github/thing
+  printf '.github export-ignore\n' > .gitattributes
+  git add -A; git commit -q -s -m "chore: files"
+  git tag v0.2.0
+  run scripts/package.sh --out "$HOME/dist"
+  [ "$status" -eq 0 ]
+  [ -f "$HOME/dist/nekoshell-0.2.0.tar.gz" ]
+  run tar -tzf "$HOME/dist/nekoshell-0.2.0.tar.gz"
+  assert_contains "$output" "nekoshell-0.2.0/bin/nekoshell"
+  assert_contains "$output" "nekoshell-0.2.0/VERSION"
+  assert_not_contains "$output" ".github"
+  sum="$(shasum -a 256 "$HOME/dist/nekoshell-0.2.0.tar.gz" | awk '{print $1}')"
+  [ "$(cat "$HOME/dist/SHA256SUMS")" = "$sum  nekoshell-0.2.0.tar.gz" ]
+}
+@test "package.sh --ref HEAD works before a tag exists and refuses a missing ref" {
+  make_repo
+  run scripts/package.sh --ref HEAD --out "$HOME/dist"
+  [ "$status" -eq 0 ]
+  [ -f "$HOME/dist/nekoshell-0.2.0.tar.gz" ]
+  run scripts/package.sh --ref v9.9.9 --out "$HOME/dist"
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "no such ref"
+}
