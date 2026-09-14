@@ -31,9 +31,9 @@ annotated with `nekoshell X.Y.Z`. It pushes nothing; the second command does
 that. `scripts/release.sh 0.2.0 --dry-run` prints what it would do and changes
 nothing.
 
-The branch ruleset on `main` requires pull requests, and this pushes a release
-commit straight to `main`; the repository admin has a bypass on that ruleset, so
-the push works for the owner and for nobody else.
+The branch ruleset on `main` will require pull requests, and this pushes a
+release commit straight to `main`; the repository admin has a bypass on that
+ruleset, so the push works for the owner and for nobody else.
 
 ## Watch it
 
@@ -98,8 +98,10 @@ nekoshell version
 
 - `tap` failed and everything before it passed. This is the common one, and it
   does not need a new release. The GitHub Release is correct; only the formula
-  is stale. Fix the token, then re-run the `tap` job from the Actions page. If
-  that is not possible, render and commit the formula by hand:
+  is stale. Fix the token, then use "Re-run failed jobs" on the Actions page,
+  never "Re-run all jobs": a full re-run starts `release` again and
+  `gh release create` fails on a Release that already exists. If re-running is
+  not possible, render and commit the formula by hand:
 
   ```bash
   gh release download v0.2.0 --dir /tmp/rel --pattern SHA256SUMS

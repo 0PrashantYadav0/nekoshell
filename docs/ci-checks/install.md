@@ -21,15 +21,18 @@ HOME="$(mktemp -d)" ./bin/nekoshell terminal list
 `--check` resolves everything and writes nothing: the profile's plugin list, the
 dependency and conflict graph, the terminal adapter and the files it would link
 or copy. `NEKOSHELL_SKIP_PREFLIGHT=1` drops the Darwin, Homebrew, zsh and git
-probes, which a runner cannot all satisfy in the shape the installer expects.
-The `HOME` in front of each command is a fresh empty directory, so nothing the
-job does can reach the runner's own dotfiles.
+probes. A macOS runner passes all four, which is why
+[real-install.md](real-install.md) leaves preflight on; here it is belt and
+braces, because `--check` mutates nothing and has no business asking whether
+Homebrew is installed before it resolves a plugin list. The `HOME` in front of
+each command is a fresh empty directory, so nothing the job does can reach the
+runner's own dotfiles.
 
 ## When it runs
 
 Every push to `main` and every pull request, on `macos-latest`. All five names
-(`install (iterm2)` through `install (terminal-app)`) are required by the branch
-ruleset on `main`.
+(`install (iterm2)` through `install (terminal-app)`) will be required by the
+branch ruleset on `main`.
 
 ## Run it locally
 

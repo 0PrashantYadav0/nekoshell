@@ -57,11 +57,13 @@ Everything except the two publishing steps:
 ```bash
 scripts/changelog-section.sh 0.2.0          # what verify checks and release uses as notes
 make check                                  # what check runs
-make package                                # dist/nekoshell-0.2.0.tar.gz and dist/SHA256SUMS
+scripts/package.sh --ref HEAD --out dist    # dist/nekoshell-0.2.0.tar.gz and dist/SHA256SUMS
 scripts/render-formula.sh --version 0.2.0 \
   --sha256 "$(awk '{print $1}' dist/SHA256SUMS)"
 ```
 
+`--ref HEAD` is the part that matters before a tag exists: `make package`
+packages `v$(cat VERSION)`, so it only works once `vX.Y.Z` is there.
 `scripts/release.sh 0.2.0 --dry-run` prints what the tagging half would do
 without touching anything.
 
@@ -89,9 +91,11 @@ Which job failed tells you where you are:
   `scripts/release.sh` again. Never move a tag that a Release already points at.
 - A half-published Release: delete the Release and the tag
   (`gh release delete v0.2.0 --yes --cleanup-tag`), fix, tag again.
-- `tap` failed alone: do not redo the release. Re-run that one job from the
-  Actions page once the token is fixed, or render the formula locally and
-  commit it to the tap by hand.
+- `tap` failed alone: do not redo the release. Once the token is fixed, use
+  "Re-run failed jobs" on the Actions page, never "Re-run all jobs": a full
+  re-run starts `release` again and `gh release create` fails on a Release
+  that already exists. Or render the formula locally and commit it to the tap
+  by hand.
 - `HOMEBREW_TAP_TOKEN` missing or expired: `tap`'s checkout fails with a 404 on
   a repository that does exist, because a token without access cannot tell the
   difference. Reissue the token and set it again under the repository's secrets.

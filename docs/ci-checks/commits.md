@@ -33,8 +33,9 @@ Messages git writes itself are accepted as they are: `Merge ...`,
 ## When it runs
 
 On pull requests only (`if: github.event_name == 'pull_request'`); there is no
-range to check on a direct push. Required by the branch ruleset on `main`, which
-is safe precisely because every change to `main` arrives through a pull request.
+range to check on a direct push. Will be required by the branch ruleset on
+`main`, which is safe precisely because every change to `main` arrives through a
+pull request.
 
 ## Run it locally
 
