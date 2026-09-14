@@ -1,0 +1,24 @@
+name: Plugin request
+description: A tool you want nekoshell to install and theme
+labels: [plugin]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: The tool
+      description: Its name and Homebrew formula or cask
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What the plugin would do
+      description: Files it would put in your home, keys it would bind, what changes with the theme
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contributing
+      options:
+        - label: I would like to write it (docs/contributing/writing-a-plugin.md explains how)
