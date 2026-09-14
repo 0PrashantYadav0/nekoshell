@@ -117,7 +117,7 @@ while IFS= read -r f; do
     echo "$f: not executable" >&2
     shape_failed=1
   }
-done < <(git ls-files 'bin/*' 'plugins/*/bin/*' 'tests/fakes/*' 'install.sh' 'uninstall.sh' 'scripts/*')
+done < <(git ls-files 'bin/*' 'plugins/*/bin/*' 'tests/fakes/*' 'install.sh' 'uninstall.sh' 'scripts/*' 'bootstrap.sh')
 # Guarded: bash 3.2 treats an empty array as unbound under `set -u`, and a
 # commit of only docs has no shell files at all.
 if [[ ${#shell_files[@]} -gt 0 ]]; then
