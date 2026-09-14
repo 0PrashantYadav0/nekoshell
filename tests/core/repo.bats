@@ -77,3 +77,17 @@ $name/plugin.toml: an art provider must list greet in requires_plugins"
   done
   if [[ -n "$bad" ]]; then echo "art provider contract violations:$bad" >&2; false; fi
 }
+
+# The release tarball is `git archive` of the tag. Development-only files stay
+# out of it through export-ignore, and the tree that ships must still run.
+@test "git archive of HEAD ships the runtime and not the development files" {
+  cd "$REPO_ROOT"
+  run bash -c "git archive --worktree-attributes --format=tar HEAD | tar -t"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "bin/nekoshell"
+  assert_contains "$output" "VERSION"
+  assert_contains "$output" "tests/helpers.bash"
+  assert_not_contains "$output" ".github/"
+  assert_not_contains "$output" ".githooks/"
+  assert_not_contains "$output" ".shellcheckrc"
+}

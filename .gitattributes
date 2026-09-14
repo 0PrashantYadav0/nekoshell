@@ -1,0 +1,12 @@
+# Line endings: LF everywhere (scripts/lint.sh refuses CRLF anyway).
+* text=auto eol=lf
+
+# Out of the release tarball (git archive): development-only files.
+.github export-ignore
+.githooks export-ignore
+.planning export-ignore
+.editorconfig export-ignore
+.markdownlint-cli2.yaml export-ignore
+.shellcheckrc export-ignore
+.yamllint.yaml export-ignore
+.gitattributes export-ignore
