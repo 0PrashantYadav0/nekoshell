@@ -128,3 +128,27 @@ make_repo() {
   [ "$status" -eq 1 ]
   assert_contains "$output" "no such ref"
 }
+
+@test "render-formula.sh fills url and sha256 and leaves no placeholder" {
+  local sha; sha="$(printf 'a%.0s' $(seq 1 64))"
+  run "$S/render-formula.sh" --version 0.2.0 --sha256 "$sha"
+  [ "$status" -eq 0 ]
+  assert_contains "$output" 'class Nekoshell < Formula'
+  assert_contains "$output" 'url "https://github.com/0PrashantYadav0/nekoshell/releases/download/v0.2.0/nekoshell-0.2.0.tar.gz"'
+  assert_contains "$output" "sha256 \"$sha\""
+  assert_contains "$output" 'head "https://github.com/0PrashantYadav0/nekoshell.git", branch: "main"'
+  assert_not_contains "$output" "@VERSION@"
+  assert_not_contains "$output" "@URL@"
+  assert_not_contains "$output" "@SHA256@"
+}
+@test "render-formula.sh refuses a sha that is not 64 hex characters" {
+  run "$S/render-formula.sh" --version 0.2.0 --sha256 abc
+  [ "$status" -eq 2 ]
+}
+@test "the rendered formula is valid ruby" {
+  command -v ruby >/dev/null || skip "no ruby"
+  local sha; sha="$(printf 'a%.0s' $(seq 1 64))"
+  "$S/render-formula.sh" --version 0.2.0 --sha256 "$sha" > "$HOME/nekoshell.rb"
+  run ruby -c "$HOME/nekoshell.rb"
+  [ "$status" -eq 0 ]
+}

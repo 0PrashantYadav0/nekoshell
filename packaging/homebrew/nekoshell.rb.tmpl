@@ -1,0 +1,33 @@
+# Rendered by scripts/render-formula.sh from packaging/homebrew/nekoshell.rb.tmpl
+# in github.com/0PrashantYadav0/nekoshell and pushed to the tap by its release
+# workflow. Edit the template there, not this file.
+class Nekoshell < Formula
+  desc "Catppuccin terminal rig for macOS: zsh, prompt, greeting and plugins"
+  homepage "https://github.com/0PrashantYadav0/nekoshell"
+  url "@URL@"
+  sha256 "@SHA256@"
+  license "MIT"
+  head "https://github.com/0PrashantYadav0/nekoshell.git", branch: "main"
+
+  depends_on "bash"
+  depends_on :macos
+
+  def install
+    libexec.install Dir["*"]
+    bin.install_symlink libexec/"bin/nekoshell"
+  end
+
+  def caveats
+    <<~EOS
+      Set up your shell with:
+        nekoshell install
+
+      nekoshell records #{HOMEBREW_PREFIX}/opt/nekoshell/libexec as its root, so
+      brew upgrade keeps every link in your home directory valid.
+    EOS
+  end
+
+  test do
+    assert_match "nekoshell ", shell_output("#{bin}/nekoshell version")
+  end
+end
