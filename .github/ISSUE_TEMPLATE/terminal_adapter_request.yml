@@ -1,0 +1,18 @@
+name: Terminal adapter request
+description: A terminal you want nekoshell to configure
+labels: [terminal]
+body:
+  - type: input
+    id: terminal
+    attributes:
+      label: The terminal
+      description: Its name, Homebrew cask and the environment variable it sets in its shells
+    validations:
+      required: true
+  - type: textarea
+    id: caps
+    attributes:
+      label: What it can do
+      description: True colour, inline images, a background image, a panel or hotkey window, and where its config file lives
+    validations:
+      required: true

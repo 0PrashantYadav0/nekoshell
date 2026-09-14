@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Install and troubleshooting guide
+    url: https://github.com/0PrashantYadav0/nekoshell/blob/main/docs/INSTALL.md
+    about: The install steps, the steps only you can do, and the troubleshooting list
+  - name: The plugins
+    url: https://github.com/0PrashantYadav0/nekoshell/blob/main/docs/plugins/README.md
+    about: One page per plugin, what it installs and how to turn it off

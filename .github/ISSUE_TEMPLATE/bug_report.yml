@@ -1,0 +1,41 @@
+name: Bug report
+description: Something nekoshell does is wrong on your Mac
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: nekoshell version
+      description: The output of `nekoshell version`
+      placeholder: nekoshell 0.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: terminal
+    attributes:
+      label: Terminal
+      options: [iTerm2, kitty, Ghostty, Warp, Terminal.app, other]
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: The output of `sw_vers -productVersion`
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: nekoshell doctor
+      description: Paste the output of `nekoshell doctor`
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, what you saw
+    validations:
+      required: true
