@@ -47,10 +47,19 @@ if [[ "$dry" == 1 ]]; then
   exit 0
 fi
 printf '%s\n' "$version" >VERSION
-# Never `sed -i`: macOS and GNU sed disagree about its argument.
+# Never `sed -i`: macOS and GNU sed disagree about its argument. The result is
+# copied back rather than moved, so CHANGELOG.md keeps its own mode instead of
+# inheriting mktemp's 0600.
 tmp="$(mktemp)"
 sed "s/^## $version (unreleased)$/## $version - $today/" CHANGELOG.md >"$tmp"
-mv "$tmp" CHANGELOG.md
+cat "$tmp" >CHANGELOG.md && rm -f "$tmp"
+# The guard above matches the heading anywhere on the line; this sed only
+# matches a whole line. A heading with trailing whitespace passes the one and
+# not the other, so check the rewrite really happened before committing it.
+grep -qE "^## $version - [0-9]{4}-[0-9]{2}-[0-9]{2}$" CHANGELOG.md || {
+  echo "could not date the '$heading' heading in CHANGELOG.md" >&2
+  exit 1
+}
 git add VERSION CHANGELOG.md
 git commit -q -s -m "chore(release): $version"
 git tag -a "v$version" -m "nekoshell $version"

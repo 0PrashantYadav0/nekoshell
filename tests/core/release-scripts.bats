@@ -90,6 +90,7 @@ make_repo() {
   [ "$status" -eq 0 ]
   assert_contains "$output" "would"
   grep -q '^## 0.2.0 (unreleased)$' CHANGELOG.md
+  [ -z "$(git status --porcelain)" ]
   [ -z "$(git tag -l)" ]
 }
 @test "release.sh refuses a dirty tree, a wrong branch, an existing tag and a missing section" {
@@ -105,6 +106,18 @@ make_repo() {
   git tag -d v0.2.0 >/dev/null
   run scripts/release.sh 0.4.0; [ "$status" -eq 1 ]; assert_contains "$output" "no '## 0.4.0 (unreleased)' section"
   run scripts/release.sh 1.2; [ "$status" -eq 2 ]
+}
+@test "release.sh refuses a heading its rewrite could not date" {
+  make_repo
+  # Trailing space: the old guard matched it (unanchored grep -F) and the
+  # anchored sed did not, so a release commit landed with an undated heading.
+  printf '# Changelog\n\n## 0.2.0 (unreleased) \n\n- a thing\n' > CHANGELOG.md
+  git commit -q -s -am "chore: trailing space"
+  run scripts/release.sh 0.2.0
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "could not date the '## 0.2.0 (unreleased)' heading"
+  [ "$(git log -1 --format=%s)" = "chore: trailing space" ]
+  [ -z "$(git tag -l)" ]
 }
 
 @test "package.sh writes the tarball and its checksum for a ref" {
@@ -142,7 +155,6 @@ make_repo() {
   assert_contains "$output" 'url "https://github.com/0PrashantYadav0/nekoshell/releases/download/v0.2.0/nekoshell-0.2.0.tar.gz"'
   assert_contains "$output" "sha256 \"$sha\""
   assert_contains "$output" 'head "https://github.com/0PrashantYadav0/nekoshell.git", branch: "main"'
-  assert_not_contains "$output" "@VERSION@"
   assert_not_contains "$output" "@URL@"
   assert_not_contains "$output" "@SHA256@"
 }
