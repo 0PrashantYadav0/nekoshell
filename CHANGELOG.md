@@ -28,7 +28,7 @@ A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`,
 ### Repository
 
 - `actions/checkout` bumped to v7 in the workflows.
-- One linter, `scripts/lint.sh` (shellcheck, shfmt, the repository shape rules, actionlint, yamllint, markdownlint), conventional commit messages checked by `scripts/check-commit-msg.sh`, git hooks installed by `make hooks`, and four required CI jobs: lint, test, install (once per terminal adapter) and commits.
+- One linter, `scripts/lint.sh` (shellcheck, shfmt, the repository shape rules, actionlint, yamllint, markdownlint), conventional commit messages checked by `scripts/check-commit-msg.sh`, git hooks installed by `make hooks`, and five required CI jobs: lint, test, install (once per terminal adapter), commits and secrets.
 - `tests/core/repo.bats` guards the plugin and adapter contracts and keeps code off the v0.1 layout. Every shell file is formatted with `shfmt -i 2 -ci -bn`.
 - Every commit carries a `Signed-off-by` trailer (`git commit -s`); the commit-msg hook and the `commits` job refuse one without it. `tests/core/commit-msg.bats` covers the checker.
 - A fifth CI job, `secrets`, runs gitleaks over the whole history.
