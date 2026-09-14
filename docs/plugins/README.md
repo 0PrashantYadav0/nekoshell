@@ -53,7 +53,7 @@ The installer asks for a profile, or takes `--profile`:
 
 | Plugin | What it is | Tags | Needs |
 | --- | --- | --- | --- |
-| [modern-cli](modern-cli.md) | eza, bat, fd, ripgrep, zoxide and delta in place of ls, cat, cd and the git pager | shell | eza, bat, fd, ripgrep, zoxide, git-delta |
+| [modern-cli](modern-cli.md) | eza, bat, fd, ripgrep and delta in place of ls, cat and the git pager, plus zoxide's `z` for jumping | shell | eza, bat, fd, ripgrep, zoxide, git-delta |
 | [greet](greet.md) | a sprite from an art provider or your own pixel art next to fastfetch's machine stats on every new shell | look | fastfetch |
 | [pokemon](pokemon.md) | a random Pokémon in the greeting, with its number, type and generation | look | pokemon-colorscripts, cloned |
 | [anime](anime.md) | a random anime character in the greeting | look | anime-colorscripts, a release tarball |
