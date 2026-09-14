@@ -1,12 +1,13 @@
 name: ci
 
-# Every push to main and every pull request runs four independent jobs, so a
+# Every push to main and every pull request runs five independent jobs, so a
 # reviewer sees which one failed at a glance: lint (static checks, on Linux
 # because they do not need macOS), test (the bats suite, on macOS because
 # the code is macOS-only), install (the installer against a throwaway HOME,
-# once per terminal adapter) and commits (every commit message of a pull
-# request is a conventional commit). Branch protection on main requires
-# all four.
+# once per terminal adapter), commits (every commit message of a pull
+# request is a conventional commit) and secrets (gitleaks over the whole
+# history, so a token in a fixture or a doc never lands). Branch protection
+# on main requires all five.
 on:
   push:
     branches: [main]
@@ -84,3 +85,19 @@ jobs:
           fetch-depth: 0
       - name: Every commit message is a conventional commit
         run: scripts/check-commit-msg.sh --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # Pinned like the linters above, downloaded rather than taken from an
+      # action, so the version is the one written here.
+      - name: Install gitleaks
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz" | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+      - name: No secret anywhere in the history
+        run: gitleaks git --no-banner --redact .
