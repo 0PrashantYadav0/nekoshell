@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Fake uname: `-s` prints $FAKE_UNAME (Darwin when unset), so a test can stand
+# on a Linux box without leaving the Mac it runs on.
+if [[ "${1:-}" == "-s" ]]; then
+  printf '%s\n' "${FAKE_UNAME:-Darwin}"
+  exit 0
+fi
+echo "uname $*"
