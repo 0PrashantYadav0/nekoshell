@@ -3,7 +3,9 @@
 #
 #   scripts/render-formula.sh --version X.Y.Z --sha256 HEX [--url URL]
 #
-# Fills @VERSION@, @URL@ and @SHA256@ in packaging/homebrew/nekoshell.rb.tmpl.
+# Fills @URL@ and @SHA256@ in packaging/homebrew/nekoshell.rb.tmpl. --version
+# builds the default url; the formula takes its version from that url, so a
+# version stanza of its own would only be something for brew audit to flag.
 # The release workflow writes the result to Formula/nekoshell.rb in the tap;
 # rendering the whole file, rather than patching two lines of the tap's copy
 # with sed, keeps the template here the only source of truth.
@@ -40,5 +42,5 @@ done
   exit 2
 }
 [[ -n "$url" ]] || url="https://github.com/0PrashantYadav0/nekoshell/releases/download/v$version/nekoshell-$version.tar.gz"
-sed -e "s|@VERSION@|$version|g" -e "s|@URL@|$url|g" -e "s|@SHA256@|$sha|g" \
+sed -e "s|@URL@|$url|g" -e "s|@SHA256@|$sha|g" \
   "$root/packaging/homebrew/nekoshell.rb.tmpl"
