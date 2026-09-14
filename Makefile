@@ -1,6 +1,6 @@
 # The developer entry points. Each target is one line of shell, so the same
 # thing runs on a laptop, in a git hook and in CI.
-.PHONY: help lint fmt test secrets check hooks tools
+.PHONY: help lint fmt test secrets check hooks tools release package
 
 help: ## list the targets
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{ printf "  %-8s %s\n", $$1, $$2 }'
@@ -18,6 +18,9 @@ secrets: ## gitleaks over the whole history
 	@gitleaks git --no-banner --redact .
 
 check: lint test ## everything CI runs, in CI's order
+
+release: ## cut a release: make release VERSION=X.Y.Z
+	@scripts/release.sh $(VERSION)
 
 hooks: ## install the git hooks in .githooks (pre-commit lint, commit-msg, pre-push tests)
 	@git config core.hooksPath .githooks
