@@ -17,7 +17,7 @@ Follow `AGENTS.md` in <https://github.com/0PrashantYadav0/nekoshell> exactly. In
 
    `--terminal all` configures every terminal with an adapter instead of only the installed ones. Do not add the `aerospace` plugin unless the human asked for it.
 3. Verify with `nekoshell doctor --json`; exit 0 is success. `warn` rows on `iterm2 prefs`, `terminal-app default`, `ghostty hotkey`, `spotify login` and `greet time` are expected on a fresh machine; only a `fail` row blocks, and its detail names the fix.
-4. Tell the human the steps that apply, then stop: quit iTerm2 and run `nekoshell terminal apply`; quit and reopen Terminal.app; grant Ghostty Accessibility and restart it; sign in to Warp; run `spotify_player authenticate`; run `tmux` and press `C-a I` once; open `nvim` once. Do not start a tmux session yourself.
+4. Tell the human the steps that apply, then stop: quit iTerm2 and run `nekoshell terminal apply`; quit and reopen Terminal.app; grant Ghostty Accessibility and restart it; sign in to Warp; run `nekoshell spotify login`; run `tmux` and press `C-a I` once; open `nvim` once. Do not start a tmux session yourself.
 
 The look is Catppuccin mocha by default; `nekoshell theme latte` (or frappe, macchiato, `auto`) switches every themed file at once. Run it only when the human asks for a different flavour.
 
