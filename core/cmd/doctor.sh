@@ -175,6 +175,17 @@ EOF
   esac
 }
 
+# _doctor_same_dir A B: true when both exist and resolve to one directory.
+# A recorded root may be Homebrew's opt link while the running root is the
+# Cellar directory behind it (or the reverse); by name they differ, by
+# directory they are the same install.
+_doctor_same_dir() {
+  local a b
+  a="$(cd "$1" 2>/dev/null && pwd -P)" || return 1
+  b="$(cd "$2" 2>/dev/null && pwd -P)" || return 1
+  [[ "$a" == "$b" ]]
+}
+
 _doctor_core_block() {
   if _doctor_have brew; then report ok "homebrew" "$(brew --version | head -1)"; else report fail "homebrew" "not on PATH"; fi
 
@@ -184,7 +195,11 @@ _doctor_core_block() {
     report fail "zshrc" "not a nekoshell symlink (run: nekoshell install)"
   fi
 
-  if [[ -r "$NEKOSHELL_TOML" ]] && [[ "$(config_get root 2>/dev/null || true)" == "$NEKOSHELL_ROOT" ]]; then
+  local recorded
+  recorded="$(config_get root 2>/dev/null || true)"
+  if [[ -n "$recorded" && ! -d "$recorded" ]]; then
+    report fail "config" "recorded root $recorded is gone (run: nekoshell install)"
+  elif [[ -n "$recorded" ]] && _doctor_same_dir "$recorded" "$NEKOSHELL_ROOT"; then
     report ok "config" "$NEKOSHELL_TOML"
   else
     report fail "config" "stale root (run: nekoshell install)"
