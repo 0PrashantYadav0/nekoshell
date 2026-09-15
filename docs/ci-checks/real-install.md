@@ -10,12 +10,14 @@ One job on `macos-latest`, two steps, each with its own throwaway `HOME`
 ```bash
 export HOME
 HOME="$(mktemp -d)"
+export PATH="$HOME/.local/bin:$PATH"
 ./install.sh --yes --profile minimal --terminal terminal-app
 ```
 
 ```bash
 export HOME
 HOME="$(mktemp -d)"
+export PATH="$HOME/.local/bin:$PATH"
 ./install.sh --yes --profile minimal --terminal terminal-app >/dev/null
 ./bin/nekoshell doctor
 ./bin/nekoshell plugin add fzf
@@ -28,7 +30,9 @@ throwaway `HOME` rather than the runner's own. Preflight is left on, because a
 macOS runner has all four things it wants: Darwin, Homebrew, zsh and git.
 Terminal.app ships with macOS, so `--terminal terminal-app` names an adapter
 whose application really exists. The second install is idempotent and fast,
-because Homebrew already has everything from the first.
+because Homebrew already has everything from the first. Each step also puts
+`~/.local/bin` on `PATH` the way the zshrc does for a real shell, so the
+doctor sees the tools plugins link there.
 
 ## When it runs
 
