@@ -88,11 +88,72 @@ teardown() { teardown_tmp_home; }
 
 @test "greet-art captions the file name and prints the sprite" {
   "$NK" plugin add anime >/dev/null
-  ANIME_ONLY=miku run "$P/greet-art"
+  # ANIME_SCALE=100 leaves the file as it is; the fixture is text, not cells.
+  ANIME_ONLY=miku ANIME_SCALE=100 run "$P/greet-art"
   [ "$status" -eq 0 ]
   [ "${lines[0]}" = "Hatsune Miku" ]
   [ "${lines[1]}" = "ART 2997-hatsune-miku" ]
   [ "${lines[2]}" = "line2" ]
+}
+
+# grid ROWS COLS: a sprite shaped like the pack's, a blank line above and
+# below, every cell a colour escape naming its row and column then two
+# blocks, a reset at the end of the last row. Written as the miku file so
+# ANIME_ONLY=miku picks it.
+grid() {
+  local rows="$1" cols="$2" r c
+  {
+    echo
+    for ((r = 0; r < rows; r++)); do
+      for ((c = 0; c < cols; c++)); do printf '\033[38;2;%d;%d;0m\xe2\x96\x88\xe2\x96\x88' "$r" "$c"; done
+      [[ $r -eq $((rows - 1)) ]] && printf '\033[0m'
+      echo
+    done
+    echo
+  } > "$ANIME_DIR/colorscripts/2997-hatsune-miku.txt"
+}
+
+# cell R C: the escape and pair the grid wrote for one cell.
+cell() { printf '\033[38;2;%d;%d;0m\xe2\x96\x88\xe2\x96\x88' "$1" "$2"; }
+
+@test "the sprite is drawn at 30 percent by default, sampling the middle of each block" {
+  "$NK" plugin add anime >/dev/null
+  grid 10 10
+  ANIME_ONLY=miku run "$P/greet-art"
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "Hatsune Miku" ]
+  # 10 rows at 30 percent are 3, taken from the middle of each third: rows
+  # 1, 5 and 8, and the same three columns of each. The blank lines around
+  # the pack's sprites go; the reset that ends the sprite stays.
+  [ "${#lines[@]}" -eq 4 ]
+  [ "${lines[1]}" = "$(cell 1 1)$(cell 1 5)$(cell 1 8)" ]
+  [ "${lines[2]}" = "$(cell 5 1)$(cell 5 5)$(cell 5 8)" ]
+  [ "${lines[3]}" = "$(cell 8 1)$(cell 8 5)$(cell 8 8)$(printf '\033[0m')" ]
+}
+
+@test "ANIME_SCALE sets the size, and a value that is not 1 to 100 means 30" {
+  "$NK" plugin add anime >/dev/null
+  grid 10 10
+  ANIME_ONLY=miku ANIME_SCALE=50 run "$P/greet-art"
+  [ "${#lines[@]}" -eq 6 ]
+  [ "${lines[1]}" = "$(cell 1 1)$(cell 1 3)$(cell 1 5)$(cell 1 7)$(cell 1 9)" ]
+  # At 100 the file goes out as it is; bats drops its two blank lines.
+  ANIME_ONLY=miku ANIME_SCALE=100 run "$P/greet-art"
+  [ "${#lines[@]}" -eq 11 ]
+  ANIME_ONLY=miku ANIME_SCALE=big run "$P/greet-art"
+  [ "${#lines[@]}" -eq 4 ]
+  ANIME_ONLY=miku ANIME_SCALE=0 run "$P/greet-art"
+  [ "${#lines[@]}" -eq 4 ]
+}
+
+@test "a cell without an escape of its own keeps the colour of the cell before it" {
+  "$NK" plugin add anime >/dev/null
+  # One row, ten cells, one escape: the pack sets a colour once and lets it
+  # run. Every cell the scaler keeps has to carry that colour itself.
+  { echo; printf '\033[38;2;9;9;0m'; for ((c = 0; c < 10; c++)); do printf '\xe2\x96\x88\xe2\x96\x88'; done; echo; } > "$ANIME_DIR/colorscripts/2997-hatsune-miku.txt"
+  ANIME_ONLY=miku run "$P/greet-art"
+  [ "${#lines[@]}" -eq 2 ]
+  [ "${lines[1]}" = "$(cell 9 9)$(cell 9 9)$(cell 9 9)" ]
 }
 
 @test "ANIME_SKIP words are never drawn, and the default skips the rude one" {
@@ -136,7 +197,8 @@ teardown() { teardown_tmp_home; }
 @test "the greeting draws an anime sprite through the provider" {
   "$NK" plugin add anime >/dev/null
   run script -q /dev/null "$NK" greet --art anime < /dev/null
-  assert_contains "$output" "--file-raw - stdin=2"
+  # The two-row fixture is one row at the default 30 percent.
+  assert_contains "$output" "--file-raw - stdin=1"
   grep -qE 'Hatsune Miku|Naruto Uzumaki' "$HOME/.cache/nekoshell/art-name"
 }
 

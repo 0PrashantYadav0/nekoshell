@@ -17,6 +17,7 @@ A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`,
 - AI tool plugins: `ai` prints a welcome banner (tool, project, branch, last commit; templates of your own) in front of a tool; `claude-code` renders a Catppuccin custom theme and a status line for Claude Code and sets the two settings keys with the previous values restored on removal; `opencode` renders a theme for OpenCode and selects it in `tui.json`.
 - Art providers: greet draws its sprite from any enabled plugin that ships a `greet-art` program. pokemon (the Pokémon, moved out of greet, in every profile), anime (anime-colorscripts' release tarball, checksummed), minecraft and colorscripts (pinned clones; only a vetted list of scripts runs). `ART` and `SPRITE_SHARE` in `greet.conf` pick among them, `nekoshell greet --art NAME` forces one, the doctor has a row per provider, and with none enabled the stats print alone.
 - spotify rework: `app.toml` is copied once and is the user's, with `nekoshell spotify client-id` for a personal Spotify client id (the shared one is rate-limited at start-up), `nekoshell spotify login|logout` for the cached login, and `theme.toml` rendered per flavour with the `theme` line of `app.toml` pointed at it.
+- The anime sprites are drawn at 30 percent of the pack's size, 10 rows instead of 32, so they sit level with the stats; `ANIME_SCALE` in greet.conf changes that.
 
 ### Five terminals
 
