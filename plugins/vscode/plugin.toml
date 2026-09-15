@@ -1,0 +1,9 @@
+name = "vscode"
+summary = "VS Code opens the nekoshell terminal from Ctrl+Shift+C and the Explorer"
+requires = []
+casks = []
+taps = []
+requires_plugins = []
+terminals = ["any"]
+conflicts = []
+tags = ["editor"]
