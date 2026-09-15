@@ -35,7 +35,7 @@ Merge commits, git's own reverts and `fixup!`/`squash!` commits are accepted as 
 
 ## Pull request checks
 
-Every pull request runs five jobs in `.github/workflows/ci.yml`, and branch protection on `main` requires all five: `lint` (`scripts/lint.sh` on Linux), `test` (`bats -r tests` on macOS), `install` (`nekoshell install --check --profile full` against a throwaway `HOME`, once per terminal adapter), `commits` (every commit message of the pull request, including its sign-off) and `secrets` (gitleaks over the whole history). The pull request template asks for `make check` output, the terminals the change was tried in, a test for new behaviour, updated docs and a changelog line.
+Every pull request runs five jobs in `.github/workflows/ci.yml`, and branch protection on `main` requires all five: `lint` (`scripts/lint.sh` on Linux), `test` (`bats -r tests` on macOS), `install` (`nekoshell install --check --profile full` against a throwaway `HOME`, once per terminal adapter), `commits` (every commit message of the pull request, including its sign-off) and `secrets` (gitleaks over the whole history). The pull request template is a four-line checklist of the same things: `make check`, the commit rules, a test and docs for new behaviour, and a changelog line.
 
 ## Code rules
 
