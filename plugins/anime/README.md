@@ -8,10 +8,12 @@ machine stats with the character's name on the "Art" line. The pack is
 [anime-colorscripts](https://github.com/juanlouisr/anime-colorscripts), some
 250 characters as coloured unicode text.
 
-Two keys in `~/.config/nekoshell/greet.conf`: `ANIME_ONLY="miku naruto"`
-draws only characters whose name contains one of the words, and
-`ANIME_SKIP` lists words never drawn (one file in the pack has a crude name,
-which the default skips). `nekoshell greet --art anime` forces one now.
+Three keys in `~/.config/nekoshell/greet.conf`: `ANIME_ONLY="miku naruto"`
+draws only characters whose name contains one of the words, `ANIME_SKIP`
+lists words never drawn (one file in the pack has a crude name, which the
+default skips), and `ANIME_SCALE` is the size as a percent of the pack's, 30
+unless set: the 32-row sprites come out 10 rows tall, level with the stats.
+`nekoshell greet --art anime` forces one now.
 
 ## Installs
 

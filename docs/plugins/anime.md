@@ -2,7 +2,7 @@
 
 ## What you get
 
-A random anime character in the greeting, drawn by the [greet](greet.md) plugin next to the machine stats, with the character's name on the "Art" line. The pack is anime-colorscripts, about 250 characters as coloured unicode text; the install hook downloads its pinned release and checks the checksum.
+A random anime character in the greeting, drawn by the [greet](greet.md) plugin next to the machine stats, with the character's name on the "Art" line. The pack is anime-colorscripts, about 250 characters as coloured unicode text; the install hook downloads its pinned release and checks the checksum. The sprites are drawn at 30 percent of the pack's size, 10 rows instead of 32, so they sit level with the stats; `ANIME_SCALE` changes that.
 
 ## Using it
 
@@ -18,6 +18,7 @@ Keys in `~/.config/nekoshell/greet.conf`:
 | --- | --- |
 | `ANIME_ONLY="miku naruto"` | only characters whose file name contains one of the words |
 | `ANIME_SKIP="word"` | never draw a name containing a word; the default skips the one crude file name in the pack |
+| `ANIME_SCALE=30` | how big to draw, as a percent of the pack's size; 30 unless set, which turns the 32-row sprites into 10 rows, about the height of the stats. 100 draws them as they come |
 
 ## Files
 
