@@ -76,3 +76,4 @@ The installer asks for a profile, or takes `--profile`:
 | [claude-code](claude-code.md) | Claude Code in the flavour: a custom theme, a status line, the banner | ai | Claude Code, installed on its own |
 | [opencode](opencode.md) | OpenCode in the flavour: a theme and the banner | ai | opencode |
 | [omz](omz.md) | oh-my-zsh's git aliases and web-search, without oh-my-zsh | shell | nothing from Homebrew; antidote clones oh-my-zsh on the first shell |
+| [vscode](vscode.md) | VS Code opens the nekoshell terminal from Ctrl+Shift+C and the Explorer | editor | VS Code, installed on its own |
