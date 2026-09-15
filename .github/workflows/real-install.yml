@@ -27,11 +27,15 @@ jobs:
         run: |
           export HOME
           HOME="$(mktemp -d)"
+          # The zshrc puts ~/.local/bin on PATH for a real shell; the doctor
+          # and the greeting look up the tools plugins link there.
+          export PATH="$HOME/.local/bin:$PATH"
           ./install.sh --yes --profile minimal --terminal terminal-app
       - name: Doctor
         run: |
           export HOME
           HOME="$(mktemp -d)"
+          export PATH="$HOME/.local/bin:$PATH"
           ./install.sh --yes --profile minimal --terminal terminal-app >/dev/null
           ./bin/nekoshell doctor
           ./bin/nekoshell plugin add fzf
