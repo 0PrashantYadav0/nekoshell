@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.0 - 2026-09-15
 
 A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`, `theme`, `terminal`, `plugin`, `music` and `uninstall` replace the v0.1 scripts; `install.sh` and `uninstall.sh` only check for macOS and Homebrew and hand over. The v0.1 command names stay as three-line shims onto the subcommands.
 
