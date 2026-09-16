@@ -237,3 +237,133 @@ JSONC
   [ "$status" -eq 0 ]
   assert_matches "$output" "warn +external terminal +not set: no VS Code app name is known for 'fake'"
 }
+
+@test "vscode terminal prints the app and its id after add, and not set on a fresh file" {
+  "$NK" plugin add vscode >/dev/null
+  run "$NK" vscode terminal
+  [ "$status" -eq 0 ]
+  [ "$output" = "kitty.app (kitty)" ]
+  printf '{}\n' >"$SETTINGS"
+  run "$NK" vscode terminal
+  [ "$status" -eq 0 ]
+  [ "$output" = "not set (VS Code opens Terminal.app)" ]
+  rm "$SETTINGS"
+  run "$NK" vscode terminal
+  [ "$status" -eq 0 ]
+  [ "$output" = "not set (VS Code opens Terminal.app)" ]
+}
+
+@test "vscode terminal ID sets the key to the app and prints ok" {
+  "$NK" plugin add vscode >/dev/null
+  run "$NK" vscode terminal ghostty
+  [ "$status" -eq 0 ]
+  assert_matches "$output" '^ok +VS Code opens Ghostty\.app$'
+  [ "$(setting terminal.external.osxExec)" = '"Ghostty.app"' ]
+  run "$NK" vscode terminal
+  [ "$output" = "Ghostty.app (ghostty)" ]
+  # The previous value is the one add recorded, not what the command replaced.
+  [ "$(previous terminal.external.osxExec)" = "null" ]
+}
+
+@test "vscode terminal App.app passes a name outside the table through" {
+  "$NK" plugin add vscode >/dev/null
+  run "$NK" vscode terminal Alacritty.app
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +VS Code opens Alacritty\.app'
+  [ "$(setting terminal.external.osxExec)" = '"Alacritty.app"' ]
+  run "$NK" vscode terminal
+  [ "$output" = "Alacritty.app" ]
+}
+
+@test "vscode terminal foo fails, exits 1 and writes nothing" {
+  "$NK" plugin add vscode >/dev/null
+  cp "$SETTINGS" "$HOME/before.json"
+  cp "$PREV" "$HOME/prev-before.json"
+  run "$NK" vscode terminal foo
+  [ "$status" -eq 1 ]
+  assert_matches "$output" '^fail +foo is not a terminal nekoshell knows \(kitty, ghostty, iterm2, warp, terminal-app\) and does not end in \.app$'
+  diff "$HOME/before.json" "$SETTINGS"
+  diff "$HOME/prev-before.json" "$PREV"
+}
+
+@test "vscode terminal warns about the debug console for kitty and not for ghostty" {
+  use_terminal ghostty
+  "$NK" plugin add vscode >/dev/null
+  run "$NK" vscode terminal kitty
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'warn +"console": "externalTerminal" in launch.json is not supported by VS Code for kitty\.app'
+  run "$NK" vscode terminal ghostty
+  [ "$status" -eq 0 ]
+  assert_not_contains "$output" "not supported"
+  run "$NK" vscode terminal Warp.app
+  assert_matches "$output" 'warn +.*not supported by VS Code for Warp\.app'
+}
+
+@test "vscode terminal records the previous value once, so remove restores the original" {
+  mkdir -p "$(dirname "$SETTINGS")"
+  printf '{\n  "terminal.external.osxExec": "Terminal.app"\n}\n' >"$SETTINGS"
+  "$NK" plugin add vscode >/dev/null
+  "$NK" vscode terminal warp >/dev/null
+  "$NK" vscode terminal iterm2 >/dev/null
+  [ "$(previous terminal.external.osxExec)" = '"Terminal.app"' ]
+  "$NK" plugin remove vscode >/dev/null
+  [ "$(setting terminal.external.osxExec)" = '"Terminal.app"' ]
+}
+
+@test "vscode terminal in a dry run says what it would set and writes nothing" {
+  "$NK" plugin add vscode >/dev/null
+  cp "$SETTINGS" "$HOME/before.json"
+  run env NEKOSHELL_DRY_RUN=1 "$NK" vscode terminal ghostty
+  [ "$status" -eq 0 ]
+  assert_contains "$output" 'would set terminal.external.osxExec to "Ghostty.app"'
+  assert_not_contains "$output" "VS Code opens"
+  diff "$HOME/before.json" "$SETTINGS"
+}
+
+@test "vscode -h prints usage and exits 0, an unknown subcommand exits 2" {
+  "$NK" plugin add vscode >/dev/null
+  run "$NK" vscode -h
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "usage: nekoshell vscode terminal"
+  run "$NK" vscode help
+  [ "$status" -eq 0 ]
+  run "$NK" vscode
+  [ "$status" -eq 2 ]
+  assert_contains "$output" "usage: nekoshell vscode terminal"
+  run "$NK" vscode bogus
+  [ "$status" -eq 2 ]
+  run "$NK" vscode terminal kitty extra
+  [ "$status" -eq 2 ]
+  [ "$(setting terminal.external.osxExec)" = '"kitty.app"' ]
+}
+
+@test "nekoshell vscode exists only while the plugin is enabled" {
+  run "$NK" vscode terminal
+  [ "$status" -eq 2 ]
+  assert_contains "$output" "provided by the vscode plugin, which is not enabled"
+}
+
+@test "help lists vscode under Plugin commands, enabled or not" {
+  run "$NK" help
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "Plugin commands:"
+  assert_matches "$output" 'vscode +\(plugin vscode, not enabled\)'
+  "$NK" plugin add vscode >/dev/null
+  run "$NK" help
+  assert_matches "$output" 'vscode +\(plugin vscode, enabled\)'
+}
+
+@test "doctor names the id that matches the app after vscode terminal, or the app alone" {
+  "$NK" plugin add vscode >/dev/null
+  "$NK" vscode terminal ghostty >/dev/null
+  run "$NK" doctor --plugin vscode
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +external terminal +Ghostty\.app \(ghostty\)'
+  assert_not_contains "$output" "(kitty)"
+  "$NK" vscode terminal Alacritty.app >/dev/null
+  run "$NK" doctor --plugin vscode
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'ok +external terminal +Alacritty\.app'
+  assert_not_contains "$output" "Alacritty.app ("
+  assert_matches "$output" 'warn +debug console +.*not supported by VS Code for Alacritty\.app'
+}
