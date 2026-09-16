@@ -32,14 +32,14 @@ The installer asks for a profile, or takes `--profile`:
 | `full` | dev plus spotify |
 | `pick` | a menu that toggles plugins one by one |
 
-`--with a,b` and `--without c` adjust any of them. anime, minecraft, colorscripts, yazi, gh, mise, pure, ai, claude-code, opencode, aerospace, p10k and omz are in no profile: add them by hand.
+`--with a,b` and `--without c` adjust any of them. anime, minecraft, colorscripts, yazi, gh, mise, pure, ai, claude-code, opencode, aerospace, p10k, omz and vscode are in no profile: add them by hand.
 
 ## What a plugin puts in your home
 
 - **Linked.** Files under `plugins/<name>/files/link/` are symlinked into `$HOME` at the same relative path. A real file already there is moved into `~/.local/share/nekoshell/backup/<timestamp>/` first. The link points into the checkout, so editing the file edits the repository copy, and `git pull` changes it. Removing the plugin removes the link.
 - **Copied once.** Files under `plugins/<name>/files/copy/` are copied into `$HOME` when missing and never written again. They are yours: edit them freely, and removing the plugin leaves them in place. A plugin with a `copy_guard` (nvim, tmux, aerospace, p10k, spotify, yazi, mise) skips the whole copy when a config of your own is already at the guarded path and says so; the shipped files stay readable in the checkout.
 - **Rendered.** Some plugins write a file from a template on `plugin add` and on every `nekoshell theme <flavour>`: the fastfetch config, the tmux flavour file, the p10k and pure colours, the spotify theme, the yazi theme. Each starts with a header that names nekoshell. Edits to a rendered file are lost on the next switch; a file of your own at the same path is backed up before the first render.
-- **Touched in place.** Three plugins edit a line or a region of a file that is otherwise yours: modern-cli appends an `[include]` region to `~/.gitconfig`, btop rewrites the `color_theme` line of `~/.config/btop/btop.conf`, spotify rewrites the `theme` and `client_id` lines of `~/.config/spotify-player/app.toml`, claude-code sets the `theme` and `statusLine` keys of `~/.claude/settings.json` and opencode the `theme` key of `~/.config/opencode/tui.json`, each with the previous value recorded and restored on removal.
+- **Touched in place.** Six plugins edit a line or a region of a file that is otherwise yours: modern-cli appends an `[include]` region to `~/.gitconfig`, btop rewrites the `color_theme` line of `~/.config/btop/btop.conf`, spotify rewrites the `theme` and `client_id` lines of `~/.config/spotify-player/app.toml`, claude-code sets the `theme` and `statusLine` keys of `~/.claude/settings.json`, opencode the `theme` key of `~/.config/opencode/tui.json`, and vscode the `terminal.external.osxExec` and `terminal.explorerKind` keys of VS Code's `settings.json` (comments and trailing commas kept, since that file is JSONC), each with the previous value recorded and restored on removal.
 
 ## Hooks you may notice
 
