@@ -39,6 +39,24 @@ vscode_app_for() {
   esac
 }
 
+# The ids vscode_app_for knows, in the order of the table, for the message
+# `nekoshell vscode terminal` prints when it is handed something else.
+VSCODE_IDS="kitty, ghostty, iterm2, warp, terminal-app"
+
+# vscode_id_for APP: the table the other way round: the nekoshell terminal id
+# whose app bundle is APP. Status 1 for an app that is not in the table,
+# which is what a terminal without an adapter looks like.
+vscode_id_for() {
+  case "$1" in
+    kitty.app) echo "kitty" ;;
+    Ghostty.app) echo "ghostty" ;;
+    iTerm.app) echo "iterm2" ;;
+    Warp.app) echo "warp" ;;
+    Terminal.app) echo "terminal-app" ;;
+    *) return 1 ;;
+  esac
+}
+
 # vscode_installed: `code` on PATH or the app bundle in either Applications
 # directory.
 vscode_installed() {

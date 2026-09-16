@@ -9,6 +9,7 @@ Visual Studio Code opens the terminal nekoshell is configured for, instead of Te
 | Command | What it does |
 | --- | --- |
 | `nekoshell plugin add vscode` | sets `terminal.external.osxExec` to the app for the `terminal` id in `nekoshell.toml` (kitty.app, Ghostty.app, iTerm.app, Warp.app or Terminal.app) and `terminal.explorerKind` to `both` |
+| `nekoshell vscode terminal [ID\|App.app]` | with no argument, prints the app `terminal.external.osxExec` names and its nekoshell id (`kitty.app (kitty)`), or `not set`; with a terminal id or a name ending in `.app`, sets the key to that app and warns when the debug console cannot open it |
 | `nekoshell doctor --plugin vscode` | VS Code, the app the external terminal opens, and whether the debug console can use it |
 
 ## Files

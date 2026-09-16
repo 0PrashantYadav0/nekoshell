@@ -16,7 +16,14 @@ vs_app="${vs_app#\"}"
 vs_app="${vs_app%\"}"
 vs_term="$(config_get terminal 2>/dev/null || true)"
 if [[ -n "$vs_app" ]]; then
-  report ok "external terminal" "$vs_app ($vs_term)"
+  # The id that matches the app, not the one nekoshell.toml names: after
+  # `nekoshell vscode terminal` the two can differ, and an app from outside
+  # the table has none.
+  if vs_id="$(vscode_id_for "$vs_app")"; then
+    report ok "external terminal" "$vs_app ($vs_id)"
+  else
+    report ok "external terminal" "$vs_app"
+  fi
 elif ! vscode_installed; then
   report warn "external terminal" "not set and VS Code not installed"
 elif vscode_app_for "$vs_term" >/dev/null; then

@@ -4,7 +4,7 @@
 
 ### Plugins
 
-- vscode plugin: VS Code opens the nekoshell terminal from Ctrl+Shift+C and the Explorer's "Open in External Terminal". `plugin add` sets `terminal.external.osxExec` to the app for the configured terminal id and `terminal.explorerKind` to `both` in VS Code's `settings.json`, editing the JSONC file in place so comments and the other keys survive; `plugin remove` puts both keys back; the doctor says which apps the debug console can open.
+- vscode plugin: VS Code opens the nekoshell terminal from Ctrl+Shift+C and the Explorer's "Open in External Terminal". `plugin add` sets `terminal.external.osxExec` to the app for the configured terminal id and `terminal.explorerKind` to `both` in VS Code's `settings.json`, editing the JSONC file in place so comments and the other keys survive; `plugin remove` puts both keys back; `nekoshell vscode terminal [ID|App.app]` shows or changes the app, with a name outside the table passed through as it is; the doctor says which apps the debug console can open.
 
 ## 0.2.0 - 2026-09-15
 
