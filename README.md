@@ -1,12 +1,12 @@
 # nekoshell
 
-A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon (or an anime character, a Minecraft block, an ANSI pattern) or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, `nekoshell`, installs it, themes it and checks it.
+A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon (or an anime picture, a Minecraft block, an ANSI pattern) or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, `nekoshell`, installs it, themes it and checks it.
 
 ## What you get
 
 **Look.** Catppuccin in any of its four flavours, mocha by default, and JetBrainsMono Nerd Font in every configured terminal. Commands are coloured as you type them and the autosuggestion behind the cursor takes the palette's dimmest readable grey. `nekoshell theme latte` moves the whole rig to another flavour; `nekoshell theme auto` follows the macOS appearance.
 
-**Greeting.** A new interactive shell prints art next to the machine stats fastfetch collects. The art is a sprite from an art provider plugin 70 percent of the time and a picture from your art pack the rest, when the terminal can draw images. The `pokemon` provider is in every profile; `anime`, `minecraft` and `colorscripts` are one `nekoshell plugin add` away. It stays silent inside tmux, inside the panel, over SSH and under Claude Code.
+**Greeting.** A new interactive shell prints art next to the machine stats fastfetch collects. The art is from an art provider plugin 70 percent of the time and a picture from your art pack the rest, when the terminal can draw images. The `pokemon` provider is in every profile; `anime` (a picture drawn inline, in terminals that can), `minecraft` and `colorscripts` are one `nekoshell plugin add` away. It stays silent inside tmux, inside the panel, over SSH and under Claude Code.
 
 **Prompt.** Starship, two lines: the working directory, git and language status on top, the last command's duration, exit status and the clock on the right. The p10k plugin puts Powerlevel10k in its place, in the flavour's colours.
 
@@ -150,4 +150,4 @@ Your own shell additions go in `~/.config/nekoshell/zsh/local.zsh`, which is sou
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The sprites the greeting draws (Pokémon, anime characters, Minecraft blocks) come from their packs at greeting time and are not part of this repository; Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.
+MIT, see [LICENSE](LICENSE). The sprites and pictures the greeting draws (Pokémon, anime characters, Minecraft blocks) come from their packs, fetched at install time, and are not part of this repository; Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.

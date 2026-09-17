@@ -24,7 +24,7 @@ teardown() { teardown_tmp_home; }
 # instead.
 
 @test "plugin_all lists fixture plugins sorted; plugin_meta reads toml" {
-  [ "$(plugin_all | tr '\n' ' ')" = "broken clash demo fakeart fakeart2 fakeplayer flaky-doctor guarded kitty-only needs-demo otherplayer " ]
+  [ "$(plugin_all | tr '\n' ' ')" = "broken clash demo fakeart fakeart2 fakeimage fakeplayer flaky-doctor guarded kitty-only needs-demo otherplayer " ]
   [ "$(plugin_meta demo summary)" = "A fixture plugin" ]
   [ "$(plugin_meta_list demo requires)" = "eza" ]
   plugin_exists demo; ! plugin_exists nope

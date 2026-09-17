@@ -78,6 +78,8 @@ fi
 set +a
 # SPRITE_SHARE used to be POKEMON_SHARE, when the Pokémon was the only sprite.
 [[ -n "$SPRITE_SHARE" ]] || SPRITE_SHARE="${POKEMON_SHARE:-70}"
+# The size an image provider falls back on, whether greet.conf set it or not.
+export IMAGE_WIDTH IMAGE_HEIGHT
 
 # A seeded run has to draw the same numbers on every bash: bash's own RANDOM
 # generator changed between versions, so a test seeded through it passes on
@@ -130,6 +132,18 @@ image_flag() {
   return 0
 }
 
+# ask_flag: image_flag's answer in $flag, asked once. The question sources
+# four core libraries and the terminal adapter, so the greeting asks it only
+# on a path that needs it, and never twice.
+flag=""
+flag_asked=0
+ask_flag() {
+  ((flag_asked)) && return 0
+  flag_asked=1
+  flag="$(image_flag)"
+  return 0
+}
+
 pick_image() {
   # Print a random image path from the art pack, or nothing. $1 is the random
   # value, drawn by the caller in the main shell: this runs inside a $(...)
@@ -154,16 +168,36 @@ enabled_plugins() {
   return 0
 }
 
-# providers: the enabled plugins that ship an executable greet-art, in the
-# order they were enabled. That file is the whole of the provider contract:
-# the caption on the first line, the sprite after it, silence and a non-zero
-# status when there is nothing to draw.
+# providers: the enabled plugins that can draw here, in the order they were
+# enabled. A plugin with an executable greet-art is a sprite provider: that
+# file prints the caption on the first line and the sprite after it, and is
+# silent with a non-zero status when there is nothing to draw. A plugin with
+# an executable greet-image is an image provider: the caption, then the path
+# of a picture, then on an optional third line its size in cells. Image
+# providers count only while image_ok holds the terminal's image flag, which
+# the caller sets when the terminal can draw images and a picture was not
+# ruled out (--text asks for a sprite).
+image_ok=""
 providers() {
-  local p
+  local p d
   for p in $(enabled_plugins); do
-    [[ -x "$NEKOSHELL_PLUGINS_DIR/$p/greet-art" ]] && printf '%s\n' "$p"
+    d="$NEKOSHELL_PLUGINS_DIR/$p"
+    if [[ -x "$d/greet-art" ]] || [[ -n "$image_ok" && -x "$d/greet-image" ]]; then
+      printf '%s\n' "$p"
+    fi
   done
   return 0
+}
+
+# has_image_provider: is any enabled plugin an image provider? Asked before
+# the terminal is, so a machine with sprite providers alone never pays for
+# the terminal question on the sprite path.
+has_image_provider() {
+  local p
+  for p in $(enabled_plugins); do
+    [[ -x "$NEKOSHELL_PLUGINS_DIR/$p/greet-image" ]] && return 0
+  done
+  return 1
 }
 
 # pick_provider: one provider name by ART, or nothing when none applies.
@@ -219,6 +253,44 @@ show_sprite() {
   printf '%s\n' "${out#*$'\n'}" | fastfetch --config "$ff_config" --file-raw -
 }
 
+# show_provider_image NAME: run NAME's greet-image and hand fastfetch the
+# picture with the terminal's image flag. A size line is used as it comes;
+# without one the picture gets the art pack's box. A provider that prints
+# nothing usable, or names a file that is not there, fails this.
+show_provider_image() {
+  local name="$1" out caption rest img size w h
+  out="$(PLUGIN_NAME="$name" PLUGIN_DIR="$NEKOSHELL_PLUGINS_DIR/$name" \
+    "$NEKOSHELL_PLUGINS_DIR/$name/greet-image" 2>/dev/null)" || return 1
+  [[ "$out" == *$'\n'* ]] || return 1
+  caption="${out%%$'\n'*}"
+  rest="${out#*$'\n'}"
+  img="${rest%%$'\n'*}"
+  size=""
+  [[ "$rest" == *$'\n'* ]] && size="${rest#*$'\n'}"
+  size="${size%%$'\n'*}"
+  [[ -n "$caption" && -f "$img" ]] || return 1
+  w="$IMAGE_WIDTH"
+  h="$IMAGE_HEIGHT"
+  if [[ "$size" =~ ^([0-9]+)[[:space:]]+([0-9]+)$ ]]; then
+    w="${BASH_REMATCH[1]}"
+    h="${BASH_REMATCH[2]}"
+  fi
+  printf '%s\n' "$caption" >"$NEKOSHELL_CACHE/art-name"
+  fastfetch --config "$ff_config" "$flag" "$img" --logo-width "$w" --logo-height "$h" </dev/null
+}
+
+# show_provider NAME: whatever NAME can draw here. The picture where the
+# terminal can show one, else the sprite; a plugin that ships both is drawn
+# as a picture where that works and as a sprite everywhere else.
+show_provider() {
+  local name="$1" d="$NEKOSHELL_PLUGINS_DIR/$1"
+  if [[ -x "$d/greet-image" ]]; then
+    ask_flag
+    if [[ -n "$flag" ]] && show_provider_image "$name"; then return 0; fi
+  fi
+  [[ -x "$d/greet-art" ]] && show_sprite "$name"
+}
+
 # show_stats: the machine stats with no picture, which is still a greeting.
 show_stats() {
   : >"$NEKOSHELL_CACHE/art-name"
@@ -238,20 +310,19 @@ show_image() {
 draw
 roll=$((DRAW % 100))
 img=""
-flag=""
 mode="${NEKOSHELL_GREET_MODE:-auto}"
 [[ -n "${NEKOSHELL_GREET_ART:-}" ]] && mode=text
 case "$mode" in
   text) ;;
   image)
-    flag="$(image_flag)"
+    ask_flag
     if [[ -n "$flag" ]]; then
       draw
       img="$(pick_image "$DRAW")"
     fi
     ;;
   *) if ((roll >= SPRITE_SHARE)); then
-    flag="$(image_flag)"
+    ask_flag
     if [[ -n "$flag" ]]; then
       draw
       img="$(pick_image "$DRAW")"
@@ -264,10 +335,16 @@ if [[ -n "$img" ]]; then
 else
   provider="${NEKOSHELL_GREET_ART:-}"
   if [[ -z "$provider" ]]; then
+    # --text asked for a sprite, so the image providers sit that draw out;
+    # a forced provider (--art NAME) is drawn whatever it is, above.
+    if [[ "$mode" != text ]] && has_image_provider; then
+      ask_flag
+      image_ok="$flag"
+    fi
     draw
     provider="$(pick_provider "$DRAW")"
   fi
-  if [[ -z "$provider" ]] || ! show_sprite "$provider"; then
+  if [[ -z "$provider" ]] || ! show_provider "$provider"; then
     show_stats
   fi
 fi

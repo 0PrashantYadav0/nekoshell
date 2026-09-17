@@ -21,6 +21,7 @@ plugins/<name>/
   bin/               put on PATH by the zshrc
   cmd/<sub>.sh       becomes nekoshell <sub>
   greet-art          makes this plugin an art provider for the greeting
+  greet-image        makes it an image provider: a picture, where the terminal draws them
   files/link/        symlinked into $HOME at the same relative path
   files/copy/        copied into $HOME once, then the user's
   files/*.tmpl       rendered by theme.sh; not linked or copied
@@ -125,9 +126,11 @@ An executable `greet-art` at the top of the plugin makes it an art provider for 
 
 `PLUGIN_NAME` and `PLUGIN_DIR` are set when it runs. Every shipped provider also seeds `RANDOM` from `NEKOSHELL_SEED` when that variable is in the environment, which is how a test pins the draw; the greet plugin's own doctor row sets it.
 
+An executable `greet-image` makes the plugin an image provider instead: the caption on the first line, the path of a PNG or JPG on the second, and on an optional third line the size to draw at as `WIDTH HEIGHT` in cells (without it, `IMAGE_WIDTH` by `IMAGE_HEIGHT` from `greet.conf`, which the greeting exports). The greeting hands the file to fastfetch with the terminal's image flag, so an image provider is only drawn from where the terminal adapter lists `images` among its capabilities, and never on `--text`; where images cannot be drawn the other providers keep their odds. A plugin that ships both files is drawn as a picture where that works and as a sprite everywhere else.
+
 The greeting picks among the enabled providers with `ART` from `~/.config/nekoshell/greet.conf`: `auto` gives each the same odds, and a list such as `pokemon:70,anime:30` weights them. A name that is not an enabled provider is dropped and a weight of 0 never draws.
 
-The greeting runs on every new interactive shell, and its doctor warns above 150 ms. A provider that fetches over the network, or runs unpinned third-party code, does not belong here: `pokemon`, `minecraft` and `colorscripts` clone their packs in `install.sh` at a pinned commit and `anime` downloads a pinned release tarball, so drawing is a local read.
+The greeting runs on every new interactive shell, and its doctor warns above 150 ms. A provider that fetches over the network, or runs unpinned third-party code, does not belong here: `pokemon`, `minecraft` and `colorscripts` clone their packs in `install.sh` at a pinned commit and `anime` downloads the archive of a pinned commit and shrinks the pictures once, so drawing is a local read.
 
 ## Music players
 

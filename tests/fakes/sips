@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 # Fake sips: writes a stub wherever --out points instead of converting an
 # image, and echoes the invocation so a test can see the conversion happen.
+# Asked for a size (-g pixelWidth -g pixelHeight) it answers in sips' own
+# layout with FAKE_SIPS_SIZE ("WIDTH HEIGHT", 750 by 1060 unless set).
 # FAKE_SIPS_FAILS=1 makes it fail the way sips does on a file it cannot read.
 [[ "${FAKE_SIPS_FAILS:-0}" == "1" ]] && exit 1
 dest=""
 prev=""
+query=0
 for arg in "$@"; do
   [[ "$prev" == "--out" ]] && dest="$arg"
+  [[ "$arg" == "-g" ]] && query=1
   prev="$arg"
 done
+if [[ "$query" == 1 ]]; then
+  read -r w h <<<"${FAKE_SIPS_SIZE:-750 1060}"
+  printf '%s\n  pixelWidth: %s\n  pixelHeight: %s\n' "${!#}" "$w" "$h"
+  exit 0
+fi
 [[ -n "$dest" ]] && printf 'fake png\n' >"$dest"
 echo "sips $*"
 exit 0
