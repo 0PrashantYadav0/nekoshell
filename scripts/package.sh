@@ -45,11 +45,17 @@ mkdir -p "$out"
 git archive --format=tar.gz --prefix="$name/" -o "$out/$name.tar.gz" "$ref"
 
 bytes="$(wc -c <"$out/$name.tar.gz" | tr -d '[:space:]')"
-entries="$(tar -tzf "$out/$name.tar.gz" | wc -l | tr -d '[:space:]')"
+# Capture the listing once: under `set -o pipefail`, `tar -tzf | grep -q`
+# can have tar killed by SIGPIPE the moment grep exits early on a match,
+# which pipefail then reports as a failure of the whole pipeline. Reading
+# the listing into a variable first means the entry count and the tripwire
+# below both work from the same already-complete output.
+listing="$(tar -tzf "$out/$name.tar.gz")"
+entries="$(printf '%s\n' "$listing" | wc -l | tr -d '[:space:]')"
 kb="$((bytes / 1024))"
 echo "$name.tar.gz: $kb KB, $entries entries"
 
-if tar -tzf "$out/$name.tar.gz" | grep -qE "^$name/(tests|scripts)/"; then
+if printf '%s\n' "$listing" | grep -qE "^$name/(tests|scripts)/"; then
   echo "the tarball carries development files; check the export-ignore lines in .gitattributes" >&2
   exit 1
 fi
