@@ -11,7 +11,7 @@ setup() {
   export PATH="$REPO_ROOT/tests/fakes:$PATH"
   export NEKOSHELL_TERMINALS_DIR="$REPO_ROOT/tests/fixtures/terminals"
   export FAKE_BREW_INSTALLED=""
-  unset CLAUDECODE TMUX NEKOSHELL_PANEL SSH_CONNECTION NEKOSHELL_NO_GREET NEKOSHELL_GREET_SSH NEKOSHELL_GREET_MODE NEKOSHELL_GREET_ART FAKEART_FAIL FAKEART2_FAIL
+  unset CLAUDECODE TMUX NEKOSHELL_PANEL SSH_CONNECTION NEKOSHELL_NO_GREET NEKOSHELL_GREET_SSH NEKOSHELL_GREET_MODE NEKOSHELL_GREET_ART FAKEART_FAIL FAKEART2_FAIL FAKEIMAGE_FAIL FAKEIMAGE_NOSIZE FAKEIMAGE_GONE
   # A developer running the tests from a nekoshell shell has NEKOSHELL_ROOT
   # exported, pointing at their own checkout. The greeting prefers it over the
   # recorded root, so it has to go: these tests are about this checkout, and
@@ -19,12 +19,13 @@ setup() {
   unset NEKOSHELL_ROOT
   # The engine looks for providers among the enabled plugins under
   # NEKOSHELL_PLUGINS_DIR. A directory of links carries the real greet plugin
-  # next to the two fixture providers.
+  # next to the three fixture providers.
   export NEKOSHELL_PLUGINS_DIR="$HOME/plugins"
   mkdir -p "$NEKOSHELL_PLUGINS_DIR"
   ln -s "$REPO_ROOT/plugins/greet" "$NEKOSHELL_PLUGINS_DIR/greet"
   ln -s "$REPO_ROOT/tests/fixtures/plugins/fakeart" "$NEKOSHELL_PLUGINS_DIR/fakeart"
   ln -s "$REPO_ROOT/tests/fixtures/plugins/fakeart2" "$NEKOSHELL_PLUGINS_DIR/fakeart2"
+  ln -s "$REPO_ROOT/tests/fixtures/plugins/fakeimage" "$NEKOSHELL_PLUGINS_DIR/fakeimage"
   mkdir -p "$HOME/.config/nekoshell/art" "$HOME/.cache/nekoshell"
   printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = ["greet", "fakeart"]\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
   NK="$REPO_ROOT/bin/nekoshell"
@@ -273,6 +274,102 @@ print(d["display"]["color"]["title"])'
   assert_contains "$output" "--logo none"
 }
 
+# --- image providers --------------------------------------------------------
+# A plugin with an executable greet-image is an image provider: caption on
+# the first line, the path of a picture on the second, and on an optional
+# third the size in cells. It takes part in the provider draw like a sprite
+# provider, but only where the terminal can draw images.
+
+@test "an image provider's picture goes to fastfetch's image flag at its own size" {
+  set_plugins '"greet", "fakeimage"'
+  NEKOSHELL_SEED=1 run greet
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "--kitty $NEKOSHELL_PLUGINS_DIR/fakeimage/one.png --logo-width 20 --logo-height 10"
+  [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Image · one" ]
+}
+
+@test "an image provider without a size line gets IMAGE_WIDTH and IMAGE_HEIGHT" {
+  set_plugins '"greet", "fakeimage"'
+  FAKEIMAGE_NOSIZE=1 NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--logo-width 28 --logo-height 14"
+  printf 'IMAGE_WIDTH=30\nIMAGE_HEIGHT=15\n' > "$HOME/.config/nekoshell/greet.conf"
+  FAKEIMAGE_NOSIZE=1 NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--logo-width 30 --logo-height 15"
+}
+
+@test "ART=auto gives an image provider the same odds as a sprite provider" {
+  set_plugins '"greet", "fakeart", "fakeimage"'
+  local seen="" seed
+  for seed in 1 2 3 4 5 6 7 8; do
+    rm -f "$HOME/.cache/nekoshell/art-name"
+    NEKOSHELL_SEED=$seed greet >/dev/null
+    [ -s "$HOME/.cache/nekoshell/art-name" ]
+    seen="$seen $(cat "$HOME/.cache/nekoshell/art-name")"
+  done
+  assert_contains "$seen" "Fake Art · one"
+  assert_contains "$seen" "Fake Image · one"
+}
+
+@test "ART weights name an image provider like any other" {
+  set_plugins '"greet", "fakeart", "fakeimage"'
+  printf 'ART="fakeart:0,fakeimage:5"\n' > "$HOME/.config/nekoshell/greet.conf"
+  local seed
+  for seed in 1 2 3 4 5; do
+    NEKOSHELL_SEED=$seed greet >/dev/null
+    [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Image · one" ]
+  done
+}
+
+@test "where the terminal cannot draw images an image provider is never drawn from" {
+  set_plugins '"greet", "fakeart", "fakeimage"'
+  set_terminal bare
+  local seed
+  for seed in 1 2 3 4 5 6 7 8; do
+    NEKOSHELL_SEED=$seed greet >/dev/null
+    [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Fake Art · one" ]
+  done
+  set_plugins '"greet", "fakeimage"'
+  NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--logo none"
+  assert_not_contains "$output" "--kitty"
+}
+
+@test "--text means a sprite, so an image provider sits it out" {
+  set_plugins '"greet", "fakeimage"'
+  NEKOSHELL_GREET_MODE=text NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--logo none"
+  assert_not_contains "$output" "--kitty"
+}
+
+@test "NEKOSHELL_GREET_ART forces an image provider, and an image-capable iterm2 gets --iterm" {
+  set_plugins '"greet", "fakeart", "fakeimage"'
+  NEKOSHELL_GREET_ART=fakeimage NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--kitty $NEKOSHELL_PLUGINS_DIR/fakeimage/one.png"
+  mkdir -p "$HOME/terms/iterm2"
+  printf 'terminal_name() { echo iterm2; }\nterminal_capabilities() { echo "truecolor images"; }\n' \
+    > "$HOME/terms/iterm2/adapter.sh"
+  set_terminal iterm2
+  NEKOSHELL_TERMINALS_DIR="$HOME/terms" NEKOSHELL_GREET_ART=fakeimage NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--iterm $NEKOSHELL_PLUGINS_DIR/fakeimage/one.png"
+}
+
+@test "an image provider that draws nothing, or names a picture that is not there, gives way to the stats" {
+  set_plugins '"greet", "fakeimage"'
+  FAKEIMAGE_FAIL=1 NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--logo none"
+  [ ! -s "$HOME/.cache/nekoshell/art-name" ]
+  FAKEIMAGE_GONE=1 NEKOSHELL_SEED=1 run greet
+  assert_contains "$output" "--logo none"
+  assert_not_contains "$output" "--kitty"
+}
+
+@test "nekoshell greet --art accepts an image provider" {
+  set_plugins '"greet", "fakeart", "fakeimage"'
+  run script -q /dev/null "$NK" greet --art fakeimage < /dev/null
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "--kitty $NEKOSHELL_PLUGINS_DIR/fakeimage/one.png"
+}
+
 # --- the image branch -------------------------------------------------------
 # The image branch is a question about the terminal, not about TERM_PROGRAM: it
 # is taken only when the adapter says it can draw images. The `fake` fixture
@@ -432,6 +529,13 @@ print(d["display"]["color"]["title"])'
   assert_matches "$output" 'ok +art: fakeart +draws'
   assert_matches "$output" 'ok +art: fakeart2 +draws'
   assert_matches "$output" 'greet time +[0-9]+ ms'
+  set_plugins '"greet", "fakeart", "fakeimage"'
+  run "$NK" doctor --plugin greet
+  assert_matches "$output" 'ok +art: fakeimage +draws'
+  FAKEIMAGE_FAIL=1 run "$NK" doctor --plugin greet
+  [ "$status" -eq 1 ]
+  assert_matches "$output" 'fail +art: fakeimage +nothing to draw \(nekoshell plugin add fakeimage\)'
+  set_plugins '"greet", "fakeart", "fakeart2"'
   assert_not_contains "$output" "could not measure"
   FAKEART_FAIL=1 run "$NK" doctor --plugin greet
   [ "$status" -eq 1 ]

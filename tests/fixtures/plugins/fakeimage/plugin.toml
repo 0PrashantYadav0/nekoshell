@@ -1,0 +1,9 @@
+name = "fakeimage"
+summary = "A fixture image provider"
+requires = []
+casks = []
+taps = []
+requires_plugins = ["greet"]
+terminals = ["any"]
+conflicts = []
+tags = ["look"]
