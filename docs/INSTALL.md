@@ -87,6 +87,8 @@ A switch re-renders `~/.config/starship.toml`, `~/.config/nekoshell/theme.zsh` (
 
 iTerm2, kitty and Warp pick up the new colours by themselves or in the next window; Ghostty needs ⌘⇧, (comma) or a restart; Terminal.app re-reads the profile at launch. The prompt and greeting want a new shell.
 
+Everything else you can set — the keys in `nekoshell.toml`, the prompt, the greeting's `greet.conf` and your own `local.zsh` — is in [CONFIGURATION.md](CONFIGURATION.md).
+
 ## 6. Terminals
 
 ```bash
@@ -100,7 +102,7 @@ nekoshell terminal background ~/Pictures/bg.jpg 0.85
 nekoshell terminal background none
 ```
 
-A machine can configure several terminals. `nekoshell music` runs the player in the current window; `nekoshell music --panel` opens the running terminal's panel. The greeting and the panel always act on the terminal the shell is running in; the theme, the doctor and uninstall walk every configured one. What each adapter writes, how its panel opens and what it cannot do is in `terminals/<id>/README.md`.
+A machine can configure several terminals. `nekoshell music` runs the player in the current window; `nekoshell music --panel` opens the running terminal's panel. The greeting and the panel always act on the terminal the shell is running in; the theme, the doctor and uninstall walk every configured one. Which terminal can draw inline images, take a background image or open the panel from a key is in [TERMINALS.md](TERMINALS.md), and what each adapter writes, how its panel opens and what it cannot do is in `terminals/<id>/README.md`.
 
 ## 7. Plugins
 
@@ -111,7 +113,37 @@ nekoshell plugin add aerospace
 nekoshell plugin remove --purge btop   # --purge also uninstalls formulas no other plugin needs
 ```
 
-Twenty-three plugins ship: modern-cli, greet and its art providers pokemon, anime, minecraft and colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, yazi, gh, mise, spotify, ai, claude-code, opencode, aerospace, p10k, pure and omz. Each plugin's README (`nekoshell plugin info NAME` prints it) says what it installs, which files it links or copies, and what removing it leaves behind. [docs/plugins/README.md](plugins/README.md) is the manual: what each one does day to day, its keys, commands and aliases, the files you may edit, how it follows the theme, and how to turn it off.
+Twenty-four plugins ship: modern-cli, greet and its art providers pokemon, anime, minecraft and colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, yazi, gh, mise, spotify, ai, claude-code, opencode, vscode, aerospace, p10k, pure and omz. Each plugin's README (`nekoshell plugin info NAME` prints it) says what it installs, which files it links or copies, and what removing it leaves behind. [docs/plugins/README.md](plugins/README.md) is the manual: what each one does day to day, its keys, commands and aliases, the files you may edit, how it follows the theme, and how to turn it off.
+
+## Commands
+
+`nekoshell help` prints this list on the machine, marking the plugin commands enabled or not. Nine come from the core:
+
+| Command | What it takes |
+| --- | --- |
+| `nekoshell install` | `[--profile P] [--with a,b] [--without c] [--yes] [--check] [--dry-run] [--terminal ID\|a,b\|all\|installed]` |
+| `nekoshell doctor` | `[--json] [--plugin NAME]` |
+| `nekoshell theme` | `list \| current \| auto \| --resolve \| FLAVOUR` |
+| `nekoshell terminal` | `detect \| list \| use ID...\|all\|installed \| remove ID \| apply \| background PATH\|none [OPACITY] \| capabilities` |
+| `nekoshell plugin` | `list \| info NAME \| add NAME... \| remove [--purge] NAME...` |
+| `nekoshell music` | `[PLAYER] [--panel]` |
+| `nekoshell uninstall` | `[--yes] [--purge]` |
+| `nekoshell help` | nothing; `-h` and `--help` are the same |
+| `nekoshell version` | nothing; `-v` and `--version` are the same |
+
+Five more come from plugins, and exist only while the plugin that owns them is enabled:
+
+| Command | Plugin | What it takes |
+| --- | --- | --- |
+| `nekoshell greet` | greet | `[--image \| --text \| --art NAME]` |
+| `nekoshell art` | greet | `list \| add IMAGE \| sample` |
+| `nekoshell spotify` | spotify | `search [QUERY] \| client-id ID \| login \| logout` |
+| `nekoshell vscode` | vscode | `terminal [ID\|App.app]` |
+| `nekoshell ai` | ai | `welcome [TOOL] \| edit \| status` |
+
+A name a plugin owns but has not been enabled for prints the `nekoshell plugin add <owner>` line and exits 2. `bin/` also holds the five v0.1 command names (`nekoshell-art`, `nekoshell-doctor`, `nekoshell-greet`, `nekoshell-music`, `nekoshell-theme`) as three-line shims that exec the matching subcommand.
+
+There is no `nekoshell update`: upgrading is a `git pull` or `brew upgrade`, below.
 
 ## Upgrading
 
@@ -141,7 +173,7 @@ cd ~/.nekoshell
 
 It removes every enabled plugin in reverse order (their linked files and install-hook changes, such as the delta include in `~/.gitconfig`), unlinks the zshrc, restores every backup set newest first, deletes the Starship config it rendered, takes nekoshell's config back out of every configured terminal, and deletes `theme.zsh`, `antidote.txt` and `nekoshell.toml`.
 
-Left in place, on purpose: `~/.config/nekoshell/zsh/local.zsh`, `greet.conf` and the art pack, `~/.config/fastfetch/config.jsonc`, `~/.config/tmux/nekoshell-theme.conf`, `~/.config/btop/btop.conf`, every config a plugin copied into your home (Neovim, tmux, AeroSpace), the art packs under `~/.local/share` (pokemon-colorscripts with its `~/.local/bin` link, fastfetch-pngs, minecraft-colorscripts, colorscripts), the TPM clone, the backup directory, `~/.iterm2_shell_integration.zsh`, and the Homebrew packages unless you passed `--purge`. iTerm2's global preferences are the one thing an uninstall cannot undo while iTerm2 runs; it prints the `defaults delete` line to run with iTerm2 quit.
+Left in place, on purpose: `~/.config/nekoshell/zsh/local.zsh`, `greet.conf` and the art pack, `~/.config/fastfetch/config.jsonc`, `~/.config/tmux/nekoshell-theme.conf`, `~/.config/btop/btop.conf`, every config a plugin copied into your home (Neovim, tmux, AeroSpace, yazi, mise, `~/.p10k.zsh`, spotify-player's `app.toml` with your client id, the ai plugin's welcome templates) and the cached Spotify login, the records of the settings that were put back (`~/.config/nekoshell/vscode/previous.json` and the two under `~/.config/nekoshell/ai/`), the art packs under `~/.local/share` (pokemon-colorscripts with its `~/.local/bin` link, fastfetch-pngs, minecraft-colorscripts, colorscripts), the TPM clone, the backup directory, `~/.iterm2_shell_integration.zsh`, and the Homebrew packages unless you passed `--purge`. iTerm2's global preferences are the one thing an uninstall cannot undo while iTerm2 runs; it prints the `defaults delete` line to run with iTerm2 quit.
 
 ## Troubleshooting
 

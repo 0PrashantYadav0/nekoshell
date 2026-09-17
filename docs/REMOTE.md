@@ -27,4 +27,4 @@ The panel and the terminal configuration are for the remote Mac's own windows. `
 
 ## What an AI agent does
 
-An agent installing nekoshell on a Mac it reaches over SSH follows [AGENTS.md](../AGENTS.md) unchanged: the same non-interactive install line, `nekoshell doctor --json` to verify, and the human steps handed back rather than attempted. The only difference is that the terminal cannot be detected, so the agent passes `--terminal installed` or a named id.
+An agent installing nekoshell on a Mac it reaches over SSH follows [AGENTS.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/AGENTS.md) unchanged: the same non-interactive install line, `nekoshell doctor --json` to verify, and the human steps handed back rather than attempted. The only difference is that the terminal cannot be detected, so the agent passes `--terminal installed` or a named id.

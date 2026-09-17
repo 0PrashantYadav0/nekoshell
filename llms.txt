@@ -1,18 +1,25 @@
 # nekoshell
 
-> A Catppuccin terminal rig for macOS: one command installs a zsh config, a prompt, a greeting, a music panel and a plugin set across iTerm2, kitty, Ghostty, Warp and Terminal.app, and one theme switch recolours all of it.
+> A Catppuccin terminal rig for macOS: one command installs a zsh config, a prompt, a greeting, a music panel and twenty-four plugins across iTerm2, kitty, Ghostty, Warp and Terminal.app, and one theme switch recolours all of it.
 
 ## Start here
 
-- [README](README.md): what you get, install, commands, terminals
+- [README](README.md): the front page — install, the commands, the plugins, where every page is
+- [Docs index](docs/README.md): every page in this repository, grouped
 - [AGENTS.md](AGENTS.md): the contract for an agent installing or changing nekoshell
-- [Install](docs/INSTALL.md): the long install, upgrading, uninstalling, troubleshooting
+- [Install](docs/INSTALL.md): the long install, the commands, upgrading, uninstalling, troubleshooting
+
+## Use it
+
+- [Configuration](docs/CONFIGURATION.md): `nekoshell.toml`, the themes, the prompt, `greet.conf`, `local.zsh`
+- [Terminals](docs/TERMINALS.md): what the five adapters can do and what each needs by hand
+- [The plugins](docs/plugins/README.md)
 
 ## Understand it
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [How a plugin works](docs/plugins/ARCHITECTURE.md)
-- [The plugins](docs/plugins/README.md)
+- [Distribution](docs/DISTRIBUTION.md): the tap, the one-liner, the release tarball
 
 ## Change it
 

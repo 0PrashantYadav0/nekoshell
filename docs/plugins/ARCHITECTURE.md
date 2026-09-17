@@ -140,4 +140,4 @@ The player itself is `plugins/<name>/bin/nekoshell-<name>`, an executable that r
 
 ## Writing one
 
-Step by step, ending with a plugin that passes `make check`: [../contributing/writing-a-plugin.md](../contributing/writing-a-plugin.md).
+Step by step, ending with a plugin that passes `make check`: [docs/contributing/writing-a-plugin.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/docs/contributing/writing-a-plugin.md) in the repository (it is a contributor page, so it does not ship in the release tarball).
