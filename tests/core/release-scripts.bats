@@ -60,6 +60,10 @@ make_repo() {
   [ "$(git rev-parse --show-toplevel)" = "$R" ] || return 1
   git config user.name "A Person"; git config user.email "a@example.com"
   cp -R "$REPO_ROOT/scripts" "$R/scripts"
+  # scripts/ is only here so package.sh can find itself; export-ignore it the
+  # way the real .gitattributes does, so package.sh's own refusal check does
+  # not trip over this test fixture's own scripts/ directory.
+  printf 'scripts export-ignore\n' > .gitattributes
   printf '0.2.0\n' > VERSION
   printf '# Changelog\n\n## 0.2.0 (unreleased)\n\n- a thing\n\n## 0.1.0\n\n- first\n' > CHANGELOG.md
   git add -A; git commit -q -s -m "chore: seed"
@@ -124,7 +128,7 @@ make_repo() {
   make_repo
   mkdir -p bin .github; printf '#!/usr/bin/env bash\necho hi\n' > bin/nekoshell; chmod +x bin/nekoshell
   echo x > .github/thing
-  printf '.github export-ignore\n' > .gitattributes
+  printf '.github export-ignore\nscripts export-ignore\n' > .gitattributes
   git add -A; git commit -q -s -m "chore: files"
   git tag v0.2.0
   run scripts/package.sh --out "$HOME/dist"
@@ -145,6 +149,97 @@ make_repo() {
   run scripts/package.sh --ref v9.9.9 --out "$HOME/dist"
   [ "$status" -eq 1 ]
   assert_contains "$output" "no such ref"
+}
+
+@test "package.sh prints the size line in the exact format" {
+  make_repo
+  mkdir -p bin .github; printf '#!/usr/bin/env bash\necho hi\n' > bin/nekoshell; chmod +x bin/nekoshell
+  printf '.github export-ignore\nscripts export-ignore\n' > .gitattributes
+  git add -A; git commit -q -s -m "chore: files"
+  run scripts/package.sh --ref HEAD --out "$HOME/dist"
+  [ "$status" -eq 0 ]
+  assert_matches "${lines[0]}" '^nekoshell-[0-9.]+\.tar\.gz: [0-9]+ KB, [0-9]+ entries$'
+}
+
+# A throwaway repo shaped like the real one, with the real export-ignore
+# entries committed: bin/, docs/plugins/ and README.md survive, the
+# development-only paths do not.
+make_release_tree() {
+  R="$HOME/release-repo"; mkdir -p "$R"
+  cd "$R" || return 1
+  git init -q -b main . 2>/dev/null || { git init -q .; git checkout -q -b main; }
+  [ "$(git rev-parse --show-toplevel)" = "$R" ] || return 1
+  git config user.name "A Person"; git config user.email "a@example.com"
+  cp -R "$REPO_ROOT/scripts" "$R/scripts"
+  cat > .gitattributes <<'EOF'
+tests export-ignore
+scripts export-ignore
+skills export-ignore
+packaging export-ignore
+docs/superpowers export-ignore
+docs/ci-checks export-ignore
+docs/contributing export-ignore
+docs/ai export-ignore
+docs/screenshots export-ignore
+docs/assets export-ignore
+Makefile export-ignore
+AGENTS.md export-ignore
+CLAUDE.md export-ignore
+CONTRIBUTING.md export-ignore
+CODE_OF_CONDUCT.md export-ignore
+SECURITY.md export-ignore
+llms.txt export-ignore
+EOF
+  mkdir -p bin docs/plugins docs/screenshots docs/assets docs/superpowers tests skills packaging
+  printf '#!/usr/bin/env bash\necho hi\n' > bin/nekoshell; chmod +x bin/nekoshell
+  printf '# Plugins\n' > docs/plugins/README.md
+  echo shot > docs/screenshots/shot.png
+  echo logo > docs/assets/logo.png
+  echo note > docs/superpowers/note.md
+  echo t > tests/whatever.bats
+  echo s > skills/whatever.md
+  echo p > packaging/whatever
+  printf '# nekoshell\n' > README.md
+  echo m > Makefile
+  echo a > AGENTS.md
+  echo c > CLAUDE.md
+  echo l > llms.txt
+  printf '0.9.0\n' > VERSION
+  git add -A; git commit -q -s -m "chore: seed release tree"
+}
+
+@test "package.sh's tarball holds what runs and drops the development files" {
+  make_release_tree
+  run scripts/package.sh --ref HEAD --out "$HOME/dist"
+  [ "$status" -eq 0 ]
+  run tar -tzf "$HOME/dist/nekoshell-0.9.0.tar.gz"
+  assert_contains "$output" "nekoshell-0.9.0/bin/nekoshell"
+  assert_contains "$output" "nekoshell-0.9.0/docs/plugins/README.md"
+  assert_contains "$output" "nekoshell-0.9.0/README.md"
+  assert_not_contains "$output" "/tests/"
+  assert_not_contains "$output" "/scripts/"
+  assert_not_contains "$output" "/skills/"
+  assert_not_contains "$output" "/packaging/"
+  assert_not_contains "$output" "docs/screenshots"
+  assert_not_contains "$output" "docs/assets"
+  assert_not_contains "$output" "docs/superpowers"
+  assert_not_contains "$output" "/Makefile"
+  assert_not_contains "$output" "/AGENTS.md"
+  assert_not_contains "$output" "/CLAUDE.md"
+  assert_not_contains "$output" "/llms.txt"
+}
+
+@test "package.sh refuses to write SHA256SUMS when tests/ or scripts/ made it into the tarball" {
+  make_release_tree
+  # Undo the export-ignore for tests/ only, so the archive carries development
+  # files and the refusal check has something to catch.
+  sed -i.bak '/^tests export-ignore$/d' .gitattributes
+  rm .gitattributes.bak
+  git commit -q -s -am "chore: stop ignoring tests"
+  run scripts/package.sh --ref HEAD --out "$HOME/dist"
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "the tarball carries development files; check the export-ignore lines in .gitattributes"
+  [ ! -f "$HOME/dist/SHA256SUMS" ]
 }
 
 @test "render-formula.sh fills url and sha256 and leaves no placeholder" {

@@ -6,7 +6,10 @@
 # `git archive` of REF (default the tag for VERSION) with the prefix
 # nekoshell-X.Y.Z/, honouring .gitattributes export-ignore, into DIR (default
 # dist/), plus SHA256SUMS beside it. The release workflow attaches both to the
-# GitHub Release, and the Homebrew formula pins the sha.
+# GitHub Release, and the Homebrew formula pins the sha. Prints the tarball's
+# size and entry count, and refuses to write SHA256SUMS if development files
+# (tests/, scripts/) made it in anyway: the export-ignore lines in
+# .gitattributes are the real fix, this is the tripwire.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$root"
@@ -40,5 +43,16 @@ version="$(git show "$ref:VERSION" | tr -d '[:space:]')"
 name="nekoshell-$version"
 mkdir -p "$out"
 git archive --format=tar.gz --prefix="$name/" -o "$out/$name.tar.gz" "$ref"
+
+bytes="$(wc -c <"$out/$name.tar.gz" | tr -d '[:space:]')"
+entries="$(tar -tzf "$out/$name.tar.gz" | wc -l | tr -d '[:space:]')"
+kb="$((bytes / 1024))"
+echo "$name.tar.gz: $kb KB, $entries entries"
+
+if tar -tzf "$out/$name.tar.gz" | grep -qE "^$name/(tests|scripts)/"; then
+  echo "the tarball carries development files; check the export-ignore lines in .gitattributes" >&2
+  exit 1
+fi
+
 (cd "$out" && shasum -a 256 "$name.tar.gz" >SHA256SUMS)
 cat "$out/SHA256SUMS"

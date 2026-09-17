@@ -15,14 +15,14 @@ teardown() { teardown_tmp_home; }
 @test "a fresh machine clones main into NEKOSHELL_DIR and hands over to install.sh" {
   run "$B" --yes --profile minimal
   [ "$status" -eq 0 ]
-  assert_contains "$output" "git clone --branch main https://github.com/0PrashantYadav0/nekoshell.git $HOME/.nekoshell"
+  assert_contains "$output" "git clone --depth 1 --branch main https://github.com/0PrashantYadav0/nekoshell.git $HOME/.nekoshell"
   assert_contains "$output" "would: $HOME/.nekoshell/install.sh --yes --profile minimal"
 }
 
 @test "NEKOSHELL_REF picks a tag" {
   NEKOSHELL_REF=v0.2.0 run "$B"
   [ "$status" -eq 0 ]
-  assert_contains "$output" "git clone --branch v0.2.0"
+  assert_contains "$output" "git clone --depth 1 --branch v0.2.0"
 }
 
 @test "an existing checkout is fetched and moved to the ref" {
