@@ -16,13 +16,18 @@ The libraries under `core/lib` only define functions. Nothing there touches the 
 | `core/starship/` | `starship.toml.tmpl`, the prompt |
 | `core/antidote.txt` | the zsh plugins every install gets, before any plugin adds its own |
 | `terminals/` | `adapter.sh`, the contract, and one directory per adapter: ghostty, iterm2, kitty, terminal-app, warp |
-| `plugins/` | 23 plugins, one directory each |
+| `plugins/` | 24 plugins, one directory each |
 | `profiles/` | `minimal.txt`, `dev.txt`, `full.txt`: plugin names, one per line |
 | `data/` | vendored files, currently the zsh-syntax-highlighting Catppuccin themes |
+| `docs/` | the manual: `README.md` (the index), `INSTALL.md`, `CONFIGURATION.md`, `TERMINALS.md`, this file, `DISTRIBUTION.md`, `REMOTE.md` and `plugins/`, plus the contributor-only `contributing/`, `ci-checks/`, `ai/`, `superpowers/`, `screenshots/` and `assets/` |
 | `skills/nekoshell/` | `SKILL.md`, the Claude Code skill |
-| `scripts/` | `lint.sh` and `check-commit-msg.sh` |
+| `packaging/` | `homebrew/nekoshell.rb.tmpl`, the only copy of the formula |
+| `scripts/` | `lint.sh`, `check-commit-msg.sh`, and the release scripts `package.sh`, `release.sh`, `changelog-section.sh`, `render-formula.sh` |
 | `tests/` | the bats suite, its helpers, fakes and fixtures |
 | `install.sh`, `uninstall.sh` | check macOS and Homebrew, then `exec bin/nekoshell install`/`uninstall` with the flags |
+| `bootstrap.sh`, `VERSION` | the one-line installer's clone-and-run, and the version the release is cut from |
+
+A release tarball is `git archive` of the tag, so the tree above is not all of it: everything only a contributor or the repository page opens is `export-ignore` in `.gitattributes` and stripped from the tarball. That is `tests/`, `scripts/`, `skills/`, `packaging/`, `Makefile`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `llms.txt`, the dot-files, and the six contributor-only directories under `docs/`. A new development-only path needs its own `export-ignore` line, and a page that ships must not link into a path that does not: the link becomes a `https://github.com/0PrashantYadav0/nekoshell/blob/main/<path>` URL instead. [DISTRIBUTION.md](DISTRIBUTION.md) has the tarball itself.
 
 ## The dispatcher
 
@@ -185,4 +190,4 @@ A full run is the core block (homebrew, zshrc, config, starship, the zsh plugin 
 
 `bats -r tests` is the whole suite: `tests/core` for the libraries and the dispatcher, `tests/plugins/<name>.bats` for each plugin, `tests/terminals/<id>.bats` for each adapter. `tests/helpers.bash` gives every test a throwaway `HOME`, `tests/fakes` stands in for the tools an install would otherwise run, and `tests/fixtures` holds sample plugins and adapters. No test touches the real `HOME`, runs a real `brew`, or writes into the checkout.
 
-How to write one: [contributing/testing.md](contributing/testing.md).
+How to write one: [docs/contributing/testing.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/docs/contributing/testing.md) in the repository (it is a contributor page, so it does not ship in the release tarball).
