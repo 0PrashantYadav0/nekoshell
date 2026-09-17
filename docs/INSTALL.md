@@ -1,6 +1,6 @@
 # Install
 
-The human version of the install steps. For an AI agent, see [AGENTS.md](../AGENTS.md).
+The human version of the install steps. For an AI agent, see [AGENTS.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/AGENTS.md) in the repository (it does not ship in the release tarball).
 
 ## 1. Before you start
 
