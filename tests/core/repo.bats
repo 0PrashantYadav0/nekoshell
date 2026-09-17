@@ -86,10 +86,16 @@ $name/plugin.toml: an art provider must list greet in requires_plugins"
   [ "$status" -eq 0 ]
   assert_contains "$output" "bin/nekoshell"
   assert_contains "$output" "VERSION"
-  assert_contains "$output" "tests/helpers.bash"
+  assert_contains "$output" "docs/plugins/README.md"
   assert_not_contains "$output" ".github/"
   assert_not_contains "$output" ".githooks/"
   assert_not_contains "$output" ".shellcheckrc"
+  # Top-level only: plugins/colorscripts/scripts.txt and the like are runtime
+  # files that happen to share a name with the directories going.
+  local top; top="$(printf '%s\n' "$output" | grep -E '^(tests|scripts|skills|packaging)/' || true)"
+  [ -z "$top" ]
+  local root; root="$(printf '%s\n' "$output" | grep -E '^(Makefile|AGENTS\.md|CLAUDE\.md|llms\.txt)$' || true)"
+  [ -z "$root" ]
 }
 
 # The user manual is one page per plugin plus a table that links them, and a

@@ -55,7 +55,12 @@ elif [[ -e "$dir" ]]; then
   exit 1
 else
   say "cloning $repo ($ref) into $dir"
-  run git clone --branch "$ref" "$repo" "$dir"
+  # Shallow: the history is 11 MB and growing, the tree it runs from is under
+  # 3 MB, and a fresh install only ever needs $ref checked out, not the log.
+  # A contributor who wants the history clones it by hand instead (see
+  # docs/INSTALL.md); the update path above (fetch --tags, pull --ff-only)
+  # still works on a shallow clone.
+  run git clone --depth 1 --branch "$ref" "$repo" "$dir"
 fi
 
 say "running install.sh $*"

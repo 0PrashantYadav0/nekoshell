@@ -8,6 +8,11 @@
 - greet: image providers. A plugin with an executable `greet-image` (caption, picture path, optional `WIDTH HEIGHT` in cells) is drawn through fastfetch's image flag where the terminal can show images, and takes part in `ART` and `nekoshell greet --art` like a sprite provider; `--text` leaves it out. The doctor's provider rows cover it.
 - vscode plugin: VS Code opens the nekoshell terminal from Ctrl+Shift+C and the Explorer's "Open in External Terminal". `plugin add` sets `terminal.external.osxExec` to the app for the configured terminal id and `terminal.explorerKind` to `both` in VS Code's `settings.json`, editing the JSONC file in place so comments and the other keys survive; `plugin remove` puts both keys back; `nekoshell vscode terminal [ID|App.app]` shows or changes the app, with a name outside the table passed through as it is; the doctor says which apps the debug console can open.
 
+### Install
+
+- The release tarball carries only what runs: `tests/`, `scripts/`, `skills/`, `packaging/` and the contributor-only docs are now `export-ignore` in `.gitattributes`, and `scripts/package.sh` prints the tarball's size and entry count and refuses to write `SHA256SUMS` if development files made it in anyway.
+- `bootstrap.sh` clones with `--depth 1`: a fresh install gets the tree, not the project's history. A contributor who wants the log still clones by hand.
+
 ## 0.2.0 - 2026-09-15
 
 A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`, `theme`, `terminal`, `plugin`, `music` and `uninstall` replace the v0.1 scripts; `install.sh` and `uninstall.sh` only check for macOS and Homebrew and hand over. The v0.1 command names stay as three-line shims onto the subcommands.

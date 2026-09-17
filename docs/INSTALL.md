@@ -24,7 +24,7 @@ It clones `~/.nekoshell` (or updates it), then runs `install.sh` with any flags 
 curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash -s -- --yes --profile full --terminal installed
 ```
 
-`NEKOSHELL_REF=v0.2.0` in front of the line pins a release instead of `main`; `NEKOSHELL_DIR` moves the checkout.
+`NEKOSHELL_REF=v0.2.0` in front of the line pins a release instead of `main`; `NEKOSHELL_DIR` moves the checkout. The clone is shallow (`--depth 1`): it gets the tree at that ref, not the project's history, which is what an install needs and keeps the download small. A contributor who wants the log, `git blame` or an older commit should clone by hand instead, the way the section below does.
 
 ```bash
 git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
