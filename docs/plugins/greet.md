@@ -6,6 +6,8 @@ Every new interactive shell prints a picture next to the machine stats fastfetch
 
 The greeting stays silent inside tmux, inside the music panel, over SSH, under Claude Code, when stdout is not a terminal, and when `NEKOSHELL_NO_GREET` is set. It is the last thing the shell sources, so nothing is drawn over it. The doctor times it and warns above 150 ms.
 
+See the README's [Screenshots](../../README.md#screenshots) section for the greeting next to three of the art providers.
+
 ## Art providers
 
 The art comes from an enabled plugin that ships a `greet-art` program, a sprite: [pokemon](pokemon.md) (in every profile), [minecraft](minecraft.md) and [colorscripts](colorscripts.md); or a `greet-image` program, a picture drawn inline: [anime](anime.md), which only takes its turn where the terminal can draw images. `ART` in `greet.conf` picks among them: `auto` gives each the same odds; `pokemon:70,anime:30` weights them; a name that is not enabled is skipped; a weight of 0 never draws. `nekoshell greet --art anime` forces one. Each provider's own settings go in `greet.conf` too, prefixed with its name (`POKEMON_SHINY_ODDS`, `ANIME_ONLY`); its page lists them. The doctor prints one row per enabled provider and warns when there is none.

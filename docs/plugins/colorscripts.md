@@ -4,6 +4,8 @@
 
 An ANSI pattern in the greeting, drawn by the [greet](greet.md) plugin next to the machine stats: blocks, bars, Pac-Man, space invaders, TIE fighters and the rest of a collection in the tradition of DT's shell-color-scripts. They use the terminal's sixteen colours, so they follow the flavour by themselves. Only the 32 scripts on the plugin's vetted list are ever run; each was read and timed at the pinned commit and draws in a few milliseconds.
 
+![the colorscripts greeting: an ANSI rails pattern beside the machine stats](../screenshots/greet-colorscripts.png)
+
 ## Using it
 
 | Command | What it does |
