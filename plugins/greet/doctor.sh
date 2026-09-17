@@ -9,11 +9,19 @@ else
 fi
 
 # One row per enabled art provider, asked to draw rather than just to exist:
-# a pack that never arrived answers `-x` and nothing else.
+# a pack that never arrived answers `-x` and nothing else. A sprite provider
+# is asked for its sprite, an image provider for its picture; one that ships
+# both is asked for the sprite, which draws in any terminal.
 _greet_any=0
 for _greet_p in $(plugin_enabled_all); do
-  _greet_art="$(plugin_dir "$_greet_p")/greet-art"
-  [[ -x "$_greet_art" ]] || continue
+  _greet_art=""
+  for _greet_f in greet-art greet-image; do
+    if [[ -x "$(plugin_dir "$_greet_p")/$_greet_f" ]]; then
+      _greet_art="$(plugin_dir "$_greet_p")/$_greet_f"
+      break
+    fi
+  done
+  [[ -n "$_greet_art" ]] || continue
   _greet_any=1
   if PLUGIN_NAME="$_greet_p" PLUGIN_DIR="$(plugin_dir "$_greet_p")" "$_greet_art" >/dev/null 2>&1; then
     report ok "art: $_greet_p" "draws"
