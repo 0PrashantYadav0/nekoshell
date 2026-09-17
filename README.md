@@ -105,4 +105,4 @@ Issues and pull requests are welcome; [CONTRIBUTING.md](https://github.com/0Pras
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The sprites and pictures the greeting draws come from packs fetched at install time and are not part of this repository; Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.
+MIT, see [LICENSE](LICENSE). The sprites and pictures the greeting draws come from packs fetched at install time and are not part of this repository; only the screenshots above show them. Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.

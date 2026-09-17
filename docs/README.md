@@ -5,7 +5,7 @@ Every page in this repository, grouped by what you came for. The front page is [
 ## Using nekoshell
 
 - [INSTALL.md](INSTALL.md): the long install, the seven steps, the flags, the steps only you can do, the commands, upgrading, uninstalling and troubleshooting.
-- [CONFIGURATION.md](CONFIGURATION.md): `nekoshell.toml`, the themes, `greet.conf` and your own `local.zsh`.
+- [CONFIGURATION.md](CONFIGURATION.md): `nekoshell.toml`, the themes, the prompt, `greet.conf` and your own `local.zsh`.
 - [TERMINALS.md](TERMINALS.md): what the five terminal adapters can do, how to configure them, and what each one still needs from you by hand.
 - [plugins/README.md](plugins/README.md): how plugins are managed and what the profiles hold, with one page per plugin behind it.
 - [REMOTE.md](REMOTE.md): installing nekoshell on another Mac over SSH, and what behaves differently there.

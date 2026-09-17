@@ -90,11 +90,15 @@ $name/plugin.toml: an art provider must list greet in requires_plugins"
   assert_not_contains "$output" ".github/"
   assert_not_contains "$output" ".githooks/"
   assert_not_contains "$output" ".shellcheckrc"
-  # Top-level only: plugins/colorscripts/scripts.txt and the like are runtime
-  # files that happen to share a name with the directories going.
+  # The first regex checks the four root directories .gitattributes marks
+  # export-ignore (tests/, scripts/, skills/, packaging/), anchored so a
+  # deeper path of the same name would not match; the second checks the
+  # named root files. Neither touches plugins/colorscripts/scripts.txt: it
+  # is a file, not a directory named scripts, so it is unaffected either
+  # way and ships as it should.
   local top; top="$(printf '%s\n' "$output" | grep -E '^(tests|scripts|skills|packaging)/' || true)"
   [ -z "$top" ]
-  local root; root="$(printf '%s\n' "$output" | grep -E '^(Makefile|AGENTS\.md|CLAUDE\.md|llms\.txt)$' || true)"
+  local root; root="$(printf '%s\n' "$output" | grep -E '^(Makefile|AGENTS\.md|CLAUDE\.md|llms\.txt|CONTRIBUTING\.md|CODE_OF_CONDUCT\.md|SECURITY\.md|\.gitignore)$' || true)"
   [ -z "$root" ]
 }
 
