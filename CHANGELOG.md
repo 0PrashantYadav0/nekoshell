@@ -4,6 +4,8 @@
 
 ### Plugins
 
+- anime plugin, rebuilt: a new anime picture on every terminal you open, drawn inline by fastfetch, in place of the unicode sprites from anime-colorscripts. The install hook fetches a pack of PNG stills at a pinned commit, shrinks every picture to 640 px with `sips` and writes each one's size down, so the greeting never opens a file to size it; `ANIME_HEIGHT` sets the rows and the width follows the picture. `ANIME_ONLY` and `ANIME_SKIP` stay; `ANIME_SCALE` goes with the sprites. In a terminal that cannot draw images (Terminal.app) the provider is never picked, `nekoshell greet --art anime` says why, and the doctor warns.
+- greet: image providers. A plugin with an executable `greet-image` (caption, picture path, optional `WIDTH HEIGHT` in cells) is drawn through fastfetch's image flag where the terminal can show images, and takes part in `ART` and `nekoshell greet --art` like a sprite provider; `--text` leaves it out. The doctor's provider rows cover it.
 - vscode plugin: VS Code opens the nekoshell terminal from Ctrl+Shift+C and the Explorer's "Open in External Terminal". `plugin add` sets `terminal.external.osxExec` to the app for the configured terminal id and `terminal.explorerKind` to `both` in VS Code's `settings.json`, editing the JSONC file in place so comments and the other keys survive; `plugin remove` puts both keys back; `nekoshell vscode terminal [ID|App.app]` shows or changes the app, with a name outside the table passed through as it is; the doctor says which apps the debug console can open.
 
 ## 0.2.0 - 2026-09-15

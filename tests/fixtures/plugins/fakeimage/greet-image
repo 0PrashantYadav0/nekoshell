@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Fixture image provider: a caption, the path of a picture beside this file
+# and a size in cells; no size line when FAKEIMAGE_NOSIZE=1, a path that is
+# not there when FAKEIMAGE_GONE=1, and nothing at all when FAKEIMAGE_FAIL=1,
+# the way a provider whose pack never arrived behaves.
+[[ "${FAKEIMAGE_FAIL:-}" == 1 ]] && exit 1
+echo "Fake Image · one"
+if [[ "${FAKEIMAGE_GONE:-}" == 1 ]]; then
+  echo "$PLUGIN_DIR/gone.png"
+else
+  echo "$PLUGIN_DIR/one.png"
+fi
+[[ "${FAKEIMAGE_NOSIZE:-}" == 1 ]] || echo "20 10"
