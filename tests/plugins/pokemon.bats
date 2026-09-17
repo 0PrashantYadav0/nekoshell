@@ -109,7 +109,8 @@ teardown() { teardown_tmp_home; }
   mkdir -p "$HOME/bin"
   printf '#!/usr/bin/env bash\necho missingno\necho art\n' > "$HOME/bin/pokemon-colorscripts"
   chmod +x "$HOME/bin/pokemon-colorscripts"
-  PATH="$HOME/bin:$PATH" run "$P/greet-art"
+  # Shiny odds off: the roll is 1 in 128, and a lucky one would append " ✦ shiny".
+  POKEMON_SHINY_ODDS=0 PATH="$HOME/bin:$PATH" run "$P/greet-art"
   [ "${lines[0]}" = "Missingno" ]
 }
 
