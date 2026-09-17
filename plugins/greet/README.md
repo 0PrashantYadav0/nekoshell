@@ -2,14 +2,16 @@
 
 ## What it does
 
-Prints a greeting when you open a terminal: a sprite from an enabled art
-provider plugin (a Pokémon, an anime character, a Minecraft block, an ANSI
+Prints a greeting when you open a terminal: art from an enabled art
+provider plugin (a Pokémon, an anime picture, a Minecraft block, an ANSI
 pattern), or a picture from your own art pack, next to the machine stats
 [fastfetch](https://github.com/fastfetch-cli/fastfetch) collects — OS, host,
 uptime, shell, CPU, memory, disk, battery, wifi, packages.
 
-An art provider is a plugin that ships a `greet-art` program: `pokemon` (in
-every profile), `anime`, `minecraft` and `colorscripts`. `ART` in
+An art provider is a plugin that ships a `greet-art` program, a sprite
+(`pokemon`, in every profile, `minecraft` and `colorscripts`), or a
+`greet-image` program, a picture drawn inline (`anime`, which only takes its
+turn in a terminal that can draw images). `ART` in
 `~/.config/nekoshell/greet.conf` picks among the enabled ones: `auto` gives
 each the same odds, `pokemon:70,anime:30` weights them, and a name that is
 not enabled is skipped. `SPRITE_SHARE` is the percentage of launches that
@@ -48,8 +50,8 @@ Your own:
   three shipped samples in, `nekoshell art add <image>` adds your own.
 
 nekoshell ships no anime stills and no Pokémon sprites: those are copyrighted.
-The samples are the project's own pixel art, and the sprites come from the
-provider plugins' packs at greeting time.
+The samples are the project's own pixel art, and the sprites and pictures
+come from the provider plugins' packs, fetched at install time.
 
 ## After install
 

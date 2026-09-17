@@ -1,32 +1,30 @@
 #!/usr/bin/env bats
-# The anime art provider: a pinned release tarball, checksummed, and a
-# greet-art that picks a file itself.
+# The anime image provider: a picture pack fetched at a pinned commit and
+# shrunk once, and a greet-image that picks a file and sizes it itself.
 load ../helpers
 setup() {
   setup_tmp_home
   export PATH="$REPO_ROOT/tests/fakes:$PATH"
   export NEKOSHELL_TERMINALS_DIR="$REPO_ROOT/tests/fixtures/terminals"
   export FAKE_BREW_INSTALLED=""
-  unset FAKE_CURL_FAIL NEKOSHELL_SEED ANIME_ONLY ANIME_SKIP
+  unset FAKE_CURL_FAIL FAKE_SIPS_FAILS FAKE_SIPS_SIZE NEKOSHELL_SEED ANIME_ONLY ANIME_SKIP ANIME_HEIGHT IMAGE_HEIGHT
   unset CLAUDECODE TMUX NEKOSHELL_PANEL SSH_CONNECTION NEKOSHELL_GREET_MODE NEKOSHELL_GREET_ART
   mkdir -p "$HOME/.config/nekoshell" "$HOME/.cache/nekoshell"
   printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = []\n' "$REPO_ROOT" > "$HOME/.config/nekoshell/nekoshell.toml"
   NK="$REPO_ROOT/bin/nekoshell"
   P="$REPO_ROOT/plugins/anime"
   export PLUGIN_DIR="$P" PLUGIN_NAME=anime
-  # A tarball with the release's layout: ./anime-colorscripts/colorscripts/*.txt.
-  mkdir -p "$HOME/src/anime-colorscripts/colorscripts"
-  printf '2997-hatsune-miku\n1-naruto-uzumaki\n9-fuck-you\n' > "$HOME/src/anime-colorscripts/charalist.txt"
-  for n in 2997-hatsune-miku 1-naruto-uzumaki 9-fuck-you; do
-    printf 'ART %s\nline2\n' "$n" > "$HOME/src/anime-colorscripts/colorscripts/$n.txt"
+  SHA="$(sed -n 's/^ANIME_SHA="\(.*\)"/\1/p' "$P/install.sh")"
+  # A tarball with GitHub's archive layout: one top directory named after the
+  # repository and the commit, the pictures and a README inside it.
+  mkdir -p "$HOME/src/FastfetchPngs-$SHA"
+  for n in Miku ZeroTwo2 SatoruGojo Loli; do
+    printf 'PNG %s\n' "$n" > "$HOME/src/FastfetchPngs-$SHA/$n.png"
   done
-  # One sprite too wide to sit next to the stats: 90 columns behind an escape.
-  printf '\033[38;2;1;2;3m%090d\n' 0 > "$HOME/src/anime-colorscripts/colorscripts/5-wide-one.txt"
-  (cd "$HOME/src" && tar czf "$HOME/anime.tar.gz" ./anime-colorscripts)
-  export FAKE_CURL_SOURCE="$HOME/anime.tar.gz"
-  NEKOSHELL_ANIME_SHA256="$(shasum -a 256 "$HOME/anime.tar.gz" | cut -d' ' -f1)"
-  export NEKOSHELL_ANIME_SHA256
-  ANIME_DIR="$HOME/.local/share/anime-colorscripts"
+  printf '# pictures\n' > "$HOME/src/FastfetchPngs-$SHA/README.md"
+  (cd "$HOME/src" && tar czf "$HOME/pngs.tar.gz" "FastfetchPngs-$SHA")
+  export FAKE_CURL_SOURCE="$HOME/pngs.tar.gz"
+  ANIME_DIR="$HOME/.local/share/fastfetch-pngs"
 }
 teardown() { teardown_tmp_home; }
 
@@ -38,24 +36,30 @@ teardown() { teardown_tmp_home; }
   for s in "## What it does" "## Installs" "## Files" "## After install" "## Remove"; do
     grep -qF "$s" "$P/README.md"
   done
-  [ -x "$P/greet-art" ]
+  [ -x "$P/greet-image" ]
+  [ ! -e "$P/greet-art" ]
 }
 
-@test "add downloads the pinned release, checks it and unpacks the sprites" {
+@test "add downloads the pinned commit, shrinks every picture and lists their sizes" {
   run "$NK" plugin add anime
   [ "$status" -eq 0 ]
   assert_contains "$output" "curl -fsSL -o"
-  assert_contains "$output" "releases/download/v1.1.3/anime-colorscripts.tar.gz"
-  [ -f "$ANIME_DIR/colorscripts/2997-hatsune-miku.txt" ]
-  [ -f "$ANIME_DIR/charalist.txt" ]
-  [ "$(cat "$ANIME_DIR/.nekoshell-version")" = "v1.1.3" ]
-  [ "$(cat "$ANIME_DIR/.nekoshell-list.txt" | tr '\n' ' ')" = "1-naruto-uzumaki 2997-hatsune-miku 9-fuck-you " ]
+  assert_contains "$output" "/archive/$SHA.tar.gz"
+  for n in Miku ZeroTwo2 SatoruGojo Loli; do
+    [ -f "$ANIME_DIR/$n.png" ]
+  done
+  [ ! -e "$ANIME_DIR/README.md" ]
+  [ "$(cat "$ANIME_DIR/.nekoshell-version")" = "$SHA" ]
+  [ "$(cat "$ANIME_DIR/.nekoshell-list.txt" | tr '\n' '|')" = "Loli.png 750 1060|Miku.png 750 1060|SatoruGojo.png 750 1060|ZeroTwo2.png 750 1060|" ]
   assert_contains "$output" "anime enabled"
 }
 
-@test "the recorded checksum is a sha256 and the tarball is the v1.1.3 asset" {
-  grep -q '^ANIME_VERSION="v1.1.3"' "$P/install.sh"
-  grep -qE ':-[0-9a-f]{64}\}' "$P/install.sh"
+@test "the pin is a commit id and the pictures are shrunk to 640 px on the long side" {
+  grep -qE '^ANIME_SHA="[0-9a-f]{40}"$' "$P/install.sh"
+  "$NK" plugin add anime >/dev/null
+  # The fake sips writes a stub where --out points; the stub is what is kept.
+  [ "$(cat "$ANIME_DIR/Miku.png")" = "fake png" ]
+  grep -q '^ANIME_PX=640$' "$P/install.sh"
 }
 
 @test "a second add does not download again" {
@@ -66,18 +70,22 @@ teardown() { teardown_tmp_home; }
   assert_contains "$output" "already here"
 }
 
-@test "a checksum mismatch keeps what is there and still succeeds" {
-  NEKOSHELL_ANIME_SHA256="0000000000000000000000000000000000000000000000000000000000000000" run "$NK" plugin add anime
-  [ "$status" -eq 0 ]
-  assert_contains "$output" "does not match the recorded checksum"
-  [ ! -d "$ANIME_DIR/colorscripts" ]
-}
-
 @test "a download that fails warns and still succeeds" {
   FAKE_CURL_FAIL=1 run "$NK" plugin add anime
   [ "$status" -eq 0 ]
-  assert_contains "$output" "could not download anime-colorscripts"
-  [ ! -d "$ANIME_DIR/colorscripts" ]
+  assert_contains "$output" "could not download the anime pictures"
+  [ ! -d "$ANIME_DIR" ]
+}
+
+@test "pictures that cannot be shrunk are left out, and none at all keeps what is there" {
+  FAKE_SIPS_FAILS=1 run "$NK" plugin add anime
+  [ "$status" -eq 0 ]
+  assert_contains "$output" "could not prepare any of the anime pictures"
+  [ ! -e "$ANIME_DIR/.nekoshell-version" ]
+  # The next add tries again rather than believing the pack is here.
+  run "$NK" plugin add anime
+  assert_contains "$output" "curl"
+  [ -f "$ANIME_DIR/Miku.png" ]
 }
 
 @test "a dry run downloads and unpacks nothing" {
@@ -86,129 +94,124 @@ teardown() { teardown_tmp_home; }
   [ ! -d "$ANIME_DIR" ]
 }
 
-@test "greet-art captions the file name and prints the sprite" {
+@test "greet-image prints the caption, the path and a size that keeps the proportions" {
   "$NK" plugin add anime >/dev/null
-  # ANIME_SCALE=100 leaves the file as it is; the fixture is text, not cells.
-  ANIME_ONLY=miku ANIME_SCALE=100 run "$P/greet-art"
+  ANIME_ONLY=miku run "$P/greet-image"
   [ "$status" -eq 0 ]
-  [ "${lines[0]}" = "Hatsune Miku" ]
-  [ "${lines[1]}" = "ART 2997-hatsune-miku" ]
-  [ "${lines[2]}" = "line2" ]
+  [ "${lines[0]}" = "Miku" ]
+  [ "${lines[1]}" = "$ANIME_DIR/Miku.png" ]
+  # 750 by 1060 at 14 rows: a cell is twice as tall as it is wide, so
+  # 14 * 2 * 750 / 1060 = 19.8 columns.
+  [ "${lines[2]}" = "20 14" ]
+  [ "${#lines[@]}" -eq 3 ]
 }
 
-# grid ROWS COLS: a sprite shaped like the pack's, a blank line above and
-# below, every cell a colour escape naming its row and column then two
-# blocks, a reset at the end of the last row. Written as the miku file so
-# ANIME_ONLY=miku picks it.
-grid() {
-  local rows="$1" cols="$2" r c
-  {
-    echo
-    for ((r = 0; r < rows; r++)); do
-      for ((c = 0; c < cols; c++)); do printf '\033[38;2;%d;%d;0m\xe2\x96\x88\xe2\x96\x88' "$r" "$c"; done
-      [[ $r -eq $((rows - 1)) ]] && printf '\033[0m'
-      echo
-    done
-    echo
-  } > "$ANIME_DIR/colorscripts/2997-hatsune-miku.txt"
-}
-
-# cell R C: the escape and pair the grid wrote for one cell.
-cell() { printf '\033[38;2;%d;%d;0m\xe2\x96\x88\xe2\x96\x88' "$1" "$2"; }
-
-@test "the sprite is drawn at 30 percent by default, sampling the middle of each block" {
+@test "the caption is the file name spaced at the capitals, without a variant number" {
   "$NK" plugin add anime >/dev/null
-  grid 10 10
-  ANIME_ONLY=miku run "$P/greet-art"
-  [ "$status" -eq 0 ]
-  [ "${lines[0]}" = "Hatsune Miku" ]
-  # 10 rows at 30 percent are 3, taken from the middle of each third: rows
-  # 1, 5 and 8, and the same three columns of each. The blank lines around
-  # the pack's sprites go; the reset that ends the sprite stays.
-  [ "${#lines[@]}" -eq 4 ]
-  [ "${lines[1]}" = "$(cell 1 1)$(cell 1 5)$(cell 1 8)" ]
-  [ "${lines[2]}" = "$(cell 5 1)$(cell 5 5)$(cell 5 8)" ]
-  [ "${lines[3]}" = "$(cell 8 1)$(cell 8 5)$(cell 8 8)$(printf '\033[0m')" ]
+  ANIME_ONLY=zerotwo run "$P/greet-image"
+  [ "${lines[0]}" = "Zero Two" ]
+  ANIME_ONLY=gojo run "$P/greet-image"
+  [ "${lines[0]}" = "Satoru Gojo" ]
+  # A name that is letters and digits through, or all capitals, is left alone.
+  printf 'LLawliet.png 750 1060\nRO635.png 750 1060\n' > "$ANIME_DIR/.nekoshell-list.txt"
+  cp "$ANIME_DIR/Miku.png" "$ANIME_DIR/LLawliet.png"
+  cp "$ANIME_DIR/Miku.png" "$ANIME_DIR/RO635.png"
+  ANIME_ONLY=llaw run "$P/greet-image"
+  [ "${lines[0]}" = "LLawliet" ]
+  ANIME_ONLY=ro63 run "$P/greet-image"
+  [ "${lines[0]}" = "RO635" ]
 }
 
-@test "ANIME_SCALE sets the size, and a value that is not 1 to 100 means 30" {
+@test "the height is IMAGE_HEIGHT, or ANIME_HEIGHT over it, and the width follows the picture" {
   "$NK" plugin add anime >/dev/null
-  grid 10 10
-  ANIME_ONLY=miku ANIME_SCALE=50 run "$P/greet-art"
-  [ "${#lines[@]}" -eq 6 ]
-  [ "${lines[1]}" = "$(cell 1 1)$(cell 1 3)$(cell 1 5)$(cell 1 7)$(cell 1 9)" ]
-  # At 100 the file goes out as it is; bats drops its two blank lines.
-  ANIME_ONLY=miku ANIME_SCALE=100 run "$P/greet-art"
-  [ "${#lines[@]}" -eq 11 ]
-  ANIME_ONLY=miku ANIME_SCALE=big run "$P/greet-art"
-  [ "${#lines[@]}" -eq 4 ]
-  ANIME_ONLY=miku ANIME_SCALE=0 run "$P/greet-art"
-  [ "${#lines[@]}" -eq 4 ]
+  ANIME_ONLY=miku IMAGE_HEIGHT=20 run "$P/greet-image"
+  [ "${lines[2]}" = "28 20" ]
+  ANIME_ONLY=miku IMAGE_HEIGHT=20 ANIME_HEIGHT=10 run "$P/greet-image"
+  [ "${lines[2]}" = "14 10" ]
+  # A landscape picture goes wide; a height that is not a number means 14.
+  printf 'Wide.png 1000 250\n' > "$ANIME_DIR/.nekoshell-list.txt"
+  cp "$ANIME_DIR/Miku.png" "$ANIME_DIR/Wide.png"
+  ANIME_HEIGHT=big run "$P/greet-image"
+  [ "${lines[2]}" = "112 14" ]
 }
 
-@test "a cell without an escape of its own keeps the colour of the cell before it" {
-  "$NK" plugin add anime >/dev/null
-  # One row, ten cells, one escape: the pack sets a colour once and lets it
-  # run. Every cell the scaler keeps has to carry that colour itself.
-  { echo; printf '\033[38;2;9;9;0m'; for ((c = 0; c < 10; c++)); do printf '\xe2\x96\x88\xe2\x96\x88'; done; echo; } > "$ANIME_DIR/colorscripts/2997-hatsune-miku.txt"
-  ANIME_ONLY=miku run "$P/greet-art"
-  [ "${#lines[@]}" -eq 2 ]
-  [ "${lines[1]}" = "$(cell 9 9)$(cell 9 9)$(cell 9 9)" ]
-}
-
-@test "ANIME_SKIP words are never drawn, and the default skips the rude one" {
+@test "ANIME_SKIP words are never drawn, and the default skips one file name" {
   "$NK" plugin add anime >/dev/null
   local seen="" seed
-  for seed in 1 2 3 4 5 6 7 8 9 10; do
-    seen="$seen $(NEKOSHELL_SEED=$seed "$P/greet-art" | head -1)"
+  for seed in 1 2 3 4 5 6 7 8 9 10 11 12; do
+    seen="$seen $(NEKOSHELL_SEED=$seed "$P/greet-image" | head -1)"
   done
-  assert_not_contains "$seen" "Fuck"
-  assert_not_contains "$seen" "Wide One"
-  assert_contains "$seen" "Hatsune Miku"
-  assert_contains "$seen" "Naruto Uzumaki"
-  ANIME_SKIP="miku naruto" run "$P/greet-art"
+  assert_not_contains "$seen" "Loli"
+  assert_contains "$seen" "Miku"
+  assert_contains "$seen" "Zero Two"
+  assert_contains "$seen" "Satoru Gojo"
+  ANIME_SKIP="miku zero gojo" run "$P/greet-image"
   [ "$status" -eq 0 ]
-  [ "${lines[0]}" = "Fuck You" ]
-  ANIME_SKIP="miku naruto fuck" run "$P/greet-art"
-  [ "$status" -eq 1 ]
-}
-
-@test "without the list every sprite is a candidate" {
-  "$NK" plugin add anime >/dev/null
-  rm "$ANIME_DIR/.nekoshell-list.txt"
-  ANIME_ONLY=wide run "$P/greet-art"
-  [ "$status" -eq 0 ]
-  [ "${lines[0]}" = "Wide One" ]
-}
-
-@test "greet-art is quick: no process per sprite" {
-  "$NK" plugin add anime >/dev/null
-  local ms
-  ms="$(python3 -c 'import subprocess,time,sys;t=time.time();subprocess.run([sys.argv[1]],capture_output=True);print(int((time.time()-t)*1000))' "$P/greet-art")"
-  [ "$ms" -lt 100 ]
-}
-
-@test "greet-art is silent and non-zero before the pack is there" {
-  run "$P/greet-art"
+  [ "${lines[0]}" = "Loli" ]
+  ANIME_SKIP="miku zero gojo loli" run "$P/greet-image"
   [ "$status" -eq 1 ]
   [ -z "$output" ]
 }
 
-@test "the greeting draws an anime sprite through the provider" {
+@test "a listed picture that is no longer on disk is not a candidate" {
   "$NK" plugin add anime >/dev/null
-  run script -q /dev/null "$NK" greet --art anime < /dev/null
-  # The two-row fixture is one row at the default 30 percent.
-  assert_contains "$output" "--file-raw - stdin=1"
-  grep -qE 'Hatsune Miku|Naruto Uzumaki' "$HOME/.cache/nekoshell/art-name"
+  rm "$ANIME_DIR/Miku.png"
+  ANIME_ONLY=miku run "$P/greet-image"
+  [ "$status" -eq 1 ]
+  [ -z "$output" ]
 }
 
-@test "doctor reports the pack" {
+@test "NEKOSHELL_SEED pins the draw" {
+  "$NK" plugin add anime >/dev/null
+  local a b
+  a="$(NEKOSHELL_SEED=7 "$P/greet-image")"
+  b="$(NEKOSHELL_SEED=7 "$P/greet-image")"
+  [ "$a" = "$b" ]
+}
+
+@test "greet-image is quick: no process per picture" {
+  "$NK" plugin add anime >/dev/null
+  local ms
+  ms="$(python3 -c 'import subprocess,time,sys;t=time.time();subprocess.run([sys.argv[1]],capture_output=True);print(int((time.time()-t)*1000))' "$P/greet-image")"
+  [ "$ms" -lt 100 ]
+}
+
+@test "greet-image is silent and non-zero before the pack is there" {
+  run "$P/greet-image"
+  [ "$status" -eq 1 ]
+  [ -z "$output" ]
+}
+
+@test "the greeting draws an anime picture inline, at the provider's size" {
+  "$NK" plugin add anime >/dev/null
+  run script -q /dev/null "$NK" greet --art anime < /dev/null
+  [ "$status" -eq 0 ]
+  assert_matches "$output" "--kitty $ANIME_DIR/(Miku|ZeroTwo2|SatoruGojo)\.png --logo-width 20 --logo-height 14"
+  grep -qE '^(Miku|Zero Two|Satoru Gojo)$' "$HOME/.cache/nekoshell/art-name"
+}
+
+@test "nekoshell greet --art anime says so in a terminal that cannot draw images" {
+  "$NK" plugin add anime >/dev/null
+  sed 's/^terminal = .*/terminal = "bare"/' "$HOME/.config/nekoshell/nekoshell.toml" > "$HOME/t.toml"
+  mv "$HOME/t.toml" "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" greet --art anime
+  [ "$status" -eq 1 ]
+  assert_contains "$output" "anime draws pictures, which the bare terminal cannot show"
+}
+
+@test "doctor reports the pack, and warns where the terminal cannot draw it" {
   "$NK" plugin add anime >/dev/null
   run "$NK" doctor --plugin anime
   [ "$status" -eq 0 ]
-  assert_matches "$output" 'ok +anime-colorscripts +v1\.1\.3, 3 of 4 sprites fit'
+  assert_matches "$output" "ok +anime pictures +${SHA:0:7}, 4 pictures"
+  assert_not_contains "$output" "cannot draw"
+  sed 's/^terminal = .*/terminal = "bare"/' "$HOME/.config/nekoshell/nekoshell.toml" > "$HOME/t.toml"
+  mv "$HOME/t.toml" "$HOME/.config/nekoshell/nekoshell.toml"
+  run "$NK" doctor --plugin anime
+  [ "$status" -eq 0 ]
+  assert_matches "$output" 'warn +anime pictures +the bare terminal cannot draw images; the greeting skips this provider there'
   rm -rf "$ANIME_DIR"
   run "$NK" doctor --plugin anime
   [ "$status" -eq 1 ]
-  assert_matches "$output" 'fail +anime-colorscripts +missing \(nekoshell plugin add anime\)'
+  assert_matches "$output" 'fail +anime pictures +missing \(nekoshell plugin add anime\)'
 }

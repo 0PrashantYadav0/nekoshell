@@ -43,7 +43,7 @@ The installer asks for a profile, or takes `--profile`:
 
 ## Hooks you may notice
 
-- `install.sh` runs on add: modern-cli edits `~/.gitconfig`, pokemon, minecraft and colorscripts clone their sprite packs at a pinned commit and anime downloads its release tarball, tmux clones TPM, spotify replaces an old symlinked `app.toml` with a copy.
+- `install.sh` runs on add: modern-cli edits `~/.gitconfig`, pokemon, minecraft and colorscripts clone their sprite packs at a pinned commit and anime downloads its picture pack at one and shrinks it, tmux clones TPM, spotify replaces an old symlinked `app.toml` with a copy.
 - `theme.sh` runs on add and on every theme switch and writes the rendered files above; btop rewrites its one line, modern-cli rebuilds bat's theme cache.
 - `uninstall.sh` runs on remove and takes back what the install hook did.
 - `doctor.sh` adds rows to `nekoshell doctor`; `--plugin NAME` shows one plugin's rows.
@@ -56,7 +56,7 @@ The installer asks for a profile, or takes `--profile`:
 | [modern-cli](modern-cli.md) | eza, bat, fd, ripgrep and delta in place of ls, cat and the git pager, plus zoxide's `z` for jumping | shell | eza, bat, fd, ripgrep, zoxide, git-delta |
 | [greet](greet.md) | a sprite from an art provider or your own pixel art next to fastfetch's machine stats on every new shell | look | fastfetch |
 | [pokemon](pokemon.md) | a random Pokémon in the greeting, with its number, type and generation | look | pokemon-colorscripts, cloned |
-| [anime](anime.md) | a random anime character in the greeting | look | anime-colorscripts, a release tarball |
+| [anime](anime.md) | a random anime picture in the greeting, drawn inline where the terminal can | look | a picture pack, fetched at a pinned commit |
 | [minecraft](minecraft.md) | a random Minecraft block in the greeting | look | minecraft-colorscripts, cloned |
 | [colorscripts](colorscripts.md) | an ANSI pattern in the terminal's palette in the greeting | look | theamallalgi/colorscripts, cloned |
 | [fzf](fzf.md) | Ctrl-T, Alt-C and Ctrl-R with previews | shell | fzf |

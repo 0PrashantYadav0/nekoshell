@@ -130,7 +130,7 @@ An executable `greet-image` makes the plugin an image provider instead: the capt
 
 The greeting picks among the enabled providers with `ART` from `~/.config/nekoshell/greet.conf`: `auto` gives each the same odds, and a list such as `pokemon:70,anime:30` weights them. A name that is not an enabled provider is dropped and a weight of 0 never draws.
 
-The greeting runs on every new interactive shell, and its doctor warns above 150 ms. A provider that fetches over the network, or runs unpinned third-party code, does not belong here: `pokemon`, `minecraft` and `colorscripts` clone their packs in `install.sh` at a pinned commit and `anime` downloads a pinned release tarball, so drawing is a local read.
+The greeting runs on every new interactive shell, and its doctor warns above 150 ms. A provider that fetches over the network, or runs unpinned third-party code, does not belong here: `pokemon`, `minecraft` and `colorscripts` clone their packs in `install.sh` at a pinned commit and `anime` downloads the archive of a pinned commit and shrinks the pictures once, so drawing is a local read.
 
 ## Music players
 

@@ -1,5 +1,5 @@
 name = "anime"
-summary = "A random anime character sprite in the greeting, from anime-colorscripts"
+summary = "A random anime picture in the greeting, drawn inline where the terminal can"
 requires = []
 casks = []
 taps = []
