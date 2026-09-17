@@ -4,6 +4,8 @@
 
 A random Minecraft block in the greeting, drawn by the [greet](greet.md) plugin next to the machine stats, with the block's name on the "Art" line. The pack is minecraft-colorscripts: 261 blocks from the 1.8.9 textures, checked out at a pinned commit.
 
+![the minecraft greeting: a piston block sprite beside the machine stats](../screenshots/greet-minecraft.png)
+
 ## Using it
 
 | Command | What it does |

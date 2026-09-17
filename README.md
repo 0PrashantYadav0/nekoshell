@@ -20,6 +20,27 @@ A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with
 
 Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the twenty-four that ship: modern-cli, greet, pokemon, anime, minecraft, colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, yazi, gh, mise, spotify, ai, claude-code, opencode, aerospace, p10k, pure, omz and vscode. [docs/plugins/README.md](docs/plugins/README.md) is the user manual, one page per plugin.
 
+## Screenshots
+
+The greeting, in iTerm2, with three of the art providers.
+
+<table>
+<tr>
+<td align="center" width="33%">
+<img src="docs/screenshots/greet-anime.png" width="100%" alt="the anime greeting: an anime character drawn inline beside the machine stats">
+<br><sub>anime — a picture drawn inline</sub>
+</td>
+<td align="center" width="33%">
+<img src="docs/screenshots/greet-minecraft.png" width="100%" alt="the minecraft greeting: a piston block sprite beside the machine stats">
+<br><sub>minecraft — a block sprite</sub>
+</td>
+<td align="center" width="33%">
+<img src="docs/screenshots/greet-colorscripts.png" width="100%" alt="the colorscripts greeting: an ANSI rails pattern beside the machine stats">
+<br><sub>colorscripts — an ANSI pattern</sub>
+</td>
+</tr>
+</table>
+
 ## Install
 
 You need macOS, Homebrew, zsh and git. Then one of three ways.
