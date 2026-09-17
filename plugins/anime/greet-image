@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# anime greet-image: a random picture from the pack, captioned with the
+# character's name and sized to keep its proportions. The greeting hands the
+# file to fastfetch, which draws it inline in a terminal that can.
+#
+# The candidates come from .nekoshell-list.txt, which the install hook writes
+# with each picture's pixel size: one awk over fifty lines, no process per
+# file, so the whole thing is a few milliseconds of the greeting's 150 ms.
+#
+# Keys from greet.conf: ANIME_ONLY (words; only names containing one are
+# drawn), ANIME_SKIP (words never drawn; one file in the pack is skipped
+# unless this is set) and ANIME_HEIGHT (rows to draw at; IMAGE_HEIGHT, the
+# art pack's height, unless set). The width is worked out from the picture:
+# a terminal cell is about twice as tall as it is wide.
+set -uo pipefail
+base="$HOME/.local/share/fastfetch-pngs"
+list="$base/.nekoshell-list.txt"
+[[ -s "$list" ]] || exit 1
+[[ -n "${NEKOSHELL_SEED:-}" ]] && RANDOM="$NEKOSHELL_SEED"
+
+# The words are matched against the file name only, never the sizes after
+# it, so ANIME_SKIP=2 skips ZeroTwo2 and not every picture 1060 px tall.
+files=()
+widths=()
+heights=()
+while read -r f w h; do
+  [[ -n "$f" && -f "$base/$f" ]] || continue
+  files+=("$f")
+  widths+=("$w")
+  heights+=("$h")
+done < <(awk -v skip="${ANIME_SKIP-loli}" -v only="${ANIME_ONLY:-}" '
+  BEGIN { ns = split(tolower(skip), s, " "); no = split(tolower(only), o, " ") }
+  NF >= 3 && $2 > 0 && $3 > 0 {
+    n = tolower($1)
+    for (i = 1; i <= ns; i++) if (index(n, s[i])) next
+    if (no) {
+      ok = 0
+      for (i = 1; i <= no; i++) if (index(n, o[i])) ok = 1
+      if (!ok) next
+    }
+    print
+  }' "$list")
+[[ ${#files[@]} -gt 0 ]] || exit 1
+i=$((RANDOM % ${#files[@]}))
+file="${files[$i]}"
+w="${widths[$i]}"
+h="${heights[$i]}"
+
+# The caption: the file name spaced at its capitals, without the .png and
+# without the digit that tells a second picture of a character from the
+# first (ZeroTwo2). A digit after a digit stays: RO635 is the whole name.
+caption="${file%.png}"
+[[ "$caption" =~ [A-Za-z][0-9]$ ]] && caption="${caption%?}"
+caption="$(printf '%s\n' "$caption" | tr '_-' '  ' | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g')"
+
+rows="${ANIME_HEIGHT:-${IMAGE_HEIGHT:-14}}"
+[[ "$rows" =~ ^[0-9]+$ && "$rows" -ge 1 ]] || rows=14
+cols=$(((w * rows * 2 + h / 2) / h))
+((cols >= 1)) || cols=1
+
+printf '%s\n%s\n%s %s\n' "$caption" "$base/$file" "$cols" "$rows"

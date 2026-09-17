@@ -1,62 +1,85 @@
 #!/usr/bin/env bash
-# anime install: fetch the pinned release of anime-colorscripts.
+# anime install: fetch the picture pack, pinned, and shrink it once.
 #
-# The git tree of that project holds no sprites (its build scrapes them from
-# the web), so the release tarball is the artefact, checked against a
-# recorded checksum. Nothing here aborts `plugin add`: offline, or a download
-# that does not match, leaves what is there and warns, and the doctor's own
-# row is where a missing pack is reported.
+# The pack is a git repository of PNG stills, 185 MB at full size. It is
+# fetched as GitHub's archive of one commit rather than cloned: a commit's
+# tree is what it is, so the commit id is the pin, and there is no 185 MB
+# .git to keep afterwards. (The archive's gzip header is not stable across
+# GitHub's servers, so a checksum of the tarball would not be either; the
+# commit id is the integrity here.)
+#
+# Every picture is shrunk with sips before it is kept: fastfetch decodes the
+# picture on every shell start, a 3500 px scan costs more than the whole
+# 150 ms greeting budget, and 640 px on the long side is more than any
+# terminal cell box shows. What stays under ~/.local/share is under 20 MB. The
+# pixel size of each shrunk picture is written down beside it, so greet-image
+# never opens a file to learn its proportions.
+#
+# Nothing here aborts `plugin add`: offline, or a picture sips cannot read,
+# leaves what is there and warns, and the doctor's own row is where a missing
+# pack is reported.
 
-ANIME_VERSION="v1.1.3"
-ANIME_URL="https://github.com/juanlouisr/anime-colorscripts/releases/download/$ANIME_VERSION/anime-colorscripts.tar.gz"
-# The sha256 of that asset, taken on 2026-09-13. Tests point
-# NEKOSHELL_ANIME_SHA256 at a tarball of their own.
-ANIME_SHA256="${NEKOSHELL_ANIME_SHA256:-7e7ad31618fa292875588e2cb1f0e99ff42bac7fcffc615697aafcf34e1db3f5}"
-ANIME_DIR="$HOME/.local/share/anime-colorscripts"
+ANIME_SHA="2619f112c2d7fc1514f098b6a9fc16fe20ff5124"
+ANIME_URL="https://github.com/thunder-blaze/FastfetchPngs/archive/$ANIME_SHA.tar.gz"
+ANIME_DIR="$HOME/.local/share/fastfetch-pngs"
+ANIME_PX=640
 
-# anime_write_list: the sprites that fit next to the stats, one name per line
-# in .nekoshell-list.txt. Some of the pack's sprites are 250 columns wide;
-# 80 leaves room for fastfetch's rows on a 120-column window. Measured once
-# here, so greet-art never has to open 247 files on a shell start-up.
-anime_write_list() {
-  python3 - "$ANIME_DIR" <<'PY'
-import glob, os, re, sys
-base = sys.argv[1]
-esc = re.compile(r"\x1b\[[0-9;]*m")
-names = []
-for f in sorted(glob.glob(os.path.join(base, "colorscripts", "*.txt"))):
-    text = open(f, encoding="utf-8", errors="replace").read()
-    width = max((len(esc.sub("", line)) for line in text.split("\n")), default=0)
-    if width <= 80:
-        names.append(os.path.basename(f)[:-4])
-tmp = os.path.join(base, ".nekoshell-list.txt.tmp")
-with open(tmp, "w", encoding="utf-8") as out:
-    out.write("".join(n + "\n" for n in names))
-os.replace(tmp, os.path.join(base, ".nekoshell-list.txt"))
-PY
+# anime_prepare SRC OUT LIST: shrink every PNG at the top of SRC into OUT and
+# append "name width height" for each to LIST. Leaves how many were kept in
+# an_kept; a warning goes to the log, so the count cannot be its output.
+anime_prepare() {
+  local src="$1" out="$2" list="$3" f name size kept=0 failed=0
+  an_kept=0
+  for f in "$src"/*.png; do
+    [[ -f "$f" ]] || continue
+    name="$(basename "$f")"
+    if sips -Z "$ANIME_PX" "$f" --out "$out/$name" >/dev/null 2>&1; then
+      size="$(sips -g pixelWidth -g pixelHeight "$out/$name" 2>/dev/null \
+        | awk '/pixelWidth:/ { w = $2 } /pixelHeight:/ { h = $2 } END { if (w > 0 && h > 0) print w, h }')"
+      if [[ -n "$size" ]]; then
+        printf '%s %s\n' "$name" "$size" >>"$list"
+        kept=$((kept + 1))
+        continue
+      fi
+      rm -f "$out/$name"
+    fi
+    failed=$((failed + 1))
+  done
+  [[ "$failed" -eq 0 ]] || log_warn "$PLUGIN_NAME: $failed of $((kept + failed)) pictures could not be shrunk and were left out"
+  an_kept="$kept"
 }
 
-if [[ -f "$ANIME_DIR/.nekoshell-version" && "$(cat "$ANIME_DIR/.nekoshell-version")" == "$ANIME_VERSION" ]]; then
-  log_info "$PLUGIN_NAME: anime-colorscripts $ANIME_VERSION is already here"
-  # A pack unpacked before the list existed gets one now.
-  [[ -s "$ANIME_DIR/.nekoshell-list.txt" || "${NEKOSHELL_DRY_RUN:-0}" == "1" ]] || anime_write_list
+if [[ -f "$ANIME_DIR/.nekoshell-version" && "$(cat "$ANIME_DIR/.nekoshell-version")" == "$ANIME_SHA" ]]; then
+  log_info "$PLUGIN_NAME: the pictures at ${ANIME_SHA:0:7} are already here"
+elif ! command -v sips >/dev/null 2>&1; then
+  log_warn "$PLUGIN_NAME: sips is missing, so the pictures cannot be prepared; the greeting will skip them"
 else
   an_tmp="$(mktemp -d "${TMPDIR:-/tmp}/nekoshell-anime.XXXXXX")"
-  if run curl -fsSL -o "$an_tmp/anime.tar.gz" "$ANIME_URL"; then
+  if run curl -fsSL -o "$an_tmp/pngs.tar.gz" "$ANIME_URL"; then
     if [[ "${NEKOSHELL_DRY_RUN:-0}" == "1" ]]; then
       : # nothing was downloaded
-    elif [[ "$(shasum -a 256 "$an_tmp/anime.tar.gz" | cut -d' ' -f1)" != "$ANIME_SHA256" ]]; then
-      log_warn "$PLUGIN_NAME: the download does not match the recorded checksum; keeping what is there"
     else
-      run rm -rf "$ANIME_DIR"
-      run mkdir -p "$ANIME_DIR"
-      # The tarball's entries start with ./anime-colorscripts/.
-      run tar -xzf "$an_tmp/anime.tar.gz" -C "$ANIME_DIR" --strip-components 2
-      anime_write_list
-      printf '%s\n' "$ANIME_VERSION" >"$ANIME_DIR/.nekoshell-version"
+      mkdir -p "$an_tmp/src" "$an_tmp/out"
+      # The archive's entries start with FastfetchPngs-<commit>/.
+      if run tar -xzf "$an_tmp/pngs.tar.gz" -C "$an_tmp/src" --strip-components 1; then
+        log_info "$PLUGIN_NAME: shrinking the pictures to $ANIME_PX px with sips"
+        anime_prepare "$an_tmp/src" "$an_tmp/out" "$an_tmp/list"
+        if [[ "$an_kept" -gt 0 ]]; then
+          run rm -rf "$ANIME_DIR"
+          run mkdir -p "$(dirname "$ANIME_DIR")"
+          run mv "$an_tmp/out" "$ANIME_DIR"
+          sort "$an_tmp/list" >"$ANIME_DIR/.nekoshell-list.txt"
+          printf '%s\n' "$ANIME_SHA" >"$ANIME_DIR/.nekoshell-version"
+          log_info "$PLUGIN_NAME: $an_kept pictures in $ANIME_DIR"
+        else
+          log_warn "$PLUGIN_NAME: could not prepare any of the anime pictures; keeping what is there"
+        fi
+      else
+        log_warn "$PLUGIN_NAME: could not unpack the anime pictures; keeping what is there"
+      fi
     fi
   else
-    log_warn "$PLUGIN_NAME: could not download anime-colorscripts; the greeting will skip it"
+    log_warn "$PLUGIN_NAME: could not download the anime pictures; the greeting will skip them"
   fi
   rm -rf "$an_tmp"
 fi

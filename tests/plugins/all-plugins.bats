@@ -31,16 +31,15 @@ setup() {
   printf ':\n' >"$HOMEBREW_PREFIX/share/zsh/site-functions/async"
   mkdir -p "$HOMEBREW_PREFIX/share/powerlevel10k"
   printf '# fake powerlevel10k theme file\n' >"$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme"
-  # anime fetches a real tarball over (faked) curl and checks it against a
-  # recorded sha256; anime.bats builds one of its own for the same reason, so
+  # anime unpacks a real tarball fetched over (faked) curl, GitHub's archive
+  # of one commit; anime.bats builds one of its own for the same reason, so
   # the sweep does too, rather than leave anime's install to warn and skip.
-  mkdir -p "$HOME/src/anime-colorscripts/colorscripts"
-  printf '2997-hatsune-miku\n' >"$HOME/src/anime-colorscripts/charalist.txt"
-  printf 'ART 2997-hatsune-miku\nline2\n' >"$HOME/src/anime-colorscripts/colorscripts/2997-hatsune-miku.txt"
-  (cd "$HOME/src" && tar czf "$HOME/anime.tar.gz" ./anime-colorscripts)
-  export FAKE_CURL_SOURCE="$HOME/anime.tar.gz"
-  NEKOSHELL_ANIME_SHA256="$(shasum -a 256 "$HOME/anime.tar.gz" | cut -d' ' -f1)"
-  export NEKOSHELL_ANIME_SHA256
+  local sha
+  sha="$(sed -n 's/^ANIME_SHA="\(.*\)"/\1/p' "$REPO_ROOT/plugins/anime/install.sh")"
+  mkdir -p "$HOME/src/FastfetchPngs-$sha"
+  printf 'PNG Miku\n' >"$HOME/src/FastfetchPngs-$sha/Miku.png"
+  (cd "$HOME/src" && tar czf "$HOME/pngs.tar.gz" "FastfetchPngs-$sha")
+  export FAKE_CURL_SOURCE="$HOME/pngs.tar.gz"
   mkdir -p "$HOME/.config/nekoshell" "$HOME/.cache/nekoshell"
   printf 'root = "%s"\nterminal = "fake"\ntheme = "mocha"\ntheme_resolved = "mocha"\nplugins = []\n' "$REPO_ROOT" >"$HOME/.config/nekoshell/nekoshell.toml"
   NK="$REPO_ROOT/bin/nekoshell"
