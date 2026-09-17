@@ -26,6 +26,7 @@
 - [Contributing](CONTRIBUTING.md)
 - [Contributor guides](docs/contributing/README.md)
 - [CI checks and releases](docs/ci-checks/README.md)
+- Dev-only paths (this file included) are `export-ignore` in `.gitattributes` and stay out of the release tarball; a new dev-only path gets a line there too
 
 ## Optional
 
