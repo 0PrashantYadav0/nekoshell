@@ -47,6 +47,8 @@ Every pull request runs five jobs in `.github/workflows/ci.yml`, and branch prot
 
 **Images.** No copyrighted images anywhere in the repository. `plugins/greet/art/` holds the project's own pixel art only.
 
+**Screenshots.** A new screenshot goes in `docs/screenshots/`, named `greet-<provider>.png` or `<plugin>-<what>.png`, 1600 px wide (`sips -Z 1600 FILE`) and run through `pngquant` (`pngquant --quality 65-90 --speed 1 --strip --force --ext .png FILE`) until it is under 250 KB. `docs/screenshots/` is listed in `.gitattributes` with `export-ignore`, so it stays out of the release tarball.
+
 **Vendored files.** A file copied from another project is listed in [THIRD_PARTY.md](THIRD_PARTY.md) with its source commit and license. Generated files (`core/theme/palettes.json`, `plugins/greet/data/pokemon.tsv`) are committed with the generator beside them; re-run the generator rather than editing the output.
 
 ## Adding a plugin or a terminal adapter

@@ -6,6 +6,8 @@ A random anime picture in the greeting, on every terminal you open: the [greet](
 
 Pictures need a terminal that can draw them: iTerm2, kitty, Ghostty and Warp can, Terminal.app cannot. Where it cannot, this provider is never picked and the other providers keep their turns; `nekoshell greet --art anime` says so, and the doctor warns.
 
+![the anime greeting: a picture beside the machine stats](../screenshots/greet-anime.png)
+
 ## Using it
 
 | Command | What it does |
