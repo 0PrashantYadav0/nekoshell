@@ -38,7 +38,7 @@ It needs nothing but `git` and `curl`, and it updates with every push, which is 
 
 ## A git checkout
 
-What contributors use, and what [AGENTS.md](../AGENTS.md) tells an agent to do:
+What contributors use, and what [AGENTS.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/AGENTS.md) tells an agent to do:
 
 ```bash
 git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
@@ -46,7 +46,7 @@ cd ~/.nekoshell
 ./install.sh
 ```
 
-The checkout is the install: `nekoshell.toml` points at it, so a `git pull` is an upgrade and edits to the tree take effect in the next shell. `make hooks` then installs the git hooks, and [CONTRIBUTING.md](../CONTRIBUTING.md) covers the rest.
+The checkout is the install: `nekoshell.toml` points at it, so a `git pull` is an upgrade and edits to the tree take effect in the next shell. `make hooks` then installs the git hooks, and [CONTRIBUTING.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/CONTRIBUTING.md) covers the rest.
 
 ## GitHub Releases
 
@@ -59,7 +59,7 @@ gh release download v0.2.0 --dir /tmp/rel
 cd /tmp/rel && shasum -a 256 -c SHA256SUMS
 ```
 
-The Homebrew formula points at the same tarball and pins the same checksum, so anything downstream that wants a stable artefact should use the Release rather than a tarball of the branch. [docs/ci-checks/release-process.md](ci-checks/release-process.md) describes how a release is cut.
+The Homebrew formula points at the same tarball and pins the same checksum, so anything downstream that wants a stable artefact should use the Release rather than a tarball of the branch. [docs/ci-checks/release-process.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/docs/ci-checks/release-process.md) in the repository describes how a release is cut; it is a contributor page, so it is one of the ones that does not ship in the tarball above.
 
 ## Later
 
