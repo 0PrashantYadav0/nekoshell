@@ -50,7 +50,7 @@ The checkout is the install: `nekoshell.toml` points at it, so a `git pull` is a
 
 ## GitHub Releases
 
-Every tag `vX.Y.Z` gets a GitHub Release with two assets: `nekoshell-X.Y.Z.tar.gz`, a `git archive` of the tag with the `nekoshell-X.Y.Z/` prefix and the development files stripped by the `export-ignore` entries in `.gitattributes`, and `SHA256SUMS`. The release notes are that version's section of `CHANGELOG.md`.
+Every tag `vX.Y.Z` gets a GitHub Release with two assets: `nekoshell-X.Y.Z.tar.gz`, a `git archive` of the tag with the `nekoshell-X.Y.Z/` prefix, and `SHA256SUMS`. The tarball holds what runs: `bin/`, `core/`, `plugins/`, `terminals/`, `profiles/`, `data/`, `install.sh`, `uninstall.sh`, `bootstrap.sh`, the licence and the docs a user reads. `tests/`, `scripts/`, `skills/`, `packaging/`, the contributor-only docs and the repository's own config files stay out, stripped by the `export-ignore` entries in `.gitattributes`. `scripts/package.sh` prints the tarball's size and entry count as it builds it, and refuses to write `SHA256SUMS` if `tests/` or `scripts/` made it in anyway. The release notes are that version's section of `CHANGELOG.md`.
 
 To verify a download:
 
