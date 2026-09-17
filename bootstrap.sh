@@ -59,8 +59,13 @@ else
   # 3 MB, and a fresh install only ever needs $ref checked out, not the log.
   # A contributor who wants the history clones it by hand instead (see
   # docs/INSTALL.md); the update path above (fetch --tags, pull --ff-only)
-  # still works on a shallow clone.
-  run git clone --depth 1 --branch "$ref" "$repo" "$dir"
+  # still works on a shallow clone. --no-single-branch, though: --depth alone
+  # implies --single-branch, which narrows remote.origin.fetch to $ref and
+  # leaves nothing for a later `git checkout main` to find, so an install
+  # pinned once with NEKOSHELL_REF and later run without it would fail with a
+  # "pathspec did not match" error. --no-single-branch keeps every branch tip
+  # at depth 1 instead; the tree is what is shared, so the clone stays small.
+  run git clone --depth 1 --no-single-branch --branch "$ref" "$repo" "$dir"
 fi
 
 say "running install.sh $*"
