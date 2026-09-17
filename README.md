@@ -16,27 +16,9 @@
 
 <p align="center">A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon (or an anime picture, a Minecraft block, an ANSI pattern) or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, <code>nekoshell</code>, installs it, themes it and checks it.</p>
 
-## What you get
-
-**Look.** Catppuccin in any of its four flavours, mocha by default, and JetBrainsMono Nerd Font in every configured terminal. Commands are coloured as you type them and the autosuggestion behind the cursor takes the palette's dimmest readable grey. `nekoshell theme latte` moves the whole rig to another flavour; `nekoshell theme auto` follows the macOS appearance.
-
-**Greeting.** A new interactive shell prints art next to the machine stats fastfetch collects. The art is from an art provider plugin 70 percent of the time and a picture from your art pack the rest, when the terminal can draw images. The `pokemon` provider is in every profile; `anime` (a picture drawn inline, in terminals that can), `minecraft` and `colorscripts` are one `nekoshell plugin add` away. It stays silent inside tmux, inside the panel, over SSH and under Claude Code.
-
-**Prompt.** Starship, two lines: the working directory, git and language status on top, the last command's duration, exit status and the clock on the right. The p10k plugin puts Powerlevel10k in its place, in the flavour's colours.
-
-**Music.** `nekoshell music` runs the music player in the current window. `nekoshell music --panel` opens it in whatever panel the running terminal has instead: a hotkey window in iTerm2, a quick-access terminal in kitty, the quick terminal in Ghostty, a popup inside tmux, a new window in Warp and Terminal.app. The spotify plugin is the player: spotify_player, which streams on its own and needs Premium, or a keyboard remote for the Spotify desktop app when spotify_player is missing or you ask for `--remote`.
-
-**Editor and multiplexer.** Neovim with lazy.nvim, in the flavour the shell is wearing, and tmux with a `C-a` prefix, vim-style panes and a Catppuccin status line. Both are copied into your home once and are yours from then on; a config you already have is left alone.
-
-**Search.** fzf on Ctrl-T, Alt-C and Ctrl-R with previews, atuin for a searchable shell history that never leaves the machine, and eza, bat, fd, ripgrep, zoxide and delta in place of the tools they replace.
-
-**Five terminals.** iTerm2, kitty, Ghostty, Warp and Apple Terminal.app each have an adapter. Every one gets the font, the colours and a music panel; what differs is in the table below.
-
-Everything past the shell and the prompt is a plugin. `nekoshell plugin list` shows the twenty-four that ship: modern-cli, greet, pokemon, anime, minecraft, colorscripts, fzf, atuin, lazygit, btop, nvim, tmux, yazi, gh, mise, spotify, ai, claude-code, opencode, aerospace, p10k, pure, omz and vscode. [docs/plugins/README.md](docs/plugins/README.md) is the user manual, one page per plugin.
-
 ## Screenshots
 
-The greeting, in iTerm2, with three of the art providers.
+The greeting in iTerm2, with three of the art providers.
 
 <table>
 <tr>
@@ -59,7 +41,7 @@ The greeting, in iTerm2, with three of the art providers.
 
 You need macOS, Homebrew, zsh and git. Then one of three ways.
 
-With Homebrew:
+From the Homebrew tap, which is the recommended one:
 
 ```bash
 brew tap 0PrashantYadav0/nekoshell
@@ -67,13 +49,13 @@ brew install nekoshell
 nekoshell install
 ```
 
-With one line, which clones `~/.nekoshell` and runs the installer:
+From one line, which clones `~/.nekoshell` and runs the installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash
 ```
 
-From a checkout, which is what contributors do:
+From a checkout, which is what contributors use, since the checkout is the install:
 
 ```bash
 git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell
@@ -81,35 +63,7 @@ cd ~/.nekoshell
 ./install.sh
 ```
 
-The installer runs seven steps: terminal, profile, confirm, backup and core, theme, plugins, doctor. It asks two things. The terminal is the one you are running it from; when it cannot tell, it lists the installed ones and asks. The profile is `minimal` (modern-cli, greet), `dev` (adds fzf, atuin, lazygit, btop, nvim, tmux), `full` (adds spotify) or `pick`, which lets you toggle plugins one by one. Every file it replaces goes into `~/.local/share/nekoshell/backup/<timestamp>/` first, and a second run changes nothing.
-
-The flags, for a run that should not ask:
-
-```bash
-nekoshell install --yes --profile full --terminal all
-nekoshell install --check                      # print what would change; change nothing
-nekoshell install --profile dev --with spotify --without btop
-```
-
-`./install.sh` from a checkout is the same run: it checks macOS and Homebrew, then execs `bin/nekoshell install` with the flags it was given.
-
-`--terminal` takes one id, a comma-separated list, `all` for every terminal that has an adapter, or `installed` for every one whose app is on this Mac. `--yes` skips the confirmation and, with no `--profile`, picks `minimal`. `--check` implies `--dry-run`.
-
-Step four also asks Homebrew for Starship, antidote and the JetBrainsMono Nerd Font, only for whichever is missing; plugins bring their own tools the same way. `nekoshell doctor` reports each of the three when it is still absent.
-
-### By hand
-
-Some steps only a person can do, and the installer prints the ones that apply at the end:
-
-- Ghostty: grant Accessibility in System Settings, Privacy & Security, Accessibility, or the global ⌥M does nothing. Restart Ghostty once so the quick terminal's position takes effect.
-- Terminal.app: quit and reopen it. It reads its profiles once, at launch.
-- iTerm2: if it was running during the install, quit it and run `nekoshell terminal apply` to write the global preferences.
-- Warp: sign in. Warp shows nothing until you do.
-- spotify: run `nekoshell spotify login` (needs Premium), and `nekoshell spotify client-id <id>` with a Spotify app of your own so start-up is not rate-limited.
-- tmux: start `tmux` and press `C-a I` once so TPM fetches the plugins.
-- nvim: open it once and let lazy.nvim fetch its plugins.
-
-[docs/INSTALL.md](docs/INSTALL.md) has the long version, upgrading, uninstalling and troubleshooting.
+The installer asks which terminal and which profile, backs up every file it replaces, and can be re-run safely. [docs/INSTALL.md](docs/INSTALL.md) has the seven steps it runs, the profiles, the flags for a run that should not ask, the steps only you can do afterwards, and the troubleshooting.
 
 ## Commands
 
@@ -121,68 +75,34 @@ Some steps only a person can do, and the installer prints the ones that apply at
 | `nekoshell terminal list\|use\|remove\|apply\|background` | detect, configure and theme the terminals you use |
 | `nekoshell plugin list\|info\|add\|remove` | manage plugins |
 | `nekoshell music [PLAYER] [--panel]` | run the music player here, or in the terminal's panel |
-| `nekoshell spotify client-id\|login\|logout` | your Spotify client id and login (spotify plugin) |
-| `nekoshell greet [--image\|--text]` | print the greeting now (greet plugin) |
+| `nekoshell greet [--image\|--text\|--art NAME]` | print the greeting now (greet plugin) |
 | `nekoshell art list\|add\|sample` | manage the greeting's art pack (greet plugin) |
+| `nekoshell spotify search\|client-id\|login\|logout` | search and play, and your Spotify login (spotify plugin) |
+| `nekoshell vscode terminal [ID]` | the terminal VS Code opens (vscode plugin) |
+| `nekoshell ai welcome\|edit\|status` | the banner in front of AI coding tools (ai plugin) |
 | `nekoshell uninstall [--yes] [--purge]` | remove plugins, unlink the zshrc, restore your files |
 
-`nekoshell help` lists them, with the commands enabled plugins add. What each plugin does, its keys and its files: [docs/plugins/README.md](docs/plugins/README.md).
+`nekoshell help` lists them all, with every flag and the commands enabled plugins add; [docs/INSTALL.md](docs/INSTALL.md#commands) has the same list with what each subcommand takes.
 
-## Terminals
+## Plugins
 
-| Terminal | Inline images | Background image | Panel key |
-| --- | --- | --- | --- |
-| iTerm2 | yes | yes | ⌥M, from any app (hotkey window) |
-| kitty | yes | yes, PNG (others converted) | alt+m, inside kitty |
-| Ghostty | yes | yes | ⌥M, from any app, after Accessibility is granted |
-| Warp | yes | JPEG only | none; `nekoshell music --panel` or the `+` menu opens a new window |
-| Terminal.app | no | no | none; `nekoshell music --panel` opens a new window |
-
-`nekoshell terminal use all` configures every terminal with an adapter, `use installed` every one whose app is present, and `use kitty,ghostty` a named few. The running terminal is always the one the greeting and the panel act on. `nekoshell terminal background PICTURE [OPACITY]` sets a background on every configured terminal that can draw one; `none` takes it away. Each terminal's own file, `terminals/<id>/README.md`, says exactly what is written and what it cannot do.
-
-## Themes
-
-Four Catppuccin flavours: latte, frappe, macchiato and mocha. `nekoshell theme <flavour>` re-renders the prompt, the shell colours, every configured terminal and every enabled plugin from one palette file, `core/theme/palettes.json`. `nekoshell theme auto` follows the macOS appearance, mocha when dark and latte when light by default; each new shell re-checks it in the background.
-
-## Configuration
-
-`~/.config/nekoshell/nekoshell.toml` is written by the installer and read by everything else. The keys the code reads:
-
-| Key | Meaning |
-| --- | --- |
-| `root` | the checkout |
-| `terminal` | the primary terminal, used by a shell that is not in any configured one |
-| `terminals` | every configured terminal; the doctor, theme switches and uninstall walk this list |
-| `theme` | `auto` or a flavour |
-| `theme_resolved` | the flavour the last switch rendered |
-| `theme_auto_dark`, `theme_auto_light` | what `auto` maps the two appearances to (mocha and latte) |
-| `profile` | the profile the installer used |
-| `plugins` | the enabled plugins, in the order they were enabled |
-| `music_player` | the plugin `nekoshell music` runs; `auto` takes the first one tagged `media` |
-| `background`, `background_opacity` | the background image, re-applied on every theme switch |
-| `ghostty_quick_terminal` | `"shell"` keeps Ghostty's quick terminal a plain shell |
-| `terminal_app_previous_default` | the Terminal.app profile to put back on removal |
-
-Your own shell additions go in `~/.config/nekoshell/zsh/local.zsh`, which is sourced last and never overwritten; the installer moves aliases out of an old `.zshrc` into it. The greeting's mix, shiny odds and image size are in `~/.config/nekoshell/greet.conf`, copied once and then yours.
+The core is the zsh config, the Starship prompt, the theme and the five terminal adapters; everything past that is a plugin, and a profile is a list of them. The `minimal` profile enables modern-cli, greet and pokemon; `dev` adds fzf, atuin, lazygit, btop, nvim and tmux; `full` adds spotify; `pick` lets you toggle them one by one. The other fourteen are one `nekoshell plugin add` away: the art providers anime, minecraft and colorscripts, then yazi, gh, mise, pure, p10k, omz, ai, claude-code, opencode, vscode and aerospace. [docs/plugins/README.md](docs/plugins/README.md) is the manual, one page per plugin.
 
 ## Docs
 
-- [docs/INSTALL.md](docs/INSTALL.md): the long install, upgrading, uninstalling, troubleshooting.
-- [docs/plugins/README.md](docs/plugins/README.md): one page per plugin. [How a plugin works](docs/plugins/ARCHITECTURE.md).
+- [docs/README.md](docs/README.md): the index, every page grouped by what you came for.
+- [docs/INSTALL.md](docs/INSTALL.md): installing, the commands, upgrading, uninstalling, troubleshooting.
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md): `nekoshell.toml`, the themes, the prompt, `greet.conf`, your own `local.zsh`.
+- [docs/TERMINALS.md](docs/TERMINALS.md): what the five terminals can do and what each still needs by hand.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the pieces fit.
-- [docs/contributing/](docs/contributing/README.md): writing a plugin, a terminal adapter, a test.
-- [docs/ci-checks/](docs/ci-checks/README.md): every check a pull request runs, and how a release is cut.
-- [docs/ai/](docs/ai/README.md): installing nekoshell through an AI agent.
-- [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md): the tap, the one-liner, the tarball.
-
-## For AI agents
-
-[AGENTS.md](AGENTS.md) is the contract: the exact non-interactive install line, how to verify with `nekoshell doctor --json`, how to add a plugin or a terminal adapter, and what never to do. The skill in `skills/nekoshell/` says the same thing in the shape an agent loads. [docs/ai/](docs/ai/README.md) explains the skill, the agent plugins and the rules.
+- [docs/plugins/README.md](docs/plugins/README.md): one page per plugin, and [how a plugin works](docs/plugins/ARCHITECTURE.md) behind them.
+- [Contributing](https://github.com/0PrashantYadav0/nekoshell/blob/main/CONTRIBUTING.md) and the [contributor guides](https://github.com/0PrashantYadav0/nekoshell/blob/main/docs/contributing/README.md): the checks, writing a plugin, an adapter or a test.
+- [AGENTS.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/AGENTS.md) and [docs/ai/](https://github.com/0PrashantYadav0/nekoshell/blob/main/docs/ai/README.md): installing nekoshell through an AI agent, and the agent-facing plugins.
 
 ## Contributing
 
-[CONTRIBUTING.md](CONTRIBUTING.md): `make tools`, `make hooks`, `make check`, the commit message rules and the four pull request checks. [CHANGELOG.md](CHANGELOG.md) lists what changed. [THIRD_PARTY.md](THIRD_PARTY.md) lists the vendored files.
+Issues and pull requests are welcome; [CONTRIBUTING.md](https://github.com/0PrashantYadav0/nekoshell/blob/main/CONTRIBUTING.md) has the setup, `make check` and the commit message rules. [CHANGELOG.md](CHANGELOG.md) lists what changed, and [THIRD_PARTY.md](THIRD_PARTY.md) every vendored file and everything an install fetches.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The sprites and pictures the greeting draws (Pokémon, anime characters, Minecraft blocks) come from their packs, fetched at install time, and are not part of this repository; Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.
+MIT, see [LICENSE](LICENSE). The sprites and pictures the greeting draws come from packs fetched at install time and are not part of this repository; Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.

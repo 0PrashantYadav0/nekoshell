@@ -13,6 +13,12 @@
 - The release tarball carries only what runs: `tests/`, `scripts/`, `skills/`, `packaging/` and the contributor-only docs are now `export-ignore` in `.gitattributes`, and `scripts/package.sh` prints the tarball's size and entry count and refuses to write `SHA256SUMS` if development files made it in anyway.
 - `bootstrap.sh` clones with `--depth 1`: a fresh install gets the tree, not the project's history. A contributor who wants the log still clones by hand.
 
+### Docs
+
+- Screenshots: `docs/screenshots/greet-anime.png`, `greet-minecraft.png` and `greet-colorscripts.png`, the greeting in iTerm2 with three of the art providers, in a table on the README and on each of those three plugin pages.
+- A front page: the neko mascot (`docs/assets/neko.svg`), a row of seven badges and a one-paragraph pitch at the top of the README.
+- The README is a front page that links out rather than a manual: install, the commands, the plugins and an index, with the terminal comparison moved to the new `docs/TERMINALS.md`, `nekoshell.toml`, the themes, the prompt, `greet.conf` and `local.zsh` to the new `docs/CONFIGURATION.md`, and the full command list to `docs/INSTALL.md`. `docs/README.md` is the new index of every page. Pages that ship in the tarball no longer link into paths that do not.
+
 ## 0.2.0 - 2026-09-15
 
 A rebuild around one command and a plugin layout. `nekoshell install`, `doctor`, `theme`, `terminal`, `plugin`, `music` and `uninstall` replace the v0.1 scripts; `install.sh` and `uninstall.sh` only check for macOS and Homebrew and hand over. The v0.1 command names stay as three-line shims onto the subcommands.
