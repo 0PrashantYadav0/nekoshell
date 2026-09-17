@@ -1,6 +1,20 @@
-# nekoshell
+<p align="center">
+  <img src="docs/assets/neko.svg" width="180" alt="nekoshell's neko: a cat sitting on a terminal prompt">
+</p>
 
-A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon (or an anime picture, a Minecraft block, an ANSI pattern) or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, `nekoshell`, installs it, themes it and checks it.
+<h1 align="center">nekoshell</h1>
+
+<p align="center">
+  <a href="https://github.com/0PrashantYadav0/nekoshell/releases/latest"><img src="https://img.shields.io/github/v/release/0PrashantYadav0/nekoshell?style=flat-square&labelColor=1e1e2e&color=cba6f7&label=release" alt="latest release"></a>
+  <a href="https://github.com/0PrashantYadav0/nekoshell/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/0PrashantYadav0/nekoshell/ci.yml?branch=main&style=flat-square&labelColor=1e1e2e&color=a6e3a1&label=ci" alt="ci"></a>
+  <a href="https://github.com/0PrashantYadav0/nekoshell/stargazers"><img src="https://img.shields.io/github/stars/0PrashantYadav0/nekoshell?style=flat-square&labelColor=1e1e2e&color=f9e2af&label=stars" alt="stars"></a>
+  <a href="https://github.com/0PrashantYadav0/nekoshell/releases"><img src="https://img.shields.io/github/downloads/0PrashantYadav0/nekoshell/total?style=flat-square&labelColor=1e1e2e&color=89b4fa&label=downloads" alt="downloads"></a>
+  <a href="https://github.com/0PrashantYadav0/homebrew-nekoshell"><img src="https://img.shields.io/badge/homebrew-0PrashantYadav0%2Fnekoshell-f38ba8?style=flat-square&labelColor=1e1e2e" alt="homebrew tap"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/0PrashantYadav0/nekoshell?style=flat-square&labelColor=1e1e2e&color=f5c2e7&label=license" alt="license"></a>
+  <img src="https://img.shields.io/badge/macOS-only-fab387?style=flat-square&labelColor=1e1e2e" alt="macOS only">
+</p>
+
+<p align="center">A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon (or an anime picture, a Minecraft block, an ANSI pattern) or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, <code>nekoshell</code>, installs it, themes it and checks it.</p>
 
 ## What you get
 

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
+  <title id="t">nekoshell's neko</title>
+  <defs>
+    <radialGradient id="c" gradientUnits="userSpaceOnUse" cx="96" cy="62" r="132">
+      <stop offset="0" stop-color="#b4befe"/>
+      <stop offset="0.38" stop-color="#cba6f7"/>
+      <stop offset="1" stop-color="#9d7cd8"/>
+    </radialGradient>
+    <linearGradient id="f" gradientUnits="userSpaceOnUse" x1="36" y1="170" x2="216" y2="218">
+      <stop offset="0" stop-color="#1e1e2e"/>
+      <stop offset="1" stop-color="#181825"/>
+    </linearGradient>
+    <filter id="b" x="-30%" y="-80%" width="160%" height="260%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="134" cy="226" rx="92" ry="11" fill="#181825" opacity="0.5" filter="url(#b)"/>
+
+  <path d="M 50,170 L 68,156 L 234,156 L 216,170 Z" fill="#313244" stroke="#45475a" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M 216,170 L 234,156 L 234,192 L 216,206 Z" fill="#181825" stroke="#45475a" stroke-width="2" stroke-linejoin="round"/>
+
+  <ellipse cx="124" cy="166" rx="52" ry="7" fill="#181825" opacity="0.45" filter="url(#b)"/>
+
+  <path d="M 166,160 C 196,166 208,140 196,116" fill="none" stroke="#1e1e2e" stroke-width="21" stroke-linecap="round"/>
+  <path d="M 166,160 C 196,166 208,140 196,116" fill="none" stroke="url(#c)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M 178,161 C 195,163 203,142 195,122" fill="none" stroke="#b4befe" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
+
+  <path d="M 122,100 C 92,100 76,126 76,148 C 76,166 96,174 122,174 C 148,174 168,166 168,148 C 168,126 152,100 122,100 Z" fill="url(#c)" stroke="#1e1e2e" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <path d="M 96,74 L 103,38 L 132,58 Z" fill="url(#c)" stroke="#1e1e2e" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M 148,74 L 141,38 L 112,58 Z" fill="url(#c)" stroke="#1e1e2e" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M 141,38 L 148,74" fill="none" stroke="#b4befe" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+
+  <circle cx="122" cy="96" r="40" fill="url(#c)" stroke="#1e1e2e" stroke-width="2.5"/>
+  <path d="M 157,76 A 40,40 0 0 1 155,119" fill="none" stroke="#b4befe" stroke-width="3.5" stroke-linecap="round" opacity="0.45"/>
+
+  <path d="M 102,44 L 98,61 L 117,54 Z" fill="#f5c2e7" stroke-linejoin="round"/>
+  <path d="M 142,44 L 146,61 L 127,54 Z" fill="#f5c2e7" stroke-linejoin="round"/>
+
+  <ellipse cx="94" cy="112" rx="9" ry="5" fill="#f5c2e7" opacity="0.45"/>
+  <ellipse cx="150" cy="112" rx="9" ry="5" fill="#f5c2e7" opacity="0.45"/>
+
+  <ellipse cx="106" cy="97" rx="8" ry="10" fill="#181825"/>
+  <ellipse cx="138" cy="97" rx="8" ry="10" fill="#181825"/>
+  <circle cx="103" cy="92" r="3.2" fill="#cdd6f4"/>
+  <circle cx="135" cy="92" r="3.2" fill="#cdd6f4"/>
+  <circle cx="109" cy="102" r="1.6" fill="#cdd6f4" opacity="0.7"/>
+  <circle cx="141" cy="102" r="1.6" fill="#cdd6f4" opacity="0.7"/>
+
+  <path d="M 117,110 L 127,110 L 122,117 Z" fill="#f5c2e7" stroke="#f5c2e7" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M 113,119 C 116,125 120,125 122,119 C 124,125 128,125 131,119" fill="none" stroke="#181825" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+
+  <g stroke="#cdd6f4" stroke-width="2.2" stroke-linecap="round" opacity="0.9">
+    <path d="M 84,104 L 102,107"/>
+    <path d="M 82,111 L 102,112"/>
+    <path d="M 84,118 L 102,116"/>
+    <path d="M 160,104 L 142,107"/>
+    <path d="M 162,111 L 142,112"/>
+    <path d="M 160,118 L 142,116"/>
+  </g>
+
+  <ellipse cx="122" cy="150" rx="21" ry="17" fill="#cdd6f4" opacity="0.9"/>
+  <ellipse cx="100" cy="166" rx="13" ry="9" fill="#cdd6f4" stroke="#1e1e2e" stroke-width="2"/>
+  <ellipse cx="144" cy="166" rx="13" ry="9" fill="#cdd6f4" stroke="#1e1e2e" stroke-width="2"/>
+
+  <rect x="36" y="170" width="180" height="48" rx="14" fill="url(#f)" stroke="#45475a" stroke-width="2"/>
+  <polyline points="63,181 79,194 63,207" fill="none" stroke="#a6e3a1" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="94" y="181" width="13" height="26" rx="2" fill="#cdd6f4"/>
+</svg>
