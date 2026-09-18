@@ -1,13 +1,12 @@
 import { repo } from '../data/content'
 
 const links = [
-  ['#greet', 'greeting'],
-  ['#terminals', 'terminals'],
-  ['#commands', 'commands'],
-  ['#plugins', 'plugins'],
-  ['#themes', 'themes'],
-  ['#install', 'install'],
-  ['#author', 'author'],
+  ['#greet', 'Greeting'],
+  ['#terminals', 'Terminals'],
+  ['#commands', 'Commands'],
+  ['#plugins', 'Plugins'],
+  ['#themes', 'Themes'],
+  ['#author', 'Author'],
 ]
 
 export function Nav() {
