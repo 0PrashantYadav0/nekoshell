@@ -15,8 +15,8 @@
 
 ### Docs
 
-- Screenshots: `docs/screenshots/greet-anime.png`, `greet-minecraft.png` and `greet-colorscripts.png`, the greeting in iTerm2 with three of the art providers, in a table on the README and on each of those three plugin pages.
-- A front page: the neko mascot (`docs/assets/neko.svg`), a row of seven badges and a one-paragraph pitch at the top of the README.
+- Screenshots: `docs/screenshots/greet-anime.png`, `greet-minecraft.png` and `greet-colorscripts.png`, the greeting in iTerm2 with three of the art providers. The README shows the anime one, the whole window at full width; each of the three plugin pages shows its own.
+- A front page: the neko mascot, a row of seven badges and a one-paragraph pitch at the top of the README. The mascot, a chibi black cat on a prompt block, is a 3D model, `docs/assets/neko.stl` (GitHub shows it as a turnable view), rendered to `docs/assets/neko.png` by `docs/assets/gen-neko.py`, a standard-library Python modeller and rasteriser.
 - The README is a front page that links out rather than a manual: install, the commands, the plugins and an index, with the terminal comparison moved to the new `docs/TERMINALS.md`, `nekoshell.toml`, the themes, the prompt, `greet.conf` and `local.zsh` to the new `docs/CONFIGURATION.md`, and the full command list to `docs/INSTALL.md`. `docs/README.md` is the new index of every page. Pages that ship in the tarball no longer link into paths that do not.
 
 ## 0.2.0 - 2026-09-15
