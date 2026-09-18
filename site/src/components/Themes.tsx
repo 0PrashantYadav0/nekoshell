@@ -53,7 +53,7 @@ export function Themes() {
             alt={`The greeting with a Pok\u00e9mon sprite in ${flavour === 'latte' ? 'latte' : 'mocha'}`}
             loading="lazy"
             width={1600}
-            height={459}
+            height={flavour === 'latte' ? 531 : 576}
           />
         </figure>
         <p className="figure__cap">{flavour === 'latte' ? 'The same greeting after nekoshell theme latte: the light base, the darker accents, the swatch in the new colours.' : 'The greeting in mocha. Pick latte above to see the same window after nekoshell theme latte.'}</p>
