@@ -12,5 +12,6 @@ docs/superpowers/
 __pycache__/
 .agents/
 skills-*.json
+
 # scripts/package.sh output
 dist/
