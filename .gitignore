@@ -10,6 +10,7 @@ core/zsh/.config/nekoshell/zsh/local.zsh
 .planning/
 docs/superpowers/
 __pycache__/
-
+.agents/
+skills-*.json
 # scripts/package.sh output
 dist/
