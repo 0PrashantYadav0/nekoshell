@@ -94,7 +94,8 @@ function NekoModel({ spin, drag = true }: { spin?: MotionValue<number>; drag?: b
     if (!group.current) return
     idle.current += dt
     const scrolled = spin ? spin.get() : 0
-    group.current.rotation.y = idle.current * 0.35 + scrolled
+    // The neko turns with the scroll (and the drag), never on its own.
+    group.current.rotation.y = scrolled
     group.current.position.y = -1.95 + Math.sin(idle.current * 1.4) * 0.06
     state.camera.lookAt(0, 0.05, 0)
   })
