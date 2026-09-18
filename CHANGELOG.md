@@ -8,6 +8,10 @@
 - greet: image providers. A plugin with an executable `greet-image` (caption, picture path, optional `WIDTH HEIGHT` in cells) is drawn through fastfetch's image flag where the terminal can show images, and takes part in `ART` and `nekoshell greet --art` like a sprite provider; `--text` leaves it out. The doctor's provider rows cover it.
 - vscode plugin: VS Code opens the nekoshell terminal from Ctrl+Shift+C and the Explorer's "Open in External Terminal". `plugin add` sets `terminal.external.osxExec` to the app for the configured terminal id and `terminal.explorerKind` to `both` in VS Code's `settings.json`, editing the JSONC file in place so comments and the other keys survive; `plugin remove` puts both keys back; `nekoshell vscode terminal [ID|App.app]` shows or changes the app, with a name outside the table passed through as it is; the doctor says which apps the debug console can open.
 
+### Fixed
+
+- Latte was unreadable in every terminal: ANSI black and bright black were `surface1` and `surface2` in every flavour, light greys on latte's light base, so dim text, borders and anything drawn in black vanished, and white came out dark. The 16 ANSI colours now come from Catppuccin's own per-flavour `ansiColors` block (`ansiblack` ... `ansibrwhite` in `palettes.json`): latte draws black as `subtext1`, and every flavour gets its proper bright shades. The dark flavours also had white and bright white the wrong way round.
+
 ### Install
 
 - The release tarball carries only what runs: `tests/`, `scripts/`, `skills/`, `packaging/` and the contributor-only docs are now `export-ignore` in `.gitattributes`, and `scripts/package.sh` prints the tarball's size and entry count and refuses to write `SHA256SUMS` if development files made it in anyway.
