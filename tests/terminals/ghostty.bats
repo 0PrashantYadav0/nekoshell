@@ -96,7 +96,7 @@ owned_values() {
   [ "$(owned_values font-family font-size background foreground cursor-color selection-background)" = "JetBrainsMono Nerd Font | 15 | #1e1e2e | #cdd6f4 | #f5e0dc | #585b70" ]
   assert_contains "$(cat "$OWNED")" "palette = 0=#45475a"
   assert_contains "$(cat "$OWNED")" "palette = 5=#f5c2e7"
-  assert_contains "$(cat "$OWNED")" "palette = 15=#a6adc8"
+  assert_contains "$(cat "$OWNED")" "palette = 15=#bac2de"
   [ "$(owned_values window-padding-x window-padding-y macos-option-as-alt quick-terminal-position quick-terminal-autohide quick-terminal-screen)" = "12 | 12 | true | right | true | main" ]
   assert_contains "$(cat "$OWNED")" "keybind = global:alt+m=toggle_quick_terminal"
   assert_not_contains "$(cat "$OWNED")" "@@"
@@ -445,4 +445,13 @@ theme = Dracula" ]
   printf 'config-file = missing\n' > "$HOME/broken"
   rc=0; "$bin" +validate-config --config-file="$HOME/broken" >/dev/null 2>&1 || rc=$?
   [ "$rc" -ne 0 ]
+}
+
+@test "latte renders a dark ANSI black, so black text stays readable on the light base" {
+  load_adapter
+  terminal_apply latte >/dev/null 2>&1
+  assert_contains "$(cat "$OWNED")" "background = #eff1f5"
+  assert_contains "$(cat "$OWNED")" "palette = 0=#5c5f77"
+  assert_contains "$(cat "$OWNED")" "palette = 8=#6c6f85"
+  assert_contains "$(cat "$OWNED")" "palette = 7=#acb0be"
 }

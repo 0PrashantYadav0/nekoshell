@@ -189,11 +189,11 @@ PY
   assert_contains "$output" "foreground: '#cdd6f4'"
   assert_contains "$output" "cursor: '#f5e0dc'"
   assert_contains "$output" "accent: '#cba6f7'"
-  # ANSI 0 surface1, 5 pink, 8 surface2, 15 subtext0.
+  # ANSI 0 to 15 are the flavour's ansi roles: 0 black, 5 magenta, 8 bright black, 15 bright white.
   assert_matches "$output" "normal:.*black: '#45475a'"
   assert_matches "$output" "normal:.*magenta: '#f5c2e7'"
   assert_matches "$output" "bright:.*black: '#585b70'"
-  assert_matches "$output" "bright:.*white: '#a6adc8'"
+  assert_matches "$output" "bright:.*white: '#bac2de'"
   assert_contains "$output" "details: darker"
   assert_not_contains "$output" "background_image"
   assert_not_contains "$output" "@@"
@@ -597,4 +597,14 @@ nekoshell mocha True JetBrainsMono Nerd Font 15.0 1" ]
   assert_contains "$output" 'theme = "dark"'
   assert_contains "$output" 'font_name = "Hack"'
   assert_not_contains "$output" "nekoshell"
+}
+
+@test "latte renders a dark ANSI black, so black text stays readable on the light base" {
+  load_adapter
+  terminal_apply latte >/dev/null 2>&1
+  output="$(cat "$HOME/.warp/themes/nekoshell_latte.yaml")"
+  assert_contains "$output" "background: '#eff1f5'"
+  assert_matches "$output" "normal:.*black: '#5c5f77'"
+  assert_matches "$output" "bright:.*black: '#6c6f85'"
+  assert_matches "$output" "normal:.*white: '#acb0be'"
 }

@@ -26,8 +26,11 @@ PANEL_GUID = "4E4B4F53-4845-4C4C-0002-000000000002"
 # Replaced in main() from --font and --size; the default is what the adapter prints.
 FONT = "JetBrainsMonoNF-Regular 15"
 
-ANSI = ["surface1", "red", "green", "yellow", "blue", "pink", "teal", "subtext1",
-        "surface2", "red", "green", "yellow", "blue", "pink", "teal", "subtext0"]
+# ANSI 0 to 15: the flavour's own ansi roles in palettes.json (upstream's
+# ansiColors block), so latte gets a dark black and every flavour its own
+# bright shades. Same list as the kitty, Ghostty and Warp templates.
+ANSI = ["ansiblack", "ansired", "ansigreen", "ansiyellow", "ansiblue", "ansimagenta", "ansicyan", "ansiwhite",
+        "ansibrblack", "ansibrred", "ansibrgreen", "ansibryellow", "ansibrblue", "ansibrmagenta", "ansibrcyan", "ansibrwhite"]
 
 # The status bar, left to right. Keys are iTerm2's own, read out of its source:
 # a layout is {"components": [...], "advanced configuration": {...}} and each

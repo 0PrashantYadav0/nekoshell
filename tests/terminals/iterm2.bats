@@ -432,3 +432,14 @@ PY
   [ ! -f "$PROF" ]
   assert_contains "$output" "defaults delete com.googlecode.iterm2"
 }
+
+@test "latte draws ANSI black dark, so black text stays readable on the light base" {
+  python3 "$GEN" --root "$REPO_ROOT" --out "$OUT" --flavor latte
+  run python3 - "$OUT" <<'PY'
+import json,sys
+p=json.load(open(sys.argv[1]))['Profiles'][0]
+def c(k): v=p[k]; return "%d %d %d" % tuple(round(v[x+' Component']*255) for x in ('Red','Green','Blue'))
+print(c('Background Color'), '|', c('Ansi 0 Color'), '|', c('Ansi 8 Color'), '|', c('Ansi 7 Color'))
+PY
+  [ "${lines[0]}" = "239 241 245 | 92 95 119 | 108 111 133 | 172 176 190" ]
+}

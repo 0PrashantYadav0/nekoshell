@@ -34,7 +34,7 @@ nekoshell theme current   # the flavour in force
 nekoshell theme auto      # follow the macOS appearance
 ```
 
-A switch re-renders the prompt, the shell colours (`~/.config/nekoshell/theme.zsh`, which carries bat, fzf, syntax highlighting and autosuggestions), every configured terminal and every enabled plugin's themed files, all from one palette file, `core/theme/palettes.json`. That file is the only place in the repository a colour is written down. The shell colours are why commands are tinted as you type them and why the autosuggestion behind the cursor sits in the palette's dimmest readable grey.
+A switch re-renders the prompt, the shell colours (`~/.config/nekoshell/theme.zsh`, which carries bat, fzf, syntax highlighting and autosuggestions), every configured terminal and every enabled plugin's themed files, all from one palette file, `core/theme/palettes.json`. That file is the only place in the repository a colour is written down. It carries Catppuccin's 26 design roles and, per flavour, the 16 ANSI terminal colours, so `latte` draws black as a dark grey on its light base rather than the light `surface1` the dark flavours use. The shell colours are why commands are tinted as you type them and why the autosuggestion behind the cursor sits in the palette's dimmest readable grey.
 
 `auto` renders mocha when macOS is dark and latte when it is light; `theme_auto_dark` and `theme_auto_light` in `nekoshell.toml` change the pair. Each new interactive shell re-resolves it in the background, so the rig follows the system appearance without a command. Which terminals pick the new colours up on their own, and which want a reload, is in [TERMINALS.md](TERMINALS.md).
 

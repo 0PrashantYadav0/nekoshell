@@ -24,9 +24,19 @@ teardown() { teardown_tmp_home; }
 # child). Plain command substitution captures stdout+stderr and exit status
 # instead, throughout this file.
 
-@test "palettes has four flavours and 26 roles" {
+@test "palettes has four flavours and 42 roles" {
   [ "$(theme_flavors | tr '\n' ' ')" = "frappe latte macchiato mocha " ]
   [ "$(theme_hexes mocha base mauve | tr '\n' ' ')" = "1e1e2e cba6f7 " ]
+  for flavor in frappe latte macchiato mocha; do
+    [ "$(python3 -c "import json,sys; print(len(json.load(open(sys.argv[1]))[sys.argv[2]]))" "$REPO_ROOT/core/theme/palettes.json" "$flavor")" = "42" ]
+  done
+}
+@test "the ansi roles are per flavour: black is dark on latte and light on mocha" {
+  # Upstream's ansiColors: latte draws black as subtext1, the dark flavours as
+  # surface1, and every flavour has its own bright shades.
+  [ "$(theme_hexes latte ansiblack ansibrblack ansiwhite ansibrwhite | tr '\n' ' ')" = "5c5f77 6c6f85 acb0be bcc0cc " ]
+  [ "$(theme_hexes mocha ansiblack ansibrblack ansiwhite ansibrwhite | tr '\n' ' ')" = "45475a 585b70 a6adc8 bac2de " ]
+  [ "$(theme_hexes mocha ansired ansibrred | tr '\n' ' ')" = "f38ba8 f37799 " ]
 }
 @test "theme_render_template substitutes every placeholder kind" {
   printf '%s\n' '@@FLAVOR@@ @@TITLE@@ @@hex:mauve@@ @@HEX:mauve@@ @@sgr:mauve@@ @@rgb:mauve@@' > "$HOME/t.tmpl"

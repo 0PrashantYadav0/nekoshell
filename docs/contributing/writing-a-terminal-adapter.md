@@ -63,7 +63,7 @@ Three rules the shipped adapters keep:
 
 ## 4. Add a template for the colours
 
-Put a `.tmpl` next to the adapter and render it with `theme_render_template`, so `core/theme/palettes.json` stays the only place a colour is written. kitty has `nekoshell.conf.tmpl` and `nekoshell-panel.conf.tmpl`; ghostty has `nekoshell.tmpl`; warp has `theme.yaml.tmpl`. The placeholders are `@@FLAVOR@@`, `@@TITLE@@`, `@@hex:ROLE@@`, `@@HEX:ROLE@@`, `@@sgr:ROLE@@` and `@@rgb:ROLE@@`.
+Put a `.tmpl` next to the adapter and render it with `theme_render_template`, so `core/theme/palettes.json` stays the only place a colour is written. kitty has `nekoshell.conf.tmpl` and `nekoshell-panel.conf.tmpl`; ghostty has `nekoshell.tmpl`; warp has `theme.yaml.tmpl`. The placeholders are `@@FLAVOR@@`, `@@TITLE@@`, `@@hex:ROLE@@`, `@@HEX:ROLE@@`, `@@sgr:ROLE@@` and `@@rgb:ROLE@@`. ANSI 0 to 15 come from the `ansiblack` ... `ansibrwhite` roles, never from a design role picked by hand: those roles are per flavour, which is what keeps black readable on latte.
 
 Start the rendered file with a header naming nekoshell and the flavour. `theme_is_rendered` reads the first ten lines to tell a file nekoshell wrote from one the user wrote, and kitty's own doctor reads the flavour back out of that header.
 
