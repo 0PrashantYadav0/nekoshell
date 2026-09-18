@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
-import { Prompt } from './Prompt'
+import { SectionHead } from './SectionHead'
 import { shots } from '../data/content'
 
-// The greeting, three ways. The frame is pinned while the section scrolls
-// past, and the picture changes with the scroll position; the tabs jump to
-// the matching spot. Under 880px the pin is off and the tabs do the work.
+// The greeting, four ways. The frame is pinned while the section scrolls
+// past, and the picture changes with the scroll position; the segments jump
+// to the matching spot. Under 880px the pin is off and the segments do it.
 export function Shots() {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
@@ -36,9 +36,7 @@ export function Shots() {
     <section className="section" id="greet">
       <div className="shots" ref={ref}>
         <div className="wrap shots__pin">
-          <div>
-            <Prompt cmd="nekoshell greet" args={`--art ${shots[active].art}`} out={<>a new picture on every shell you open, beside the machine stats and the palette</>} />
-          </div>
+          <SectionHead cmd={`nekoshell greet --art ${shots[active].art}`} title="A picture on every new shell" sub="The greeting draws beside the machine stats and the palette, from whichever art providers you enable." />
           <div className="shots__frame">
             {shots.map((s, i) => (
               <motion.img
@@ -47,19 +45,19 @@ export function Shots() {
                 alt={`An iTerm2 window after nekoshell greet --art ${s.art}`}
                 loading={i === 0 ? 'eager' : 'lazy'}
                 initial={false}
-                animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.03 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.02 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               />
             ))}
           </div>
-          <div className="shots__tabs" role="tablist" aria-label="Art providers">
-            {shots.map((s, i) => (
-              <button key={s.art} role="tab" className="shots__tab" aria-current={i === active} aria-selected={i === active} onClick={() => jump(i)}>
-                {s.art}
-              </button>
-            ))}
+          <div className="shots__row">
+            <div className="seg" role="tablist" aria-label="Art providers">
+              {shots.map((s, i) => (
+                <button key={s.art} role="tab" aria-selected={i === active} onClick={() => jump(i)}>{s.art}</button>
+              ))}
+            </div>
+            <p className="shots__cap">{shots[active].caption}</p>
           </div>
-          <p className="shots__cap">{shots[active].caption}</p>
         </div>
       </div>
     </section>

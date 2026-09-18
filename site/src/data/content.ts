@@ -95,11 +95,4 @@ export const author = {
   github: 'https://github.com/0PrashantYadav0',
   portfolio: 'https://prashantyadav.vercel.app',
   x: 'https://x.com/0prashantyadav0',
-  highlights: [
-    { k: 'Walmart Global Tech', v: 'software developer intern, 2026' },
-    { k: '4 hackathon wins', v: 'GenTech Thales overall winner' },
-    { k: 'stdlib-js', v: 'open source contributor' },
-    { k: '76 public repos', v: 'raft-kv, nekoshell and more' },
-    { k: 'IIIT Lucknow', v: 'class of 2027' },
-  ],
 }

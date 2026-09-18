@@ -5,12 +5,12 @@ export function Footer() {
     <footer className="foot">
       <div className="wrap foot__in">
         <ul>
-          <li><a href={repo} target="_blank" rel="noreferrer">github</a></li>
-          <li><a href={`${repo}/blob/main/docs/README.md`} target="_blank" rel="noreferrer">docs</a></li>
-          <li><a href={`${repo}/blob/main/CHANGELOG.md`} target="_blank" rel="noreferrer">changelog</a></li>
-          <li><a href={`${repo}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noreferrer">contributing</a></li>
-          <li><a href={`${repo}/releases`} target="_blank" rel="noreferrer">releases</a></li>
-          <li><a href={`${repo}/blob/main/LICENSE`} target="_blank" rel="noreferrer">MIT license</a></li>
+          <li><a href={repo} target="_blank" rel="noreferrer">GitHub</a></li>
+          <li><a href={`${repo}/blob/main/docs/README.md`} target="_blank" rel="noreferrer">Docs</a></li>
+          <li><a href={`${repo}/blob/main/CHANGELOG.md`} target="_blank" rel="noreferrer">Changelog</a></li>
+          <li><a href={`${repo}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noreferrer">Contributing</a></li>
+          <li><a href={`${repo}/releases`} target="_blank" rel="noreferrer">Releases</a></li>
+          <li><a href={`${repo}/blob/main/LICENSE`} target="_blank" rel="noreferrer">MIT licence</a></li>
         </ul>
         <span>by <a href={author.portfolio} target="_blank" rel="noreferrer">{author.name}</a></span>
       </div>

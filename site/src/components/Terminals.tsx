@@ -1,6 +1,6 @@
 import { lazy, useRef, useState } from 'react'
 import { useScroll, useTransform } from 'framer-motion'
-import { Prompt } from './Prompt'
+import { SectionHead } from './SectionHead'
 import { LazyCanvas } from './LazyCanvas'
 
 const TerminalsScene = lazy(() => import('./TerminalsScene'))
@@ -17,14 +17,14 @@ export function Terminals() {
   return (
     <section className="section" id="terminals" ref={ref}>
       <div className="wrap">
-        <Prompt cmd="nekoshell terminal" args="use all" out={<>five adapters, ten functions each; the same font, the same 26 colours, a panel where the terminal has one</>} />
+        <SectionHead cmd="nekoshell terminal use all" title="Five terminals, the same look" sub="An adapter for each terminal applies the font, the 26 colours and a music panel where the terminal has one. Configure one, a few, or all of them at once." />
         <div className="terms">
           <div className="terms__scene" role="img" aria-label="Five terminal windows, one per adapter, fanned out in 3D">
             <LazyCanvas camera={{ position: [0, 0.3, 7.6], fov: 34 }}>
               <TerminalsScene progress={progress} hovered={hovered} />
             </LazyCanvas>
           </div>
-          <ul className="terms__list">
+          <ul className="card terms__list">
             {terminals.map((t) => (
               <li
                 key={t.id}

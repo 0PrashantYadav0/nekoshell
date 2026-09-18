@@ -1,14 +1,20 @@
 import { motion } from 'framer-motion'
-import { Prompt } from './Prompt'
+import { SectionHead } from './SectionHead'
 import { useReducedMotion } from '../lib/motion'
 
-const gets: { title: string; body: string; hue: string }[] = [
-  { title: 'one zsh config', body: 'A zshrc that is a symlink into the checkout, antidote for the plugins, and a local.zsh that is yours and never overwritten.', hue: 'mauve' },
-  { title: 'one prompt', body: 'Starship, in the flavour, with a git line. Or Powerlevel10k, or pure, one plugin add away.', hue: 'green' },
-  { title: 'a greeting', body: 'A Pokémon, an anime still, a Minecraft block or an ANSI pattern next to the machine stats, in under 150 ms, on every new shell.', hue: 'peach' },
-  { title: 'a music panel', body: 'Spotify in a drop-down terminal from ⌥M, or whatever player you enable, without leaving the keyboard.', hue: 'pink' },
-  { title: 'five terminals, one look', body: 'JetBrainsMono Nerd Font and the same 26 colours in iTerm2, kitty, Ghostty, Warp and Terminal.app, applied by an adapter for each.', hue: 'blue' },
-  { title: 'a doctor', body: 'One line per check, a fix named in every failing one, and an exit code CI can read. Nothing here is a mystery.', hue: 'yellow' },
+const gets: { title: string; body: string; hue: string; icon: React.ReactNode }[] = [
+  { title: 'One zsh config', hue: 'mauve', body: 'A zshrc linked from the checkout, antidote for plugins, and a local.zsh that is yours and never overwritten.',
+    icon: <path d="M4 17l6-5-6-5M12 19h8" /> },
+  { title: 'One prompt', hue: 'green', body: 'Starship in the flavour, with a git line. Powerlevel10k or pure are one plugin add away.',
+    icon: <path d="M5 12h14M13 6l6 6-6 6" /> },
+  { title: 'A greeting', hue: 'peach', body: 'A Pokémon, an anime still, a Minecraft block or an ANSI pattern beside the machine stats, in under 150 ms.',
+    icon: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 15l5-5 4 4 3-3 6 6" /></> },
+  { title: 'A music panel', hue: 'pink', body: 'Spotify in a drop-down terminal from ⌥M, or whichever player you enable, without leaving the keyboard.',
+    icon: <path d="M9 18V6l11-2v12M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z" /> },
+  { title: 'Five terminals, one look', hue: 'blue', body: 'JetBrainsMono Nerd Font and the same 26 colours in iTerm2, kitty, Ghostty, Warp and Terminal.app.',
+    icon: <><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></> },
+  { title: 'A doctor', hue: 'yellow', body: 'One line per check, a fix named in every failing one, and an exit code CI can read.',
+    icon: <path d="M20 6L9 17l-5-5" /> },
 ]
 
 export function WhatYouGet() {
@@ -16,23 +22,23 @@ export function WhatYouGet() {
   return (
     <section className="section" id="get">
       <div className="wrap">
-        <Prompt cmd="nekoshell install" args="--profile full" out={<>what the installer leaves behind, in six pieces</>} />
+        <SectionHead cmd="nekoshell install" title="Everything the installer sets up" sub="Six pieces, configured together, backed up before anything is replaced." />
         <ul className="gets">
           {gets.map((g, i) => (
             <motion.li
               key={g.title}
-              className="get"
-              style={{ '--dot': `var(--${g.hue})` } as React.CSSProperties}
-              initial={reduced ? false : { opacity: 0, x: -14 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-10% 0px' }}
-              transition={{ duration: 0.55, delay: (i % 2) * 0.08 + Math.floor(i / 2) * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="card get"
+              style={{ '--hue': `var(--${g.hue})` } as React.CSSProperties}
+              initial={reduced ? false : { opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-8% 0px' }}
+              transition={{ duration: 0.5, delay: (i % 3) * 0.07, ease: [0.22, 1, 0.36, 1] }}
             >
-              <span className="get__dot" aria-hidden="true" />
-              <div>
-                <h3>{g.title}</h3>
-                <p>{g.body}</p>
-              </div>
+              <span className="get__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{g.icon}</svg>
+              </span>
+              <h3>{g.title}</h3>
+              <p>{g.body}</p>
             </motion.li>
           ))}
         </ul>

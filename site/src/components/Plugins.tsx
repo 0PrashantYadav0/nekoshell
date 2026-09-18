@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Prompt } from './Prompt'
+import { SectionHead } from './SectionHead'
 import { plugins, profiles, profileSet } from '../data/content'
 import { useReducedMotion } from '../lib/motion'
 
 const hue: Record<string, string> = { core: 'mauve', art: 'peach', tool: 'blue', prompt: 'green', ai: 'pink', window: 'yellow' }
 const kinds: [string, string][] = [
-  ['core', 'in every profile'],
-  ['art', 'a picture for the greeting'],
-  ['tool', 'a tool, themed'],
-  ['prompt', 'another prompt'],
-  ['ai', 'editors and AI tools'],
-  ['window', 'the window manager'],
+  ['core', 'In every profile'],
+  ['art', 'Art for the greeting'],
+  ['tool', 'A tool, themed'],
+  ['prompt', 'Another prompt'],
+  ['ai', 'Editors and AI tools'],
+  ['window', 'Window manager'],
 ]
 
 export function Plugins() {
@@ -21,12 +21,14 @@ export function Plugins() {
   return (
     <section className="section" id="plugins">
       <div className="wrap">
-        <Prompt cmd="nekoshell plugin" args="list" out={<>the core is the shell, the prompt, the theme and the five adapters; everything past that is one of 24 plugins, and a profile is a list of them</>} />
-        <div className="profiles" role="group" aria-label="Profiles">
-          {profiles.map((p) => (
-            <button key={p.name} aria-pressed={profile === p.name} onClick={() => setProfile(p.name)}>--profile {p.name}</button>
-          ))}
-          <button aria-pressed={profile === 'all'} onClick={() => setProfile('all')}>every plugin</button>
+        <SectionHead cmd="nekoshell plugin list" title="Twenty-four plugins, three profiles" sub="The core is the shell, the prompt, the theme and the five adapters. Everything else is a plugin, and a profile is a list of them." />
+        <div className="profiles">
+          <div className="seg" role="group" aria-label="Profiles">
+            {profiles.map((p) => (
+              <button key={p.name} aria-pressed={profile === p.name} onClick={() => setProfile(p.name)}>{p.name}</button>
+            ))}
+            <button aria-pressed={profile === 'all'} onClick={() => setProfile('all')}>All plugins</button>
+          </div>
           <span className="profiles__note">{profile === 'all' ? 'the whole shelf, each one plugin add away' : profiles.find((p) => p.name === profile)?.note}</span>
         </div>
         <ul className="chips">
