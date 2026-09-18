@@ -13,5 +13,21 @@ __pycache__/
 .agents/
 skills-*.json
 
+# Assistant / editor local state
+.claude/
+.cursor/
+.vscode/
+.idea/
+*.swp
+
+# Node (site/) and Vercel CLI output
+node_modules/
+.vercel/
+
+# Environment files
+.env
+.env.*
+*.local
+
 # scripts/package.sh output
 dist/
