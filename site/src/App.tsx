@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
+import { Background } from './components/Background'
 import { Nav } from './components/Nav'
+import { Stats } from './components/Stats'
 import { Hero } from './components/Hero'
 import { Shots } from './components/Shots'
 import { WhatYouGet } from './components/WhatYouGet'
@@ -22,9 +24,12 @@ export default function App() {
   return (
     <>
       <a className="skip" href="#greet">Skip to content</a>
+      <Background />
+      <div className="frame" aria-hidden="true" />
       <Nav />
       <main>
         <Hero />
+        <Stats />
         <Shots />
         <WhatYouGet />
         <Terminals />

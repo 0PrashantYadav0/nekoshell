@@ -32,7 +32,7 @@ export function WhatYouGet() {
               initial={reduced ? false : { opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-8% 0px' }}
-              transition={{ duration: 0.5, delay: (i % 3) * 0.07, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.55, delay: (i % 3) * 0.06 }}
             >
               <span className="get__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{g.icon}</svg>

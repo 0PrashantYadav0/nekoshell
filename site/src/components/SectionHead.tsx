@@ -11,7 +11,7 @@ export function SectionHead({ title, sub, cmd }: { title: string; sub: React.Rea
       initial={reduced ? false : { opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ type: 'spring', bounce: 0, duration: 0.55 }}
     >
       {cmd && <code className="sec-head__cmd">{cmd}</code>}
       <h2>{title}</h2>

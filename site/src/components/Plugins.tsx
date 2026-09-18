@@ -42,7 +42,7 @@ export function Plugins() {
               initial={reduced ? false : { opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-5% 0px' }}
-              transition={{ duration: 0.4, delay: i * 0.025 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.45, delay: i * 0.02 }}
             >
               {p.name}
               <span className="chip__tip" role="tooltip">{p.summary}</span>
