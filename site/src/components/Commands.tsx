@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Prompt } from './Prompt'
+import { SectionHead } from './SectionHead'
 import { commands } from '../data/content'
 import { useReducedMotion } from '../lib/motion'
 
@@ -107,7 +107,7 @@ export function Commands() {
   return (
     <section className="section" id="commands">
       <div className="wrap">
-        <Prompt cmd="nekoshell help" out={<>one command, twelve subcommands, and the ones enabled plugins add</>} />
+        <SectionHead cmd="nekoshell help" title="One command for all of it" sub="Twelve subcommands cover installing, checking, theming and the terminals; enabled plugins add their own." />
         <div className="cmds">
           <div className="tty" ref={ref} aria-label="A terminal running nekoshell doctor, theme list, terminal list and theme latte" role="img">
             <div className="tty__bar" aria-hidden="true">
@@ -120,7 +120,7 @@ export function Commands() {
                 <div>
                   <span className="p">❯ </span>
                   {typing.startsWith('nekoshell') ? <><span className="k">nekoshell</span>{typing.slice(9)}</> : typing}
-                  <span className="prompt__cursor" />
+                  <span className="tty__cursor" />
                 </div>
               )}
             </div>

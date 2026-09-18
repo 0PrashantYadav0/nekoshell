@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { Prompt } from './Prompt'
+import { SectionHead } from './SectionHead'
 import { LazyCanvas } from './LazyCanvas'
 
 const PaletteScene = lazy(() => import('./PaletteScene'))
@@ -18,7 +18,7 @@ export function Themes() {
   return (
     <section className="section" id="themes">
       <div className="wrap">
-        <Prompt cmd="nekoshell theme" args={flavour} out={<>four Catppuccin flavours; a switch re-renders every terminal, the prompt, bat, btop, lazygit, yazi and the rest; <b>theme auto</b> follows the Mac's appearance</>} />
+        <SectionHead cmd={`nekoshell theme ${flavour}`} title="Four flavours, one switch" sub={<>A theme switch re-renders every terminal, the prompt, bat, btop, lazygit, yazi and the rest. <b>theme auto</b> follows the Mac's appearance.</>} />
         <div className="themes">
           <div className="themes__scene" role="img" aria-label={`The 26 colours of Catppuccin ${flavour} as spheres around a prompt block`}>
             <LazyCanvas camera={{ position: [0, 2.8, 8.4], fov: 34 }}>
@@ -26,7 +26,7 @@ export function Themes() {
             </LazyCanvas>
           </div>
           <div>
-            <p className="lead">Pick one. The page changes with it, the way every terminal on the Mac does.</p>
+            <p style={{ color: 'var(--subtext1)', marginBottom: '1rem' }}>Pick one. The page changes with it, the way every terminal on the Mac does.</p>
             <div className="flavours" role="group" aria-label="Flavours">
               {flavours.map((f) => {
                 const p = paletteOf(f)
