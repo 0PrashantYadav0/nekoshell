@@ -23,6 +23,7 @@
 /scripts export-ignore
 /skills export-ignore
 /packaging export-ignore
+/site export-ignore
 docs/superpowers export-ignore
 docs/ci-checks export-ignore
 docs/contributing export-ignore

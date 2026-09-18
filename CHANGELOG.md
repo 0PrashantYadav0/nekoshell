@@ -15,7 +15,9 @@
 
 ### Docs
 
+- A landing page, `site/`: a Vite and React single page for Vercel with the neko as a turnable 3D model, the greeting screenshots pinned while they scroll, five terminal windows in 3D, the palette of the flavour in force as spheres that re-colour with the page on a flavour switch, the command and plugin tables, the three ways to install, and the author. It is out of the release tarball and the lint sweep.
 - Screenshots: `docs/screenshots/greet-anime.png`, `greet-minecraft.png` and `greet-colorscripts.png`, the greeting in iTerm2 with three of the art providers. The README shows the anime one, the whole window at full width; each of the three plugin pages shows its own.
+- Three more, for the landing page: `docs/screenshots/greet-pokemon.png`, `greet-pokemon-latte.png` and `doctor.png`. These are the real output of `nekoshell greet --art pokemon` (in mocha and after `nekoshell theme latte`) and `nekoshell doctor`, recorded through a pty and drawn into an iTerm2-style window at 1600 px rather than captured from the screen, with the Wi-Fi and IP values left out.
 - A front page: the neko mascot, a row of seven badges and a one-paragraph pitch at the top of the README. The mascot, a chibi black cat on a prompt block, is a 3D model, `docs/assets/neko.stl` (GitHub shows it as a turnable view), rendered to `docs/assets/neko.png` by `docs/assets/gen-neko.py`, a standard-library Python modeller and rasteriser.
 - The README is a front page that links out rather than a manual: install, the commands, the plugins and an index, with the terminal comparison moved to the new `docs/TERMINALS.md`, `nekoshell.toml`, the themes, the prompt, `greet.conf` and `local.zsh` to the new `docs/CONFIGURATION.md`, and the full command list to `docs/INSTALL.md`. `docs/README.md` is the new index of every page. Pages that ship in the tarball no longer link into paths that do not.
 

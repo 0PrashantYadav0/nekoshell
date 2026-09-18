@@ -11,4 +11,5 @@ config:
 ignores:
   - .planning/**
   - node_modules/**
+  - site/** # the landing page has its own tooling
   - "**/CHANGELOG.md"
