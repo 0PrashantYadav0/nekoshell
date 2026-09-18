@@ -145,7 +145,7 @@ export function Commands() {
           initial={reduced ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-10% 0px' }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ type: 'spring', bounce: 0, duration: 0.6 }}
         >
           <img src="/shots/doctor.png" alt="The whole output of nekoshell doctor on a Mac with the full profile: one row per check, every row ok except two warnings, Ghostty's hotkey and the shared Spotify client id" loading="lazy" width={1600} height={1599} />
         </motion.figure>

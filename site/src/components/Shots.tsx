@@ -46,7 +46,7 @@ export function Shots() {
                 loading={i === 0 ? 'eager' : 'lazy'}
                 initial={false}
                 animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.02 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ type: 'spring', bounce: 0, duration: 0.55 }}
               />
             ))}
           </div>
