@@ -84,7 +84,8 @@ teardown() { teardown_tmp_home; }
 }
 
 @test "greet-art prints the facts caption and then the sprite" {
-  run "$P/greet-art"
+  # Shiny odds off: the roll is 1 in 128, and a lucky one would append " ✦ shiny".
+  POKEMON_SHINY_ODDS=0 run "$P/greet-art"
   [ "$status" -eq 0 ]
   [ "${lines[0]}" = "Pikachu · #025 · Electric · Gen 1" ]
   [ "${#lines[@]}" -eq 4 ]
@@ -116,7 +117,8 @@ teardown() { teardown_tmp_home; }
 
 @test "the greeting draws the pokémon through the provider" {
   "$NK" plugin add pokemon >/dev/null
-  run script -q /dev/null "$NK" greet --art pokemon < /dev/null
+  # The same shiny roll, reached through the greeting this time.
+  POKEMON_SHINY_ODDS=0 run script -q /dev/null "$NK" greet --art pokemon < /dev/null
   assert_contains "$output" "--file-raw - stdin=3"
   [ "$(cat "$HOME/.cache/nekoshell/art-name")" = "Pikachu · #025 · Electric · Gen 1" ]
 }
