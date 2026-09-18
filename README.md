@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/neko.svg" width="180" alt="nekoshell's neko: a cat sitting on a terminal prompt">
+  <a href="docs/assets/neko.stl"><img src="docs/assets/neko.png" width="240" alt="nekoshell's neko: a black chibi cat sitting on a mauve prompt block"></a>
 </p>
 
 <h1 align="center">nekoshell</h1>
@@ -18,24 +18,13 @@
 
 ## Screenshots
 
-The greeting in iTerm2, with three of the art providers.
+The whole iTerm2 window after `nekoshell greet --art anime`: the picture drawn inline beside the machine stats, the palette swatch under them, the prompt above and below.
 
-<table>
-<tr>
-<td align="center" width="33%">
-<img src="docs/screenshots/greet-anime.png" width="100%" alt="the anime greeting: an anime character drawn inline beside the machine stats">
-<br><sub>anime — a picture drawn inline</sub>
-</td>
-<td align="center" width="33%">
-<img src="docs/screenshots/greet-minecraft.png" width="100%" alt="the minecraft greeting: a piston block sprite beside the machine stats">
-<br><sub>minecraft — a block sprite</sub>
-</td>
-<td align="center" width="33%">
-<img src="docs/screenshots/greet-colorscripts.png" width="100%" alt="the colorscripts greeting: an ANSI rails pattern beside the machine stats">
-<br><sub>colorscripts — an ANSI pattern</sub>
-</td>
-</tr>
-</table>
+<p align="center">
+  <img src="docs/screenshots/greet-anime.png" width="100%" alt="an iTerm2 window after nekoshell greet --art anime: an anime character drawn inline beside the machine stats, the palette swatch under them and the prompt">
+</p>
+
+The same greeting with the [minecraft](docs/plugins/minecraft.md) and [colorscripts](docs/plugins/colorscripts.md) providers is on those plugin pages, and [docs/TERMINALS.md](docs/TERMINALS.md) shows nekoshell in each of the five terminals.
 
 ## Install
 
@@ -105,4 +94,4 @@ Issues and pull requests are welcome; [CONTRIBUTING.md](https://github.com/0Pras
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The sprites and pictures the greeting draws come from packs fetched at install time and are not part of this repository; only the screenshots above show them. Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.
+MIT, see [LICENSE](LICENSE). The sprites and pictures the greeting draws come from packs fetched at install time and are not part of this repository; only the screenshots show them. The neko mascot is the project's own model, MIT like the rest. Pokémon is a trademark of The Pokémon Company and Minecraft of Mojang.

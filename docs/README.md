@@ -34,4 +34,4 @@ Every page in this repository, grouped by what you came for. The front page is [
 
 ## Also in this directory
 
-`screenshots/` holds the images the README and the art provider pages use, and `assets/` holds the neko mascot; both are repository-only, as is `superpowers/`, which keeps the plans and specs behind larger changes.
+`screenshots/` holds the images the README, the art provider pages and [TERMINALS.md](TERMINALS.md) use, and `assets/` holds the neko mascot, a 3D model with its render and the script that makes both; both are repository-only, as is `superpowers/`, which keeps the plans and specs behind larger changes.
