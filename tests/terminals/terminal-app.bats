@@ -130,12 +130,20 @@ PY
   [ "$(rgb "$OUT" TextBoldColor)" = "205 214 244" ]     # text
   [ "$(rgb "$OUT" CursorColor)" = "245 224 220" ]       # rosewater
   [ "$(rgb "$OUT" SelectionColor)" = "88 91 112" ]      # surface2
-  [ "$(rgb "$OUT" ANSIBlackColor)" = "69 71 90" ]       # surface1
+  [ "$(rgb "$OUT" ANSIBlackColor)" = "69 71 90" ]       # ansiblack (surface1 on mocha)
   [ "$(rgb "$OUT" ANSIMagentaColor)" = "245 194 231" ]  # pink
   [ "$(rgb "$OUT" ANSICyanColor)" = "148 226 213" ]     # teal
-  [ "$(rgb "$OUT" ANSIWhiteColor)" = "186 194 222" ]    # subtext1
-  [ "$(rgb "$OUT" ANSIBrightBlackColor)" = "88 91 112" ] # surface2
-  [ "$(rgb "$OUT" ANSIBrightWhiteColor)" = "166 173 200" ] # subtext0
+  [ "$(rgb "$OUT" ANSIWhiteColor)" = "166 173 200" ]    # ansiwhite
+  [ "$(rgb "$OUT" ANSIBrightBlackColor)" = "88 91 112" ] # ansibrblack
+  [ "$(rgb "$OUT" ANSIBrightWhiteColor)" = "186 194 222" ] # ansibrwhite
+}
+
+@test "latte draws ANSI black dark, so black text stays readable on the light base" {
+  python3 "$GEN" --root "$REPO_ROOT" --out "$OUT" --flavor latte
+  [ "$(rgb "$OUT" BackgroundColor)" = "239 241 245" ]   # base
+  [ "$(rgb "$OUT" ANSIBlackColor)" = "92 95 119" ]       # ansiblack: subtext1 on latte
+  [ "$(rgb "$OUT" ANSIBrightBlackColor)" = "108 111 133" ] # ansibrblack
+  [ "$(rgb "$OUT" ANSIWhiteColor)" = "172 176 190" ]     # ansiwhite: surface2 on latte
 }
 
 @test "--flavor picks another Catppuccin palette from core/theme/palettes.json" {

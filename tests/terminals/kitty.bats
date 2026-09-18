@@ -102,7 +102,7 @@ include nekoshell.conf" ]
   [ "$(conf_value foreground)" = "#cdd6f4" ]
   [ "$(conf_value color0)" = "#45475a" ]
   [ "$(conf_value color5)" = "#f5c2e7" ]
-  [ "$(conf_value color15)" = "#a6adc8" ]
+  [ "$(conf_value color15)" = "#bac2de" ]
   [ "$(conf_value cursor)" = "#f5e0dc" ]
   [ "$(conf_value selection_background)" = "#585b70" ]
   [ "$(conf_value active_tab_background)" = "#cba6f7" ]
@@ -507,4 +507,13 @@ print(len(maps), maps[0] if maps else "")
     grep -Eq "^# $key( |$)" "$sample" || bad="$bad $key"
   done < <(sed -n 's/^\([a-z_]*\) .*/\1/p' "$PCONF")
   if [ -n "$bad" ]; then echo "options the kitten does not know:$bad" >&2; false; fi
+}
+
+@test "latte renders a dark ANSI black, so black text stays readable on the light base" {
+  load_adapter
+  terminal_apply latte >/dev/null 2>&1
+  [ "$(conf_value background)" = "#eff1f5" ]
+  [ "$(conf_value color0)" = "#5c5f77" ]
+  [ "$(conf_value color8)" = "#6c6f85" ]
+  [ "$(conf_value color7)" = "#acb0be" ]
 }

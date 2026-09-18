@@ -30,8 +30,11 @@ ANSI_KEYS = [
     "ANSIBrightYellowColor", "ANSIBrightBlueColor", "ANSIBrightMagentaColor",
     "ANSIBrightCyanColor", "ANSIBrightWhiteColor",
 ]
-ANSI = ["surface1", "red", "green", "yellow", "blue", "pink", "teal", "subtext1",
-        "surface2", "red", "green", "yellow", "blue", "pink", "teal", "subtext0"]
+# ANSI 0 to 15: the flavour's own ansi roles in palettes.json (upstream's
+# ansiColors block), so latte gets a dark black and every flavour its own
+# bright shades. Same list as the kitty, Ghostty and Warp templates.
+ANSI = ["ansiblack", "ansired", "ansigreen", "ansiyellow", "ansiblue", "ansimagenta", "ansicyan", "ansiwhite",
+        "ansibrblack", "ansibrred", "ansibrgreen", "ansibryellow", "ansibrblue", "ansibrmagenta", "ansibrcyan", "ansibrwhite"]
 
 # Terminal.app has no keys for cursor text, selected text or link colour, so
 # those roles from the shared rule have nowhere to go here.
