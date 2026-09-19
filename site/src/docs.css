@@ -119,7 +119,9 @@
 .docs__step:hover { border-color: var(--overlay0); }
 .docs__step span { color: var(--overlay1); font-size: var(--fs-0); font-weight: 400; }
 .docs__step--next { grid-column: 2; text-align: right; }
-.docs__step:only-child { grid-column: 1; }
+/* The index has no previous and the last page no next: the one link sits
+   alone on the left rather than half a row away from it. */
+.docs__step:only-child { grid-column: 1; text-align: left; }
 
 /* ---------- The "Pages" toggle, for one column ---------- */
 .docs__pages { display: none; margin-bottom: 1rem; }
