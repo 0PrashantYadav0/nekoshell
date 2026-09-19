@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { author, repo } from '../data/content'
 
 export function Footer() {
@@ -6,8 +7,8 @@ export function Footer() {
       <div className="wrap foot__in">
         <ul>
           <li><a href={repo} target="_blank" rel="noreferrer">GitHub</a></li>
-          <li><a href={`${repo}/blob/main/docs/README.md`} target="_blank" rel="noreferrer">Docs</a></li>
-          <li><a href={`${repo}/blob/main/CHANGELOG.md`} target="_blank" rel="noreferrer">Changelog</a></li>
+          <li><Link to="/docs">Docs</Link></li>
+          <li><Link to="/docs/changelog">Changelog</Link></li>
           <li><a href={`${repo}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noreferrer">Contributing</a></li>
           <li><a href={`${repo}/releases`} target="_blank" rel="noreferrer">Releases</a></li>
           <li><a href={`${repo}/blob/main/LICENSE`} target="_blank" rel="noreferrer">MIT licence</a></li>
