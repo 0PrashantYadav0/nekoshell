@@ -207,12 +207,33 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .nav__links a { color: var(--fg-muted); }
 .nav__links a:hover { color: var(--text); }
 .nav__cta { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-@media (max-width: 880px) { .nav__links { display: none; } }
+.nav__links a[aria-current='page'] { color: var(--text); }
+/* The section links fold into a panel under the bar on a narrow window; the
+   flavour switch and the Install button never leave it. */
+.nav__menu { display: none; }
+.nav__panel { display: none; }
+.nav__panel[hidden] { display: none; }
+@media (max-width: 880px) {
+  .nav__links { display: none; }
+  .nav__menu { display: inline-flex; }
+  .nav__panel {
+    display: block; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    background: var(--base); padding-block: 6px 10px;
+  }
+  .nav__panel[hidden] { display: none; }
+  .nav__panel .wrap { display: grid; }
+  .nav__panel a { display: flex; align-items: center; min-height: 44px; color: var(--fg-muted); font-size: var(--fs-0); font-weight: 500; border-top: 1px solid var(--line); }
+  .nav__panel a:first-child { border-top: 0; }
+  .nav__panel a[aria-current='page'] { color: var(--text); }
+}
+@media (max-width: 560px) { .nav__gh { display: none; } }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; overflow: clip; }
 .hero__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; min-height: calc(100svh - 56px); padding-block: 4rem; }
-.hero__meta { display: flex; gap: 14px; font-size: var(--fs-0); color: var(--fg-faint); margin-bottom: 1.5rem; letter-spacing: 0.01em; }
+.hero__meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--fs-0); color: var(--fg-faint); margin-bottom: 1.5rem; letter-spacing: 0.01em; }
+.hero__meta a { color: var(--fg-faint); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.hero__meta a:hover { color: var(--text); }
 .hero__meta span + span::before { content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--surface2); margin-right: 14px; vertical-align: middle; }
 .hero__title { font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: 1.02; color: var(--text); max-width: 12ch; }
 .hero__lead { margin-top: 1.5rem; font-size: var(--fs-3); color: var(--fg-muted); max-width: 44ch; line-height: 1.45; letter-spacing: -0.008em; }

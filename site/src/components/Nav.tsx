@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { repo } from '../data/content'
 import { useFlavour } from '../lib/flavour'
 
@@ -15,7 +15,11 @@ const links = [
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false)
+  const [open, setOpen] = useState(false)
+  const menuButton = useRef<HTMLButtonElement>(null)
   const { flavour, setFlavour } = useFlavour()
+  const { pathname } = useLocation()
+  const onDocs = pathname === '/docs' || pathname.startsWith('/docs/')
   const light = flavour === 'latte'
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8)
@@ -23,6 +27,21 @@ export function Nav() {
     window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
   }, [])
+  // Escape closes the panel and hands the focus back to the button that
+  // opened it, so the keyboard never lands in a panel that is not there.
+  useEffect(() => {
+    if (!open) return
+    const on = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      menuButton.current?.focus()
+    }
+    window.addEventListener('keydown', on)
+    return () => window.removeEventListener('keydown', on)
+  }, [open])
+  const docsLink = (
+    <Link to="/docs" aria-current={onDocs ? 'page' : undefined} onClick={() => setOpen(false)}>Docs</Link>
+  )
   return (
     <header className="nav" data-scrolled={scrolled}>
       <div className="wrap nav__in">
@@ -34,11 +53,21 @@ export function Nav() {
           {links.map(([href, label]) => (
             <a key={href} href={href}>{label}</a>
           ))}
-          <Link to="/docs">Docs</Link>
+          {docsLink}
           <a href="/#author">Author</a>
         </nav>
         <div className="nav__cta">
-          <a className="btn" href={repo} target="_blank" rel="noreferrer">
+          <button
+            type="button"
+            className="btn nav__menu"
+            ref={menuButton}
+            aria-expanded={open}
+            aria-controls="nav-menu"
+            onClick={() => setOpen((v) => !v)}
+          >
+            Menu
+          </button>
+          <a className="btn nav__gh" href={repo} target="_blank" rel="noreferrer">
             <GitHubIcon /> GitHub
           </a>
           <a className="btn btn--fill" href="/#install">Install</a>
@@ -51,6 +80,18 @@ export function Nav() {
           </button>
         </div>
       </div>
+      {/* The panel is in the page whether it is open or not, so the button's
+          aria-controls always names something real. */}
+      <nav className="nav__panel" id="nav-menu" aria-label="Menu" hidden={!open}>
+        <div className="wrap">
+          {links.map(([href, label]) => (
+            <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>
+          ))}
+          {docsLink}
+          <a href="/#author" onClick={() => setOpen(false)}>Author</a>
+          <a href={repo} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>GitHub</a>
+        </div>
+      </nav>
     </header>
   )
 }
