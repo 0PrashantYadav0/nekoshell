@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
 import { SectionHead } from './SectionHead'
+import { useNearViewport } from '../lib/motion'
 import { shots } from '../data/content'
 
 // The greeting, four ways. The frame is pinned while the section scrolls
@@ -11,6 +12,10 @@ export function Shots() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
   const [active, setActive] = useState(0)
   const [pinned, setPinned] = useState(true)
+  // Three of the four screenshots are a third of a megabyte together and the
+  // section starts just below the fold, near enough for the browser to fetch
+  // them by itself; they wait here until the frame is on its way in.
+  const [frame, near] = useNearViewport<HTMLDivElement>('300px')
 
   useEffect(() => {
     const m = window.matchMedia('(max-width: 880px)')
@@ -37,18 +42,20 @@ export function Shots() {
       <div className="shots" ref={ref}>
         <div className="wrap shots__pin">
           <SectionHead cmd={`nekoshell greet --art ${shots[active].art}`} title="A picture on every new shell" sub="The greeting draws beside the machine stats and the palette, from whichever art providers you enable." />
-          <div className="shots__frame">
-            {shots.map((s, i) => (
-              <motion.img
-                key={s.art}
-                src={s.file}
-                alt={`An iTerm2 window after nekoshell greet --art ${s.art}`}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                initial={false}
-                animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.02 }}
-                transition={{ type: 'spring', bounce: 0, duration: 0.55 }}
-              />
-            ))}
+          <div className="shots__frame" ref={frame}>
+            {shots.map((s, i) =>
+              i === active || near ? (
+                <motion.img
+                  key={s.art}
+                  src={s.file}
+                  alt={`An iTerm2 window after nekoshell greet --art ${s.art}`}
+                  loading={i === active ? 'eager' : 'lazy'}
+                  initial={false}
+                  animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.02 }}
+                  transition={{ type: 'spring', bounce: 0, duration: 0.55 }}
+                />
+              ) : null,
+            )}
           </div>
           <div className="shots__row">
             <div className="seg" role="tablist" aria-label="Art providers">
