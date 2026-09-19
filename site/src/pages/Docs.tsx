@@ -40,13 +40,16 @@ export default function Docs() {
       <Background />
       <Nav />
       <div className="docs" data-side={sideOpen}>
-        <div className="docs__in">
-          <button type="button" className="btn docs__pages" onClick={() => setSideOpen(!sideOpen)} aria-expanded={sideOpen}>
+        {/* The whole column is the main landmark, the Pages toggle with it, so
+            nothing on the page sits outside one. The article keeps the id the
+            skip link names, and takes the focus with it. */}
+        <main className="docs__in">
+          <button type="button" className="btn docs__pages" onClick={() => setSideOpen(!sideOpen)} aria-expanded={sideOpen} aria-controls="docs-side">
             Pages
           </button>
           <div className="docs__grid">
             <DocsSidebar onNavigate={() => setSideOpen(false)} />
-            <article className="docs__article" id="docs-article">
+            <article className="docs__article" id="docs-article" tabIndex={-1}>
               <h1>{page.title}</h1>
               <DocsTocFold key={page.slug} headings={page.headings} />
               <DocsMarkdown body={page.body} source={page.source} />
@@ -72,7 +75,7 @@ export default function Docs() {
             </article>
             <DocsToc key={page.slug} headings={page.headings} />
           </div>
-        </div>
+        </main>
       </div>
       <Footer />
     </>

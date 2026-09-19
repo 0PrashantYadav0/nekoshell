@@ -30,7 +30,9 @@ function CodeBlock({ children }: { children?: ReactNode }) {
         <span className="md__lang">{language}</span>
         <CopyButton text={text} />
       </div>
-      <pre>
+      {/* A long command scrolls sideways inside its block, so the block is a
+          named stop on the keyboard's way down the page. */}
+      <pre tabIndex={0} role="group" aria-label={`${language || 'Code'} block, scrolls sideways`}>
         <code className={className || undefined}>{text}</code>
       </pre>
     </div>
@@ -75,7 +77,7 @@ function componentsFor(source: string): Components {
     pre: CodeBlock,
     table({ children }) {
       return (
-        <div className="md__table">
+        <div className="md__table" tabIndex={0} role="group" aria-label="Table, scrolls sideways">
           <table>{children}</table>
         </div>
       )

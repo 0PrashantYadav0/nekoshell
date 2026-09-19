@@ -42,7 +42,7 @@ export function DocsSidebar({ onNavigate }: { onNavigate: () => void }) {
     setCollapsed((was) => (was.includes(label) ? was.filter((l) => l !== label) : [...was, label]))
 
   return (
-    <nav className="docs__side" aria-label="Documentation">
+    <nav className="docs__side" id="docs-side" aria-label="Documentation">
       <input
         className="docs__filter"
         type="search"
