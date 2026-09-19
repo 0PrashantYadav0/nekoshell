@@ -48,7 +48,7 @@ export default function Docs() {
             <DocsSidebar onNavigate={() => setSideOpen(false)} />
             <article className="docs__article" id="docs-article">
               <h1>{page.title}</h1>
-              <DocsTocFold headings={page.headings} />
+              <DocsTocFold key={page.slug} headings={page.headings} />
               <DocsMarkdown body={page.body} source={page.source} />
               <div className="docs__end">
                 <a className="docs__edit" href={`${repoBlob}/${page.source}`} target="_blank" rel="noreferrer">
