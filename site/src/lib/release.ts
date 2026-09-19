@@ -9,6 +9,11 @@ export const knownRelease: Release = { version: release, url: `${repo}/releases/
 
 export const latestEndpoint = 'https://api.github.com/repos/0PrashantYadav0/nekoshell/releases/latest'
 
+// The hero links wherever the answer points, so the answer may only point
+// into this repository; anything else keeps the releases page.
+const releasePrefix = `${repo}/`
+export const isReleaseUrl = (url: unknown): url is string => typeof url === 'string' && url.startsWith(releasePrefix)
+
 // Releases are tagged `v0.3.0`; the page prints the version without the v.
 export function versionOfTag(tag: unknown): string | null {
   if (typeof tag !== 'string') return null
@@ -28,7 +33,7 @@ export async function latestRelease(fetcher: typeof fetch = fetch, timeoutMs = 4
     const body = (await res.json()) as { tag_name?: unknown; html_url?: unknown }
     const version = versionOfTag(body.tag_name)
     if (!version) return knownRelease
-    return { version, url: typeof body.html_url === 'string' ? body.html_url : knownRelease.url }
+    return { version, url: isReleaseUrl(body.html_url) ? body.html_url : knownRelease.url }
   } catch {
     return knownRelease
   } finally {
