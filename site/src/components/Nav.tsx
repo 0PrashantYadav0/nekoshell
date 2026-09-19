@@ -17,6 +17,7 @@ export function Nav() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
+  const panel = useRef<HTMLElement>(null)
   const { flavour, setFlavour } = useFlavour()
   const { pathname } = useLocation()
   const onDocs = pathname === '/docs' || pathname.startsWith('/docs/')
@@ -38,6 +39,12 @@ export function Nav() {
     }
     window.addEventListener('keydown', on)
     return () => window.removeEventListener('keydown', on)
+  }, [open])
+  // Opening it puts the keyboard in it, at the first link, so the panel is
+  // read where it appears rather than after the rest of the bar.
+  useEffect(() => {
+    if (!open) return
+    panel.current?.querySelector('a')?.focus()
   }, [open])
   const docsLink = (
     <Link to="/docs" aria-current={onDocs ? 'page' : undefined} onClick={() => setOpen(false)}>Docs</Link>
@@ -82,7 +89,7 @@ export function Nav() {
       </div>
       {/* The panel is in the page whether it is open or not, so the button's
           aria-controls always names something real. */}
-      <nav className="nav__panel" id="nav-menu" aria-label="Menu" hidden={!open}>
+      <nav className="nav__panel" id="nav-menu" aria-label="Menu" ref={panel} hidden={!open}>
         <div className="wrap">
           {links.map(([href, label]) => (
             <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>
