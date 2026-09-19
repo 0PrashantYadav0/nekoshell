@@ -174,6 +174,11 @@ main, .foot, .nav { position: relative; z-index: 1; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: inset 0 1px 0 var(--edge); }
 
+.badge {
+  margin-left: 8px; padding: 2px 7px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.01em;
+  border: 1px solid color-mix(in srgb, var(--green) 45%, var(--line)); background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--text);
+}
+
 /* What a scene falls back to where there is no WebGL: the still picture, the
    names, the colours themselves. Each one fills the box the scene had. */
 .scene-still { position: absolute; inset: 0; margin: auto; display: grid; place-content: center; }
@@ -274,13 +279,24 @@ main, .foot, .nav { position: relative; z-index: 1; }
 
 /* ---------- What you get ---------- */
 .gets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.get { padding: 22px 22px 24px; }
+.get { padding: 22px 22px 24px; min-width: 0; }
 .get__icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; background: color-mix(in srgb, var(--hue) 16%, var(--mantle)); color: var(--hue); margin-bottom: 1rem; }
 .get__icon svg { width: 18px; height: 18px; }
 .get h3 { font-size: var(--fs-2); font-weight: 600; letter-spacing: -0.01em; }
 .get p { color: var(--fg-muted); margin-top: 0.4rem; font-size: var(--fs-0); line-height: 1.55; }
+/* Three rows of the doctor, in the card, so the check is on the page before
+   the full screenshot further down. */
+.get__rows {
+  margin: 0.9rem 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--crust);
+  color: var(--fg-chrome); font-size: 0.68rem; line-height: 1.7; overflow-x: auto; white-space: pre; scrollbar-width: none;
+}
+.get__more { display: inline-block; margin-top: 0.75rem; font-size: var(--fs-0); font-weight: 500; color: var(--fg-link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+.get__more:hover { color: var(--fg-link-hover); }
 @media (max-width: 880px) { .gets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .gets { grid-template-columns: 1fr; } }
+/* minmax(0, …) rather than 1fr: the doctor rows in the last card are a wide
+   block that scrolls inside itself, and a column that sizes to its content
+   would let it push the page wider than the window. */
+@media (max-width: 560px) { .gets { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------- Terminals ---------- */
 .terms { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 2.5rem; align-items: start; }
@@ -317,13 +333,15 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .cmdtable tr:first-child td { border-top: 0; }
 .cmdtable td:first-child { font-family: var(--mono); color: var(--text); padding-right: 18px; width: 54%; font-size: 0.82rem; }
 .cmdtable td:first-child b { color: var(--mauve); font-weight: 500; }
-.cmdtable td:last-child { color: var(--fg-muted); }
+.cmdtable td:nth-child(2) { color: var(--fg-muted); }
+.cmdtable__copy { width: 1%; padding-left: 12px; text-align: right; }
 @media (max-width: 880px) {
   .cmds { grid-template-columns: 1fr; }
   .tty { position: relative; top: 0; }
   .cmdtable tr { display: block; padding: 10px 0; border-top: 1px solid var(--line); }
   .cmdtable td { display: block; border: 0; padding: 0; width: auto; }
-  .cmdtable td:last-child { margin-top: 2px; }
+  .cmdtable td:nth-child(2) { margin-top: 2px; }
+  .cmdtable__copy { width: auto; margin-top: 8px; text-align: left; }
 }
 
 /* A captured window shown below a section: the doctor, the greeting in a flavour. */
@@ -336,9 +354,10 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .profiles { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
 .profiles__note { color: var(--fg-muted); font-size: var(--fs-0); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips__item { position: relative; }
 .chip {
-  position: relative; font-family: var(--mono); font-size: 0.82rem; padding: 7px 11px; border-radius: var(--r-sm);
-  border: 1px solid var(--line); background: var(--mantle); color: var(--fg-faint); cursor: default;
+  font-family: var(--mono); font-size: 0.82rem; padding: 7px 11px; border-radius: var(--r-sm);
+  border: 1px solid var(--line); background: var(--mantle); color: var(--fg-faint); cursor: pointer;
   transition: color 0.3s, border-color 0.3s, background-color 0.3s;
 }
 .chip[data-on='true'] { color: var(--text); border-color: color-mix(in srgb, var(--hue) 60%, var(--line)); background: color-mix(in srgb, var(--hue) 10%, var(--mantle)); }
@@ -350,9 +369,24 @@ main, .foot, .nav { position: relative; z-index: 1; }
   transform-origin: 12px -6px; transform: scale(0.96) translateY(-4px); transition: opacity 0.18s, transform 0.18s;
   box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--edge);
 }
-.chip:hover .chip__tip, .chip:focus-within .chip__tip { opacity: 1; transform: none; }
+/* A tip hangs from its chip's left edge; in the last column of the row that
+   would hang it past the page, so those hang from the right edge instead. */
+.chips__item[data-tip-end='true'] .chip__tip { left: auto; right: 0; transform-origin: calc(100% - 12px) -6px; }
+.chips__item:hover .chip__tip, .chips__item:focus-within .chip__tip, .chips__item[data-open='true'] .chip__tip { opacity: 1; transform: none; }
 .chips__legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 1.25rem; font-size: var(--fs-0); color: var(--fg-faint); }
 .chips__legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--hue); margin-right: 8px; vertical-align: 1px; }
+/* On a touch screen there is no hover to read a summary with, so the open
+   one is a panel in the flow under its chip rather than a floating tip. */
+@media (max-width: 880px) {
+  .chips__item[data-open='true'] { flex: 1 0 100%; }
+  .chip { min-height: 40px; }
+  .chip__tip {
+    display: none; position: static; width: auto; max-width: none; margin-top: 8px;
+    font-size: 0.875rem; opacity: 1; transform: none; pointer-events: auto; box-shadow: none;
+  }
+  .chips__item:hover .chip__tip, .chips__item:focus-within .chip__tip { display: none; }
+  .chips__item[data-open='true'] .chip__tip { display: block; }
+}
 
 /* ---------- Themes ---------- */
 .themes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; align-items: center; }
@@ -382,6 +416,17 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .way pre span::before { content: '$ '; color: var(--fg-faint); }
 .way .copy { position: absolute; top: 12px; right: 12px; }
 .way__note { color: var(--fg-faint); font-family: var(--sans); font-size: var(--fs-0); margin-top: 12px; }
+/* What each profile puts in, from the same list the installer reads. */
+.profile-list__head { font-size: var(--fs-1); font-weight: 600; margin-top: 2rem; }
+.profile-list { display: grid; margin-top: 0.75rem; }
+.profile-list li { display: grid; grid-template-columns: 5.5rem 1fr; gap: 2px 14px; padding: 12px 0; border-top: 1px solid var(--line); font-size: var(--fs-0); }
+.profile-list li:first-child { border-top: 0; }
+.profile-list b { font-family: var(--mono); font-weight: 500; color: var(--mauve); }
+.profile-list__count { color: var(--text); font-weight: 500; }
+.profile-list__adds { grid-column: 2; color: var(--fg-muted); }
+.profile-list__note { margin-top: 0.9rem; font-size: var(--fs-0); color: var(--fg-muted); max-width: 56ch; }
+.profile-list__note code { color: var(--fg-chrome); }
+
 .after { display: grid; gap: 0; }
 .after li { padding: 14px 0; border-top: 1px solid var(--line); font-size: var(--fs-0); color: var(--fg-muted); }
 .after li:first-child { border-top: 0; padding-top: 0; }
@@ -414,6 +459,13 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .foot a:hover { color: var(--text); }
 .foot p { max-width: 64ch; margin-top: 1.25rem; line-height: 1.55; }
 
+/* A finger needs more than a mouse: the small controls grow on a narrow
+   screen, where the page is most likely to be read on one. */
+@media (max-width: 880px) {
+  .seg button { min-height: 40px; }
+  .copy, .way .copy { min-height: 40px; height: 40px; }
+}
+
 /* Reduced motion keeps the feedback and drops the movement; reduced transparency
    makes the chrome solid; more contrast gives every surface a defined edge. */
 @media (prefers-reduced-motion: reduce) {
@@ -421,7 +473,7 @@ main, .foot, .nav { position: relative; z-index: 1; }
   .bg__field { animation: none; }
   .btn:active, .seg button:active, .copy:active, .flavour:active { transform: none; }
   .chip__tip { transform: none; transition: opacity 0.2s; }
-  .chip, .term, .flavour, .btn { transition: opacity 0.2s, background-color 0.2s, color 0.2s; }
+  .chip, .term, .flavour, .btn, .copy { transition: opacity 0.2s, background-color 0.2s, color 0.2s; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .nav { background: var(--base); backdrop-filter: none; -webkit-backdrop-filter: none; }
