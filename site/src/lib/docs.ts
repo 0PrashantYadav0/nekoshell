@@ -7,6 +7,8 @@
 // Only the lazily loaded /docs route imports this module, so none of it
 // reaches the landing page's bundle.
 
+import GithubSlugger, { slug } from 'github-slugger'
+
 export type Heading = { depth: 2 | 3; id: string; text: string }
 
 export type DocPage = {
@@ -55,22 +57,26 @@ export function sourceOf(path: string): string {
   return `docs/${path}`
 }
 
-/** The id rehype-slug gives a heading: lower case, punctuation dropped,
- *  spaces turned into hyphens. */
+/** The id rehype-slug would give a heading standing on its own. rehype-slug
+ *  slugs with github-slugger, so this module calls the same package rather
+ *  than keeping a copy of its rules: a copy that drifted would leave the
+ *  table of contents pointing at ids no heading carries. */
 export function headingSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[!-,./:-@[-^`{-~]/g, '')
-    .replace(/ /g, '-')
+  return slug(text)
 }
 
-/** A heading's text with the inline Markdown taken off it. */
-function plain(text: string): string {
+/** A heading's text as the renderer shows it, because github-slugger is given
+ *  a heading's text content rather than its Markdown source. An underscore is
+ *  emphasis only at a word boundary, so `local_zsh` keeps its own. */
+export function plain(text: string): string {
   return text
     .replace(/`/g, '')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/\*\*/g, '')
+    .replace(/!?\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/(?<![\w*])\*([^*]+)\*(?![\w*])/g, '$1')
+    .replace(/(?<![\w_])_([^_]+)_(?![\w_])/g, '$1')
     .trim()
 }
 
@@ -101,28 +107,38 @@ export function bodyOf(md: string): string {
   return md.replace(/^\s*#\s+.*(\r?\n)+/, '')
 }
 
-export function headingsOf(md: string): Heading[] {
-  const seen = new Map<string, number>()
-  return scanHeadings(md, [2, 3]).map(({ depth, text }) => {
-    const base = headingSlug(text)
-    const count = seen.get(base) ?? 0
-    seen.set(base, count + 1)
-    return { depth: depth as 2 | 3, id: count ? `${base}-${count}` : base, text }
-  })
+/** The h2 and h3 of a page, with the ids rehype-slug will write.
+ *
+ *  Give it the Markdown that is actually rendered — `bodyOf(raw)`, not the raw
+ *  file — and it walks every heading depth in document order, because
+ *  github-slugger numbers a repeated slug (`-1`, `-2`) across all of them. A
+ *  scan of h2 and h3 alone would count differently as soon as an h1 or an h4
+ *  shared a heading's text. */
+export function headingsOf(rendered: string): Heading[] {
+  const slugger = new GithubSlugger()
+  const found: Heading[] = []
+  for (const { depth, text } of scanHeadings(rendered, [1, 2, 3, 4, 5, 6])) {
+    const id = slugger.slug(text)
+    if (depth === 2 || depth === 3) found.push({ depth, text, id })
+  }
+  return found
 }
 
 const byPath = new Map<string, DocPage>()
-for (const [key, body] of Object.entries(files)) {
+for (const [key, raw] of Object.entries(files)) {
   const path = key.slice(prefix.length)
-  const slug = slugOf(path)
+  const pageSlug = slugOf(path)
+  // The article renders the title itself, so the h1 never reaches the
+  // renderer; the headings are read from what does.
+  const body = bodyOf(raw)
   byPath.set(path, {
     path,
-    slug,
-    route: slug ? `/docs/${slug}` : '/docs',
-    title: titleOf(body),
+    slug: pageSlug,
+    route: pageSlug ? `/docs/${pageSlug}` : '/docs',
+    title: titleOf(raw),
     source: sourceOf(path),
     headings: headingsOf(body),
-    body: bodyOf(body),
+    body,
   })
 }
 
