@@ -4,6 +4,9 @@
 
 export const repo = 'https://github.com/0PrashantYadav0/nekoshell'
 export const tap = 'https://github.com/0PrashantYadav0/homebrew-nekoshell'
+// The last GitHub Release. The hero asks GitHub for the current one and
+// falls back to this when the answer does not arrive.
+export const release = '0.2.0'
 
 export type Plugin = { name: string; summary: string; kind: 'core' | 'art' | 'tool' | 'prompt' | 'ai' | 'window' }
 
