@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { SectionHead } from './SectionHead'
 import { CopyButton } from './CopyButton'
-import { installWays, plugins, profiles, profileSet, repo } from '../data/content'
+import { installWays, plugins, profiles, profileSet } from '../data/content'
 
 export function Install() {
   const [way, setWay] = useState(installWays[0])
@@ -21,9 +22,9 @@ export function Install() {
             </div>
             <div className="way" role="tabpanel">
               <pre>{way.lines.map((l) => <span key={l}>{l}{'\n'}</span>)}</pre>
-              <CopyButton text={way.lines.join('\n')} />
+              <CopyButton text={way.lines.join('\n')} label={`Copy the ${way.label} commands`} />
             </div>
-            <p className="way__note">{way.note} Re-running is safe; <code>nekoshell doctor</code> tells you what is left. Uninstalling puts every backed-up file back: <a href={`${repo}/blob/main/docs/INSTALL.md`} target="_blank" rel="noreferrer">docs/INSTALL.md</a>.</p>
+            <p className="way__note">{way.note} Re-running is safe; <code>nekoshell doctor</code> tells you what is left. Uninstalling puts every backed-up file back: <Link to="/docs/install">the install page</Link>.</p>
             <h3 className="profile-list__head">What a profile installs</h3>
             <ul className="profile-list">
               {profiles.map((p) => (

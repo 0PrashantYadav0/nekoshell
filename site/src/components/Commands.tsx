@@ -134,7 +134,7 @@ export function Commands() {
                   <tr key={c.cmd}>
                     <td><b>{name}</b> {rest.join(' ')}</td>
                     <td>{c.does}</td>
-                    <td className="cmdtable__copy"><CopyButton text={c.cmd} /></td>
+                    <td className="cmdtable__copy"><CopyButton text={c.cmd} label={`Copy ${c.cmd}`} /></td>
                   </tr>
                 )
               })}
