@@ -43,13 +43,16 @@ export function DocsToc({ headings }: { headings: Heading[] }) {
   )
 }
 
-/** The same list folded into a disclosure, for the widths with no third column. */
+/** The same list folded into a disclosure, for the widths with no third
+ *  column. Below 1100 px this is the only table of contents the page has, so
+ *  it marks the current heading exactly as the column does. */
 export function DocsTocFold({ headings }: { headings: Heading[] }) {
+  const active = useActiveHeading(headings)
   if (headings.length === 0) return null
   return (
     <details className="docs__toc-fold">
       <summary>On this page</summary>
-      <TocList headings={headings} active="" />
+      <TocList headings={headings} active={active} />
     </details>
   )
 }
