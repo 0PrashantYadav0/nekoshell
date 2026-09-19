@@ -40,8 +40,15 @@ function CodeBlock({ children }: { children?: ReactNode }) {
 const remarkPlugins = [remarkGfm]
 const rehypePlugins = [rehypeSlug]
 
-/** react-markdown sanitises urls by default; the mapping below does that job
- *  instead, so the raw value has to reach it untouched. */
+/** react-markdown sanitises urls by default, which would rewrite a relative
+ *  link before `docsHref` could map it, so the raw value has to reach the
+ *  components below untouched.
+ *
+ *  The threat model this rests on: the Markdown is a committed copy of this
+ *  repository's own documentation, reviewed like any other file here, and
+ *  `routeFor` in lib/docs.ts drops every scheme but http, https and mailto, so
+ *  a `javascript:` href cannot survive the mapping. Do not point this renderer
+ *  at text from anywhere else without putting the sanitiser back. */
 const keepUrl = (url: string) => url
 
 /** The components that turn one page's Markdown into the site's own markup. */
