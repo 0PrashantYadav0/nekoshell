@@ -319,6 +319,13 @@ main, .foot, .nav { position: relative; z-index: 1; }
   background: var(--crust); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
   font-family: var(--mono); font-size: 0.82rem; line-height: 1.55;
   position: sticky; top: 80px;
+  /* The window carries its own palette (Commands.tsx writes mocha's onto it),
+     and a custom property keeps the value it was given where it was declared,
+     so the roles are declared again here to resolve against that palette
+     rather than against the page's. */
+  --fg-muted: var(--subtext0);
+  --fg-faint: var(--overlay2);
+  --fg-chrome: var(--subtext1);
 }
 .tty__bar { display: flex; gap: 7px; padding: 10px 12px; background: var(--mantle); border-bottom: 1px solid var(--line); align-items: center; }
 .tty__bar i { width: 10px; height: 10px; border-radius: 50%; display: block; background: var(--surface1); }
@@ -365,14 +372,21 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .chip__tip {
   position: absolute; left: 0; top: calc(100% + 8px); z-index: 5; width: max(260px, 100%); max-width: 320px;
   background: var(--crust); border: 1px solid var(--surface1); border-radius: var(--r-sm); padding: 10px 12px;
-  color: var(--fg-chrome); font-family: var(--sans); font-size: 0.85rem; line-height: 1.45; opacity: 0; pointer-events: none;
-  transform-origin: 12px -6px; transform: scale(0.96) translateY(-4px); transition: opacity 0.18s, transform 0.18s;
+  color: var(--fg-chrome); font-family: var(--sans); font-size: 0.85rem; line-height: 1.45;
+  /* Closed means closed: visibility takes the summary out of the page for a
+     reader as well as for an eye, so aria-expanded="false" is the truth. It
+     flips after the fade, so the tip still fades rather than blinking. */
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform-origin: 12px -6px; transform: scale(0.96) translateY(-4px);
+  transition: opacity 0.18s, transform 0.18s, visibility 0s linear 0.18s;
   box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--edge);
 }
 /* A tip hangs from its chip's left edge; in the last column of the row that
    would hang it past the page, so those hang from the right edge instead. */
 .chips__item[data-tip-end='true'] .chip__tip { left: auto; right: 0; transform-origin: calc(100% - 12px) -6px; }
-.chips__item:hover .chip__tip, .chips__item:focus-within .chip__tip, .chips__item[data-open='true'] .chip__tip { opacity: 1; transform: none; }
+.chips__item:hover .chip__tip, .chips__item:focus-within .chip__tip, .chips__item[data-open='true'] .chip__tip {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity 0.18s, transform 0.18s, visibility 0s;
+}
 .chips__legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 1.25rem; font-size: var(--fs-0); color: var(--fg-faint); }
 .chips__legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--hue); margin-right: 8px; vertical-align: 1px; }
 /* On a touch screen there is no hover to read a summary with, so the open
@@ -382,7 +396,7 @@ main, .foot, .nav { position: relative; z-index: 1; }
   .chip { min-height: 40px; }
   .chip__tip {
     display: none; position: static; width: auto; max-width: none; margin-top: 8px;
-    font-size: 0.875rem; opacity: 1; transform: none; pointer-events: auto; box-shadow: none;
+    font-size: 0.875rem; opacity: 1; visibility: visible; transform: none; pointer-events: auto; box-shadow: none;
   }
   .chips__item:hover .chip__tip, .chips__item:focus-within .chip__tip { display: none; }
   .chips__item[data-open='true'] .chip__tip { display: block; }
