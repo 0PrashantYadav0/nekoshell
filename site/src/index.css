@@ -174,6 +174,16 @@ main, .foot, .nav { position: relative; z-index: 1; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: inset 0 1px 0 var(--edge); }
 
+/* What a scene falls back to where there is no WebGL: the still picture, the
+   names, the colours themselves. Each one fills the box the scene had. */
+.scene-still { position: absolute; inset: 0; margin: auto; display: grid; place-content: center; }
+.scene-still img, img.scene-still { width: min(70%, 320px); height: auto; object-fit: contain; }
+.scene-names { gap: 10px; font-family: var(--mono); font-size: var(--fs-1); }
+.scene-names li { display: flex; align-items: center; gap: 10px; color: var(--fg-chrome); }
+.scene-names li::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--hue); }
+.scene-swatches { grid-template-columns: repeat(7, 1fr); gap: 8px; place-content: center; width: min(78%, 320px); }
+.scene-swatches li { aspect-ratio: 1; border-radius: 6px; }
+
 /* ---------- Nav ---------- */
 .nav {
   position: sticky; top: 0; z-index: 50;
