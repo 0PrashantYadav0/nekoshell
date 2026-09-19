@@ -48,4 +48,10 @@ describe('latestRelease', () => {
   it('falls back to the known release when the tag is in another shape', async () => {
     await expect(latestRelease(answers({ tag_name: 'nightly' }))).resolves.toEqual(knownRelease)
   })
+
+  it('keeps the releases page when the answer points anywhere else', async () => {
+    for (const html_url of ['https://example.com/releases/tag/v0.3.0', 'https://github.com/someone/else/releases/tag/v0.3.0', 'https://github.com/0PrashantYadav0/nekoshell.evil/releases', 42]) {
+      await expect(latestRelease(answers({ tag_name: 'v0.3.0', html_url }))).resolves.toEqual({ version: '0.3.0', url: knownRelease.url })
+    }
+  })
 })

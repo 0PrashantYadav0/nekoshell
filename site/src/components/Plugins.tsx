@@ -28,10 +28,14 @@ export function Plugins() {
     const ul = list.current
     if (!ul) return
     const place = () => {
+      // offsetLeft is measured from the positioned section, not from the list,
+      // so the chip is measured in the list's own frame instead.
+      const left = ul.getBoundingClientRect().left
       for (const item of Array.from(ul.children) as HTMLElement[]) {
         const tip = item.querySelector<HTMLElement>('.chip__tip')
         if (!tip) continue
-        item.dataset.tipEnd = String(item.offsetLeft + tip.offsetWidth > ul.clientWidth)
+        const x = item.getBoundingClientRect().left - left
+        item.dataset.tipEnd = String(x + tip.offsetWidth > ul.clientWidth)
       }
     }
     place()
