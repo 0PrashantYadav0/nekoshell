@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { repo } from '../data/content'
 import { useFlavour } from '../lib/flavour'
 
+// The section links carry the front page in front of the fragment, so they
+// work from a docs page as well as from the top of the landing page.
 const links = [
-  ['#greet', 'Greeting'],
-  ['#terminals', 'Terminals'],
-  ['#commands', 'Commands'],
-  ['#plugins', 'Plugins'],
-  ['#themes', 'Themes'],
-  ['#author', 'Author'],
+  ['/#greet', 'Greeting'],
+  ['/#terminals', 'Terminals'],
+  ['/#commands', 'Commands'],
+  ['/#plugins', 'Plugins'],
+  ['/#themes', 'Themes'],
 ]
 
 export function Nav() {
@@ -24,20 +26,22 @@ export function Nav() {
   return (
     <header className="nav" data-scrolled={scrolled}>
       <div className="wrap nav__in">
-        <a className="wordmark" href="#top">
+        <Link className="wordmark" to="/">
           <img src="/neko.png" alt="" width={28} height={28} />
           nekoshell
-        </a>
+        </Link>
         <nav className="nav__links" aria-label="Sections">
           {links.map(([href, label]) => (
             <a key={href} href={href}>{label}</a>
           ))}
+          <Link to="/docs">Docs</Link>
+          <a href="/#author">Author</a>
         </nav>
         <div className="nav__cta">
           <a className="btn" href={repo} target="_blank" rel="noreferrer">
             <GitHubIcon /> GitHub
           </a>
-          <a className="btn btn--fill" href="#install">Install</a>
+          <a className="btn btn--fill" href="/#install">Install</a>
           <button className="btn btn--icon" onClick={() => setFlavour(light ? 'mocha' : 'latte')} aria-label={light ? 'Switch to the dark flavour' : 'Switch to the light flavour'} title={light ? 'mocha' : 'latte'}>
             {light ? (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>

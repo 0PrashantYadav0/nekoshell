@@ -1,45 +1,34 @@
-import { useEffect } from 'react'
-import { Background } from './components/Background'
-import { Nav } from './components/Nav'
-import { Stats } from './components/Stats'
-import { Hero } from './components/Hero'
-import { Shots } from './components/Shots'
-import { WhatYouGet } from './components/WhatYouGet'
-import { Terminals } from './components/Terminals'
-import { Commands } from './components/Commands'
-import { Plugins } from './components/Plugins'
-import { Themes } from './components/Themes'
-import { Install } from './components/Install'
-import { About } from './components/About'
-import { Footer } from './components/Footer'
+import { lazy, Suspense } from 'react'
+import { Route, Routes } from 'react-router-dom'
+import { Landing } from './pages/Landing'
+import { NotFound } from './pages/NotFound'
+
+// The documentation, its Markdown and its renderer are a route of their own,
+// so nothing of it is downloaded by a reader who stays on the front page.
+const Docs = lazy(() => import('./pages/Docs'))
+
+// The chunk arrives in a moment on any connection worth the name, so this is a
+// panel holding the space rather than a spinner asking to be watched.
+function DocsPanel() {
+  return (
+    <div className="docs-wait">
+      <p>Opening the documentation…</p>
+    </div>
+  )
+}
 
 export default function App() {
-  // The sections exist only after React mounts, so a hash in the URL on
-  // load finds nothing; look it up once the page is there.
-  useEffect(() => {
-    const id = decodeURIComponent(window.location.hash.slice(1))
-    if (!id) return
-    document.getElementById(id)?.scrollIntoView()
-  }, [])
+  const docs = (
+    <Suspense fallback={<DocsPanel />}>
+      <Docs />
+    </Suspense>
+  )
   return (
-    <>
-      <a className="skip" href="#greet">Skip to content</a>
-      <Background />
-      <div className="frame" aria-hidden="true" />
-      <Nav />
-      <main>
-        <Hero />
-        <Stats />
-        <Shots />
-        <WhatYouGet />
-        <Terminals />
-        <Commands />
-        <Plugins />
-        <Themes />
-        <Install />
-        <About />
-      </main>
-      <Footer />
-    </>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/docs" element={docs} />
+      <Route path="/docs/*" element={docs} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   )
 }
