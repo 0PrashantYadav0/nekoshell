@@ -32,17 +32,3 @@ export function useNearViewport<T extends HTMLElement>(margin = '200px'): [React
   }, [margin, near])
   return [ref, near]
 }
-
-// Copies text and reports for a moment that it did.
-export function useCopy(): [boolean, (text: string) => void] {
-  const [done, setDone] = useState(false)
-  const t = useRef<number>(0)
-  const copy = (text: string) => {
-    navigator.clipboard?.writeText(text).then(() => {
-      setDone(true)
-      window.clearTimeout(t.current)
-      t.current = window.setTimeout(() => setDone(false), 1600)
-    })
-  }
-  return [done, copy]
-}

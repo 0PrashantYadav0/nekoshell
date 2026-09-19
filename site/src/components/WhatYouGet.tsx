@@ -1,8 +1,12 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { SectionHead } from './SectionHead'
 import { useReducedMotion } from '../lib/motion'
 
-const gets: { title: string; body: string; hue: string; icon: React.ReactNode }[] = [
+// Three rows as the doctor printed them in docs/screenshots/doctor.png.
+const doctorRows = ['ok   theme               mocha', 'ok   bat theme           Catppuccin Mocha', 'ok   greet time          133 ms'].join('\n')
+
+const gets: { title: string; body: string; hue: string; icon: React.ReactNode; extra?: React.ReactNode }[] = [
   { title: 'One zsh config', hue: 'mauve', body: 'A zshrc linked from the checkout, antidote for plugins, and a local.zsh that is yours and never overwritten.',
     icon: <path d="M4 17l6-5-6-5M12 19h8" /> },
   { title: 'One prompt', hue: 'green', body: 'Starship in the flavour, with a git line. Powerlevel10k or pure are one plugin add away.',
@@ -14,7 +18,13 @@ const gets: { title: string; body: string; hue: string; icon: React.ReactNode }[
   { title: 'Five terminals, one look', hue: 'blue', body: 'JetBrainsMono Nerd Font and the same 26 colours in iTerm2, kitty, Ghostty, Warp and Terminal.app.',
     icon: <><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></> },
   { title: 'A doctor', hue: 'yellow', body: 'One line per check, a fix named in every failing one, and an exit code CI can read.',
-    icon: <path d="M20 6L9 17l-5-5" /> },
+    icon: <path d="M20 6L9 17l-5-5" />,
+    extra: (
+      <>
+        <pre className="get__rows" tabIndex={0} role="group" aria-label="Three rows of nekoshell doctor output, as the screenshot lower down shows them">{doctorRows}</pre>
+        <Link className="get__more" to="/docs/install">The check step, in the docs</Link>
+      </>
+    ) },
 ]
 
 export function WhatYouGet() {
@@ -39,6 +49,7 @@ export function WhatYouGet() {
               </span>
               <h3>{g.title}</h3>
               <p>{g.body}</p>
+              {g.extra}
             </motion.li>
           ))}
         </ul>

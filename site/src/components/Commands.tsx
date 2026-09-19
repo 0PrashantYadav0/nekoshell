@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { SectionHead } from './SectionHead'
+import { CopyButton } from './CopyButton'
 import { commands } from '../data/content'
 import { useReducedMotion } from '../lib/motion'
 
@@ -133,6 +134,7 @@ export function Commands() {
                   <tr key={c.cmd}>
                     <td><b>{name}</b> {rest.join(' ')}</td>
                     <td>{c.does}</td>
+                    <td className="cmdtable__copy"><CopyButton text={c.cmd} /></td>
                   </tr>
                 )
               })}
@@ -141,6 +143,8 @@ export function Commands() {
         </div>
         <motion.figure
           className="figure figure--scroll"
+          tabIndex={0}
+          aria-label="The whole output of nekoshell doctor, in a frame that scrolls"
           style={{ margin: '2.5rem 0 0' }}
           initial={reduced ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
