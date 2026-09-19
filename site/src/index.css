@@ -345,6 +345,14 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .about__links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1.25rem; }
 @media (max-width: 560px) { .about { grid-template-columns: 1fr; } }
 
+/* ---------- The docs route while its chunk is on the way, and 404 ---------- */
+.docs-wait { position: relative; z-index: 1; min-height: 60vh; display: grid; place-items: center; color: var(--overlay1); }
+.missing { position: relative; z-index: 1; padding-block: clamp(5rem, 14vh, 9rem); text-align: center; }
+.missing__code { font-family: var(--mono); font-size: var(--fs-0); color: var(--mauve); letter-spacing: 0.08em; }
+.missing h1 { margin-top: 0.75rem; font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.022em; }
+.missing__sub { margin: 0.9rem auto 0; max-width: 46ch; color: var(--subtext0); }
+.missing__links { display: flex; gap: 10px; justify-content: center; margin-top: 1.75rem; flex-wrap: wrap; }
+
 /* ---------- Footer ---------- */
 .foot { border-top: 1px solid var(--line); padding-block: 2.5rem 3rem; color: var(--overlay1); font-size: var(--fs-0); }
 .foot__in { display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem; align-items: flex-start; justify-content: space-between; }
