@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SectionHead } from './SectionHead'
 import { plugins, profiles, profileSet } from '../data/content'
@@ -16,8 +16,34 @@ const kinds: [string, string][] = [
 
 export function Plugins() {
   const [profile, setProfile] = useState('full')
+  const [open, setOpen] = useState<string | null>(null)
+  const list = useRef<HTMLUListElement>(null)
   const on = profile === 'all' ? new Set(plugins.map((p) => p.name)) : profileSet(profile)
   const reduced = useReducedMotion()
+
+  // A summary hangs from its chip's left edge. For the chips at the end of a
+  // row that would hang it past the page, so those hang from the right edge
+  // instead and the page keeps its width.
+  useEffect(() => {
+    const ul = list.current
+    if (!ul) return
+    const place = () => {
+      // offsetLeft is measured from the positioned section, not from the list,
+      // so the chip is measured in the list's own frame instead.
+      const left = ul.getBoundingClientRect().left
+      for (const item of Array.from(ul.children) as HTMLElement[]) {
+        const tip = item.querySelector<HTMLElement>('.chip__tip')
+        if (!tip) continue
+        const x = item.getBoundingClientRect().left - left
+        item.dataset.tipEnd = String(x + tip.offsetWidth > ul.clientWidth)
+      }
+    }
+    place()
+    const ro = new ResizeObserver(place)
+    ro.observe(ul)
+    return () => ro.disconnect()
+  }, [])
+
   return (
     <section className="section" id="plugins">
       <div className="wrap">
@@ -29,23 +55,35 @@ export function Plugins() {
             ))}
             <button aria-pressed={profile === 'all'} onClick={() => setProfile('all')}>All plugins</button>
           </div>
-          <span className="profiles__note">{profile === 'all' ? 'the whole shelf, each one plugin add away' : profiles.find((p) => p.name === profile)?.note}</span>
+          <span className="profiles__note">
+            <b>{on.size} of {plugins.length} plugins</b>
+            {' — '}
+            {profile === 'all' ? 'the whole shelf, each one plugin add away' : profiles.find((p) => p.name === profile)?.note}
+          </span>
         </div>
-        <ul className="chips">
+        <ul className="chips" ref={list}>
           {plugins.map((p, i) => (
             <motion.li
               key={p.name}
-              className="chip"
-              data-on={on.has(p.name)}
-              tabIndex={0}
-              style={{ '--hue': `var(--${hue[p.kind]})` } as React.CSSProperties}
+              className="chips__item"
+              data-open={open === p.name}
               initial={reduced ? false : { opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-5% 0px' }}
               transition={{ type: 'spring', bounce: 0, duration: 0.45, delay: i * 0.02 }}
             >
-              {p.name}
-              <span className="chip__tip" role="tooltip">{p.summary}</span>
+              <button
+                type="button"
+                className="chip"
+                data-on={on.has(p.name)}
+                aria-expanded={open === p.name}
+                aria-controls={`plugin-${p.name}`}
+                style={{ '--hue': `var(--${hue[p.kind]})` } as React.CSSProperties}
+                onClick={() => setOpen((cur) => (cur === p.name ? null : p.name))}
+              >
+                {p.name}
+              </button>
+              <span className="chip__tip" id={`plugin-${p.name}`}>{p.summary}</span>
             </motion.li>
           ))}
         </ul>

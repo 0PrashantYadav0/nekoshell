@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { SectionHead } from './SectionHead'
-import { installWays, repo } from '../data/content'
-import { useCopy } from '../lib/motion'
+import { CopyButton } from './CopyButton'
+import { installWays, plugins, profiles, profileSet } from '../data/content'
 
 export function Install() {
   const [way, setWay] = useState(installWays[0])
-  const [done, copy] = useCopy()
   return (
     <section className="section" id="install">
       <div className="wrap">
@@ -14,14 +14,28 @@ export function Install() {
           <div>
             <div className="seg" role="tablist" aria-label="Ways to install">
               {installWays.map((w) => (
-                <button key={w.id} role="tab" aria-selected={way.id === w.id} onClick={() => setWay(w)}>{w.label}</button>
+                <button key={w.id} role="tab" aria-selected={way.id === w.id} onClick={() => setWay(w)}>
+                  {w.label}
+                  {w.id === 'brew' && <span className="badge">Recommended</span>}
+                </button>
               ))}
             </div>
             <div className="way" role="tabpanel">
               <pre>{way.lines.map((l) => <span key={l}>{l}{'\n'}</span>)}</pre>
-              <button className="copy" data-done={done} onClick={() => copy(way.lines.join('\n'))}>{done ? 'Copied' : 'Copy'}</button>
-              <p className="way__note">{way.note} Re-running is safe; <code>nekoshell doctor</code> tells you what is left. Uninstalling puts every backed-up file back: <a href={`${repo}/blob/main/docs/INSTALL.md`} target="_blank" rel="noreferrer">docs/INSTALL.md</a>.</p>
+              <CopyButton text={way.lines.join('\n')} label={`Copy the ${way.label} commands`} />
             </div>
+            <p className="way__note">{way.note} Re-running is safe; <code>nekoshell doctor</code> tells you what is left. Uninstalling puts every backed-up file back: <Link to="/docs/install">the install page</Link>.</p>
+            <h3 className="profile-list__head">What a profile installs</h3>
+            <ul className="profile-list">
+              {profiles.map((p) => (
+                <li key={p.name}>
+                  <b>{p.name}</b>
+                  <span className="profile-list__count">{profileSet(p.name).size} of {plugins.length} plugins</span>
+                  <span className="profile-list__adds">{p.note}: {p.adds.join(', ')}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="profile-list__note"><code>--profile</code> picks one of the three; <code>--with a,b</code> and <code>--without c</code> adjust the list it installs.</p>
           </div>
           <div>
             <h3 className="after-title" style={{ fontSize: 'var(--fs-1)', fontWeight: 600, marginBottom: '0.75rem' }}>After the install</h3>

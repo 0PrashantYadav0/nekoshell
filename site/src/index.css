@@ -28,13 +28,34 @@
   --r: 12px;
   --r-sm: 8px;
   --line: var(--surface0);
+  /* Text roles. Every shade of text on the page names one of these three
+     rather than a palette shade, because the same shade does not carry the
+     same contrast in every flavour: latte's lighter greys fall under 4.5:1
+     on its own surfaces, so latte re-points the roles a step darker below.
+     --fg-muted is secondary prose, --fg-faint is labels and captions, and
+     --fg-chrome is text sitting on a raised or inset surface. */
+  --fg-muted: var(--subtext0);
+  --fg-faint: var(--overlay2);
+  --fg-chrome: var(--subtext1);
+  --fg-link: var(--blue);
+  --fg-link-hover: var(--lavender);
   --card: color-mix(in srgb, var(--mantle) 72%, transparent);
   --edge: color-mix(in srgb, var(--text) 6%, transparent); /* light catching a surface's top edge */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --press: transform 100ms ease-out;
   color-scheme: dark;
 }
-:root[data-flavour='latte'] { color-scheme: light; }
+/* Latte's subtext0 and its overlays are too pale on its own base, mantle and
+   crust to reach 4.5:1, so muted and faint both land on subtext1 there and
+   anything on a surface takes the full text colour. */
+:root[data-flavour='latte'] {
+  color-scheme: light;
+  --fg-muted: var(--subtext1);
+  --fg-faint: var(--subtext1);
+  --fg-chrome: var(--text);
+  --fg-link: var(--mauve);
+  --fg-link-hover: var(--text);
+}
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -57,7 +78,8 @@ body {
 
 a { color: var(--text); text-decoration: none; }
 a:hover { color: var(--text); }
-p a { color: var(--blue); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+p a { color: var(--fg-link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+p a:hover { color: var(--fg-link-hover); }
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
 code, kbd, pre { font-family: var(--mono); font-size: 0.9em; }
 img { max-width: 100%; height: auto; display: block; }
@@ -102,16 +124,16 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .stats li { padding: 22px 22px; border-left: 1px solid var(--line); }
 .stats li:first-child { border-left: 0; }
 .stats b { display: block; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
-.stats span { display: block; margin-top: 8px; font-size: var(--fs-0); color: var(--subtext0); }
+.stats span { display: block; margin-top: 8px; font-size: var(--fs-0); color: var(--fg-muted); }
 @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats li:nth-child(3) { border-left: 0; } .stats li:nth-child(n + 3) { border-top: 1px solid var(--line); } }
 .section { padding-block: var(--block); position: relative; border-top: 1px solid var(--line); }
 .hero { border-top: 0; }
 .sec-head { max-width: 62ch; margin-bottom: 3rem; }
 .sec-head h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.022em; line-height: 1.1; }
-.sec-head p { margin-top: 0.75rem; font-size: var(--fs-2); color: var(--subtext0); line-height: 1.5; letter-spacing: -0.005em; }
-.sec-head p b { color: var(--subtext1); font-weight: 500; }
+.sec-head p { margin-top: 0.75rem; font-size: var(--fs-2); color: var(--fg-muted); line-height: 1.5; letter-spacing: -0.005em; }
+.sec-head p b { color: var(--text); font-weight: 500; }
 .sec-head__cmd { display: inline-block; font-size: var(--fs-0); color: var(--mauve); margin-bottom: 0.9rem; letter-spacing: 0.01em; }
-.sec-head__cmd::before { content: '$ '; color: var(--overlay1); }
+.sec-head__cmd::before { content: '$ '; color: var(--fg-faint); }
 
 /* Skip link */
 .skip { position: absolute; left: 12px; top: -60px; background: var(--mauve); color: var(--crust); padding: 8px 14px; border-radius: 6px; z-index: 100; }
@@ -137,20 +159,35 @@ main, .foot, .nav { position: relative; z-index: 1; }
 
 .seg { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--mantle); gap: 2px; flex-wrap: wrap; }
 .seg button {
-  height: 32px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--subtext0);
+  height: 32px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--fg-muted);
   font-size: var(--fs-0); font-weight: 500; cursor: pointer; transition: background-color 0.2s, color 0.2s, var(--press);
 }
 .seg button:hover { color: var(--text); }
 .seg button:active { transform: scale(0.96); }
 .seg button[aria-selected='true'], .seg button[aria-pressed='true'] { background: var(--surface0); color: var(--text); }
 
-.copy { flex: none; height: 30px; padding: 0 10px; border: 1px solid var(--surface1); background: var(--surface0); border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; color: var(--subtext1); min-width: 66px; }
+.copy { flex: none; height: 30px; padding: 0 10px; border: 1px solid var(--surface1); background: var(--surface0); border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; color: var(--fg-chrome); min-width: 66px; }
 .copy { transition: var(--press), color 0.2s, border-color 0.2s; }
 .copy:hover { color: var(--text); border-color: var(--overlay0); }
 .copy:active { transform: scale(0.96); }
 .copy[data-done='true'] { color: var(--green); border-color: var(--green); }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: inset 0 1px 0 var(--edge); }
+
+.badge {
+  margin-left: 8px; padding: 2px 7px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.01em;
+  border: 1px solid color-mix(in srgb, var(--green) 45%, var(--line)); background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--text);
+}
+
+/* What a scene falls back to where there is no WebGL: the still picture, the
+   names, the colours themselves. Each one fills the box the scene had. */
+.scene-still { position: absolute; inset: 0; margin: auto; display: grid; place-content: center; }
+.scene-still img, img.scene-still { width: min(70%, 320px); height: auto; object-fit: contain; }
+.scene-names { gap: 10px; font-family: var(--mono); font-size: var(--fs-1); }
+.scene-names li { display: flex; align-items: center; gap: 10px; color: var(--fg-chrome); }
+.scene-names li::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--hue); }
+.scene-swatches { grid-template-columns: repeat(7, 1fr); gap: 8px; place-content: center; width: min(78%, 320px); }
+.scene-swatches li { aspect-ratio: 1; border-radius: 6px; }
 
 /* ---------- Nav ---------- */
 .nav {
@@ -172,29 +209,50 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .wordmark { font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
 .wordmark img { width: 26px; height: 26px; }
 .nav__links { display: flex; gap: 22px; font-size: var(--fs-0); font-weight: 500; }
-.nav__links a { color: var(--subtext0); }
+.nav__links a { color: var(--fg-muted); }
 .nav__links a:hover { color: var(--text); }
 .nav__cta { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-@media (max-width: 880px) { .nav__links { display: none; } }
+.nav__links a[aria-current='page'] { color: var(--text); }
+/* The section links fold into a panel under the bar on a narrow window; the
+   flavour switch and the Install button never leave it. */
+.nav__menu { display: none; }
+.nav__panel { display: none; }
+.nav__panel[hidden] { display: none; }
+@media (max-width: 880px) {
+  .nav__links { display: none; }
+  .nav__menu { display: inline-flex; }
+  .nav__panel {
+    display: block; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    background: var(--base); padding-block: 6px 10px;
+  }
+  .nav__panel[hidden] { display: none; }
+  .nav__panel .wrap { display: grid; }
+  .nav__panel a { display: flex; align-items: center; min-height: 44px; color: var(--fg-muted); font-size: var(--fs-0); font-weight: 500; border-top: 1px solid var(--line); }
+  .nav__panel a:first-child { border-top: 0; }
+  .nav__panel a[aria-current='page'] { color: var(--text); }
+}
+@media (max-width: 560px) { .nav__gh { display: none; } }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; overflow: clip; }
 .hero__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; min-height: calc(100svh - 56px); padding-block: 4rem; }
-.hero__meta { display: flex; gap: 14px; font-size: var(--fs-0); color: var(--overlay1); margin-bottom: 1.5rem; letter-spacing: 0.01em; }
+.hero__meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--fs-0); color: var(--fg-faint); margin-bottom: 1.5rem; letter-spacing: 0.01em; }
+.hero__meta a { color: var(--fg-faint); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.hero__meta a:hover { color: var(--text); }
 .hero__meta span + span::before { content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--surface2); margin-right: 14px; vertical-align: middle; }
 .hero__title { font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: 1.02; color: var(--text); max-width: 12ch; }
-.hero__lead { margin-top: 1.5rem; font-size: var(--fs-3); color: var(--subtext0); max-width: 44ch; line-height: 1.45; letter-spacing: -0.008em; }
+.hero__lead { margin-top: 1.5rem; font-size: var(--fs-3); color: var(--fg-muted); max-width: 44ch; line-height: 1.45; letter-spacing: -0.008em; }
 .hero__cta { margin-top: 2rem; display: flex; gap: 10px; flex-wrap: wrap; }
 .hero__line {
   margin-top: 1.75rem; display: flex; align-items: center; gap: 12px;
   font-family: var(--mono); font-size: 0.85rem; background: var(--crust);
   border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 10px 10px 14px; max-width: 540px; min-width: 0;
 }
-.hero__line code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; color: var(--subtext1); }
-.hero__line code::before { content: '$ '; color: var(--overlay1); }
+.hero__line code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; color: var(--fg-chrome); }
+.hero__line code::before { content: '$ '; color: var(--fg-faint); }
 .hero__scene { position: relative; height: min(70vh, 620px); min-height: 380px; }
 .hero__scene canvas { touch-action: pan-y; }
-.hero__hint { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); font-size: 0.75rem; color: var(--overlay1); white-space: nowrap; }
+.hero__hint { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); font-size: 0.75rem; color: var(--fg-faint); white-space: nowrap; }
 .hero__ground {
   position: absolute; inset: auto -20% -10% -20%; height: 40%; pointer-events: none;
   background: radial-gradient(60% 60% at 50% 60%, color-mix(in srgb, var(--mauve) 20%, transparent), transparent 70%);
@@ -216,18 +274,29 @@ main, .foot, .nav { position: relative; z-index: 1; }
 }
 .shots__frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
 .shots__row { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
-.shots__cap { color: var(--subtext0); font-size: var(--fs-0); max-width: 60ch; }
+.shots__cap { color: var(--fg-muted); font-size: var(--fs-0); max-width: 60ch; }
 @media (max-width: 880px) { .shots { height: auto; } .shots__pin { position: static; height: auto; } }
 
 /* ---------- What you get ---------- */
 .gets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.get { padding: 22px 22px 24px; }
+.get { padding: 22px 22px 24px; min-width: 0; }
 .get__icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; background: color-mix(in srgb, var(--hue) 16%, var(--mantle)); color: var(--hue); margin-bottom: 1rem; }
 .get__icon svg { width: 18px; height: 18px; }
 .get h3 { font-size: var(--fs-2); font-weight: 600; letter-spacing: -0.01em; }
-.get p { color: var(--subtext0); margin-top: 0.4rem; font-size: var(--fs-0); line-height: 1.55; }
+.get p { color: var(--fg-muted); margin-top: 0.4rem; font-size: var(--fs-0); line-height: 1.55; }
+/* Three rows of the doctor, in the card, so the check is on the page before
+   the full screenshot further down. */
+.get__rows {
+  margin: 0.9rem 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--crust);
+  color: var(--fg-chrome); font-size: 0.68rem; line-height: 1.7; overflow-x: auto; white-space: pre; scrollbar-width: none;
+}
+.get__more { display: inline-block; margin-top: 0.75rem; font-size: var(--fs-0); font-weight: 500; color: var(--fg-link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+.get__more:hover { color: var(--fg-link-hover); }
 @media (max-width: 880px) { .gets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .gets { grid-template-columns: 1fr; } }
+/* minmax(0, …) rather than 1fr: the doctor rows in the last card are a wide
+   block that scrolls inside itself, and a column that sizes to its content
+   would let it push the page wider than the window. */
+@media (max-width: 560px) { .gets { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------- Terminals ---------- */
 .terms { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 2.5rem; align-items: start; }
@@ -239,8 +308,8 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .term h3 { font-size: var(--fs-1); font-weight: 600; display: flex; align-items: center; gap: 10px; }
 .term h3::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--hue); }
 .term dl { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; font-size: var(--fs-0); }
-.term dt { color: var(--overlay1); }
-.term dd { margin: 0; color: var(--subtext1); }
+.term dt { color: var(--fg-faint); }
+.term dd { margin: 0; color: var(--fg-chrome); }
 @media (max-width: 880px) { .terms { grid-template-columns: 1fr; } .terms__scene { position: relative; top: 0; height: 60vw; min-height: 280px; } }
 @media (max-width: 560px) { .term { grid-template-columns: 1fr; } }
 
@@ -250,12 +319,19 @@ main, .foot, .nav { position: relative; z-index: 1; }
   background: var(--crust); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
   font-family: var(--mono); font-size: 0.82rem; line-height: 1.55;
   position: sticky; top: 80px;
+  /* The window carries its own palette (Commands.tsx writes mocha's onto it),
+     and a custom property keeps the value it was given where it was declared,
+     so the roles are declared again here to resolve against that palette
+     rather than against the page's. */
+  --fg-muted: var(--subtext0);
+  --fg-faint: var(--overlay2);
+  --fg-chrome: var(--subtext1);
 }
 .tty__bar { display: flex; gap: 7px; padding: 10px 12px; background: var(--mantle); border-bottom: 1px solid var(--line); align-items: center; }
 .tty__bar i { width: 10px; height: 10px; border-radius: 50%; display: block; background: var(--surface1); }
-.tty__bar span { margin-inline: auto; color: var(--overlay1); font-size: 0.75rem; font-family: var(--sans); }
-.tty__body { padding: 14px 16px; min-height: 22em; white-space: pre-wrap; word-break: break-word; color: var(--subtext1); }
-.tty .ok { color: var(--green); } .tty .warn { color: var(--yellow); } .tty .dim { color: var(--overlay1); }
+.tty__bar span { margin-inline: auto; color: var(--fg-faint); font-size: 0.75rem; font-family: var(--sans); }
+.tty__body { padding: 14px 16px; min-height: 22em; white-space: pre-wrap; word-break: break-word; color: var(--fg-chrome); }
+.tty .ok { color: var(--green); } .tty .warn { color: var(--yellow); } .tty .dim { color: var(--fg-faint); }
 .tty .k { color: var(--mauve); } .tty .p { color: var(--green); } .tty .a { color: var(--peach); } .tty .b { color: var(--blue); }
 .tty__cursor { display: inline-block; width: 0.55ch; height: 1.05em; background: var(--text); vertical-align: -0.15em; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
@@ -264,28 +340,31 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .cmdtable tr:first-child td { border-top: 0; }
 .cmdtable td:first-child { font-family: var(--mono); color: var(--text); padding-right: 18px; width: 54%; font-size: 0.82rem; }
 .cmdtable td:first-child b { color: var(--mauve); font-weight: 500; }
-.cmdtable td:last-child { color: var(--subtext0); }
+.cmdtable td:nth-child(2) { color: var(--fg-muted); }
+.cmdtable__copy { width: 1%; padding-left: 12px; text-align: right; }
 @media (max-width: 880px) {
   .cmds { grid-template-columns: 1fr; }
   .tty { position: relative; top: 0; }
   .cmdtable tr { display: block; padding: 10px 0; border-top: 1px solid var(--line); }
   .cmdtable td { display: block; border: 0; padding: 0; width: auto; }
-  .cmdtable td:last-child { margin-top: 2px; }
+  .cmdtable td:nth-child(2) { margin-top: 2px; }
+  .cmdtable__copy { width: auto; margin-top: 8px; text-align: left; }
 }
 
 /* A captured window shown below a section: the doctor, the greeting in a flavour. */
 .figure { margin-top: 2.5rem; border: 1px solid var(--surface1); border-radius: var(--r); overflow: hidden; background: var(--crust); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5); }
 .figure--scroll { max-height: 64vh; overflow-y: auto; }
 .figure img { width: 100%; }
-.figure__cap { margin-top: 0.75rem; color: var(--overlay1); font-size: var(--fs-0); max-width: 70ch; }
+.figure__cap { margin-top: 0.75rem; color: var(--fg-faint); font-size: var(--fs-0); max-width: 70ch; }
 
 /* ---------- Plugins ---------- */
 .profiles { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.profiles__note { color: var(--subtext0); font-size: var(--fs-0); }
+.profiles__note { color: var(--fg-muted); font-size: var(--fs-0); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips__item { position: relative; }
 .chip {
-  position: relative; font-family: var(--mono); font-size: 0.82rem; padding: 7px 11px; border-radius: var(--r-sm);
-  border: 1px solid var(--line); background: var(--mantle); color: var(--overlay1); cursor: default;
+  font-family: var(--mono); font-size: 0.82rem; padding: 7px 11px; border-radius: var(--r-sm);
+  border: 1px solid var(--line); background: var(--mantle); color: var(--fg-faint); cursor: pointer;
   transition: color 0.3s, border-color 0.3s, background-color 0.3s;
 }
 .chip[data-on='true'] { color: var(--text); border-color: color-mix(in srgb, var(--hue) 60%, var(--line)); background: color-mix(in srgb, var(--hue) 10%, var(--mantle)); }
@@ -293,13 +372,35 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .chip__tip {
   position: absolute; left: 0; top: calc(100% + 8px); z-index: 5; width: max(260px, 100%); max-width: 320px;
   background: var(--crust); border: 1px solid var(--surface1); border-radius: var(--r-sm); padding: 10px 12px;
-  color: var(--subtext1); font-family: var(--sans); font-size: 0.85rem; line-height: 1.45; opacity: 0; pointer-events: none;
-  transform-origin: 12px -6px; transform: scale(0.96) translateY(-4px); transition: opacity 0.18s, transform 0.18s;
+  color: var(--fg-chrome); font-family: var(--sans); font-size: 0.85rem; line-height: 1.45;
+  /* Closed means closed: visibility takes the summary out of the page for a
+     reader as well as for an eye, so aria-expanded="false" is the truth. It
+     flips after the fade, so the tip still fades rather than blinking. */
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform-origin: 12px -6px; transform: scale(0.96) translateY(-4px);
+  transition: opacity 0.18s, transform 0.18s, visibility 0s linear 0.18s;
   box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--edge);
 }
-.chip:hover .chip__tip, .chip:focus-within .chip__tip { opacity: 1; transform: none; }
-.chips__legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 1.25rem; font-size: var(--fs-0); color: var(--overlay1); }
+/* A tip hangs from its chip's left edge; in the last column of the row that
+   would hang it past the page, so those hang from the right edge instead. */
+.chips__item[data-tip-end='true'] .chip__tip { left: auto; right: 0; transform-origin: calc(100% - 12px) -6px; }
+.chips__item:hover .chip__tip, .chips__item:focus-within .chip__tip, .chips__item[data-open='true'] .chip__tip {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity 0.18s, transform 0.18s, visibility 0s;
+}
+.chips__legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 1.25rem; font-size: var(--fs-0); color: var(--fg-faint); }
 .chips__legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--hue); margin-right: 8px; vertical-align: 1px; }
+/* On a touch screen there is no hover to read a summary with, so the open
+   one is a panel in the flow under its chip rather than a floating tip. */
+@media (max-width: 880px) {
+  .chips__item[data-open='true'] { flex: 1 0 100%; }
+  .chip { min-height: 40px; }
+  .chip__tip {
+    display: none; position: static; width: auto; max-width: none; margin-top: 8px;
+    font-size: 0.875rem; opacity: 1; visibility: visible; transform: none; pointer-events: auto; box-shadow: none;
+  }
+  .chips__item:hover .chip__tip, .chips__item:focus-within .chip__tip { display: none; }
+  .chips__item[data-open='true'] .chip__tip { display: block; }
+}
 
 /* ---------- Themes ---------- */
 .themes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; align-items: center; }
@@ -317,20 +418,31 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .flavour__sw { display: grid; grid-template-columns: repeat(7, 10px); gap: 3px; }
 .flavour__sw i { width: 10px; height: 10px; border-radius: 3px; display: block; }
 .flavour b { font-weight: 600; }
-.flavour small { display: block; color: var(--subtext0); font-size: var(--fs-0); }
-.flavour code { color: var(--overlay1); font-size: 0.78rem; }
-.themes__note { margin-top: 1.25rem; color: var(--overlay1); font-size: var(--fs-0); max-width: 50ch; }
+.flavour small { display: block; color: var(--fg-chrome); font-size: var(--fs-0); }
+.flavour code { color: var(--fg-chrome); font-size: 0.78rem; }
+.themes__note { margin-top: 1.25rem; color: var(--fg-faint); font-size: var(--fs-0); max-width: 50ch; }
 @media (max-width: 880px) { .themes { grid-template-columns: 1fr; } .themes__scene { height: 60vw; min-height: 280px; } }
 
 /* ---------- Install ---------- */
 .install { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 2.5rem; align-items: start; }
 .way { background: var(--crust); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 0.85rem; position: relative; margin-top: 12px; }
-.way pre { margin: 0; overflow-x: auto; line-height: 1.75; color: var(--subtext1); }
-.way pre span::before { content: '$ '; color: var(--overlay1); }
+.way pre { margin: 0; overflow-x: auto; line-height: 1.75; color: var(--fg-chrome); }
+.way pre span::before { content: '$ '; color: var(--fg-faint); }
 .way .copy { position: absolute; top: 12px; right: 12px; }
-.way__note { color: var(--overlay1); font-family: var(--sans); font-size: var(--fs-0); margin-top: 12px; }
+.way__note { color: var(--fg-faint); font-family: var(--sans); font-size: var(--fs-0); margin-top: 12px; }
+/* What each profile puts in, from the same list the installer reads. */
+.profile-list__head { font-size: var(--fs-1); font-weight: 600; margin-top: 2rem; }
+.profile-list { display: grid; margin-top: 0.75rem; }
+.profile-list li { display: grid; grid-template-columns: 5.5rem 1fr; gap: 2px 14px; padding: 12px 0; border-top: 1px solid var(--line); font-size: var(--fs-0); }
+.profile-list li:first-child { border-top: 0; }
+.profile-list b { font-family: var(--mono); font-weight: 500; color: var(--mauve); }
+.profile-list__count { color: var(--text); font-weight: 500; }
+.profile-list__adds { grid-column: 2; color: var(--fg-muted); }
+.profile-list__note { margin-top: 0.9rem; font-size: var(--fs-0); color: var(--fg-muted); max-width: 56ch; }
+.profile-list__note code { color: var(--fg-chrome); }
+
 .after { display: grid; gap: 0; }
-.after li { padding: 14px 0; border-top: 1px solid var(--line); font-size: var(--fs-0); color: var(--subtext0); }
+.after li { padding: 14px 0; border-top: 1px solid var(--line); font-size: var(--fs-0); color: var(--fg-muted); }
 .after li:first-child { border-top: 0; padding-top: 0; }
 .after b { display: block; color: var(--text); font-weight: 600; margin-bottom: 2px; }
 .after h3 { font-size: var(--fs-1); font-weight: 600; margin-bottom: 0.75rem; }
@@ -340,18 +452,33 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .about { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 1.75rem; align-items: start; }
 .about__avatar { width: 96px; height: 96px; border-radius: 50%; border: 1px solid var(--surface1); }
 .about h3 { font-size: var(--fs-3); font-weight: 600; letter-spacing: -0.01em; }
-.about__handle { color: var(--overlay1); font-size: var(--fs-0); margin-top: 2px; }
-.about p { margin-top: 0.9rem; max-width: 58ch; color: var(--subtext0); }
+.about__handle { color: var(--fg-faint); font-size: var(--fs-0); margin-top: 2px; }
+.about p { margin-top: 0.9rem; max-width: 58ch; color: var(--fg-muted); }
 .about__links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1.25rem; }
 @media (max-width: 560px) { .about { grid-template-columns: 1fr; } }
 
+/* ---------- The docs route while its chunk is on the way, and 404 ---------- */
+.docs-wait { position: relative; z-index: 1; min-height: 60vh; display: grid; place-items: center; color: var(--fg-faint); }
+.missing { position: relative; z-index: 1; padding-block: clamp(5rem, 14vh, 9rem); text-align: center; }
+.missing__code { font-family: var(--mono); font-size: var(--fs-0); color: var(--mauve); letter-spacing: 0.08em; }
+.missing h1 { margin-top: 0.75rem; font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.022em; }
+.missing__sub { margin: 0.9rem auto 0; max-width: 46ch; color: var(--fg-muted); }
+.missing__links { display: flex; gap: 10px; justify-content: center; margin-top: 1.75rem; flex-wrap: wrap; }
+
 /* ---------- Footer ---------- */
-.foot { border-top: 1px solid var(--line); padding-block: 2.5rem 3rem; color: var(--overlay1); font-size: var(--fs-0); }
+.foot { border-top: 1px solid var(--line); padding-block: 2.5rem 3rem; color: var(--fg-faint); font-size: var(--fs-0); }
 .foot__in { display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem; align-items: flex-start; justify-content: space-between; }
 .foot ul { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.foot a { color: var(--subtext0); }
+.foot a { color: var(--fg-muted); }
 .foot a:hover { color: var(--text); }
 .foot p { max-width: 64ch; margin-top: 1.25rem; line-height: 1.55; }
+
+/* A finger needs more than a mouse: the small controls grow on a narrow
+   screen, where the page is most likely to be read on one. */
+@media (max-width: 880px) {
+  .seg button { min-height: 40px; }
+  .copy, .way .copy { min-height: 40px; height: 40px; }
+}
 
 /* Reduced motion keeps the feedback and drops the movement; reduced transparency
    makes the chrome solid; more contrast gives every surface a defined edge. */
@@ -360,7 +487,7 @@ main, .foot, .nav { position: relative; z-index: 1; }
   .bg__field { animation: none; }
   .btn:active, .seg button:active, .copy:active, .flavour:active { transform: none; }
   .chip__tip { transform: none; transition: opacity 0.2s; }
-  .chip, .term, .flavour, .btn { transition: opacity 0.2s, background-color 0.2s, color 0.2s; }
+  .chip, .term, .flavour, .btn, .copy { transition: opacity 0.2s, background-color 0.2s, color 0.2s; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .nav { background: var(--base); backdrop-filter: none; -webkit-backdrop-filter: none; }

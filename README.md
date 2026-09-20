@@ -18,7 +18,7 @@
 
 ## Demo
 
-Thirty seconds of nekoshell: the greeting, a flavour switch from mocha to latte, the plugins, and the one-line install.
+Thirty seconds of nekoshell: the greeting, a flavour switch from mocha to latte, the plugins, and the one-line install. Click the picture to play it.
 
 <!-- A GIF, not a <video>: GitHub strips video tags and only plays files uploaded through its own UI, so this is the one form that plays inline on the repository page. -->
 [![nekoshell demo: the greeting, a flavour switch, the plugins, the install](docs/demo.gif)](docs/demo.mp4)
