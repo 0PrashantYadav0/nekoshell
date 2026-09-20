@@ -235,22 +235,24 @@ main, .foot, .nav { position: relative; z-index: 1; }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; overflow: clip; }
-.hero__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; min-height: calc(100svh - 56px); padding-block: 2rem; }
-.hero__meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--fs-0); color: var(--fg-faint); margin-bottom: 1.5rem; letter-spacing: 0.01em; }
+.hero__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; padding-block: 2rem 1.5rem; }
+.hero__meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--fs-0); color: var(--fg-faint); margin-bottom: 1rem; letter-spacing: 0.01em; }
 .hero__meta a { color: var(--fg-faint); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
 .hero__meta a:hover { color: var(--text); }
 .hero__meta span + span::before { content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--surface2); margin-right: 14px; vertical-align: middle; }
 .hero__title { font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: 1.02; color: var(--text); max-width: 12ch; }
-.hero__lead { margin-top: 1.5rem; font-size: var(--fs-3); color: var(--fg-muted); max-width: 44ch; line-height: 1.45; letter-spacing: -0.008em; }
-.hero__cta { margin-top: 2rem; display: flex; gap: 10px; flex-wrap: wrap; }
+.hero__lead { margin-top: 1.25rem; font-size: var(--fs-3); color: var(--fg-muted); max-width: 44ch; line-height: 1.45; letter-spacing: -0.008em; }
+.hero__cta { margin-top: 1.5rem; display: flex; gap: 10px; flex-wrap: wrap; }
 .hero__line {
-  margin-top: 1.75rem; display: flex; align-items: center; gap: 12px;
+  margin-top: 1.25rem; display: flex; align-items: center; gap: 12px;
   font-family: var(--mono); font-size: 0.85rem; background: var(--crust);
   border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 10px 10px 14px; max-width: 540px; min-width: 0;
 }
 .hero__line code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; color: var(--fg-chrome); }
 .hero__line code::before { content: '$ '; color: var(--fg-faint); }
-.hero__scene { position: relative; height: min(70vh, 620px); min-height: 380px; }
+/* The scene is a square box sized by its column, capped so the section under
+   the hero starts inside the first screen; the canvas and the still fill it. */
+.hero__scene { position: relative; aspect-ratio: 1 / 1; max-height: min(480px, 54vh); min-height: 320px; }
 .hero__scene canvas { touch-action: pan-y; }
 .hero__hint { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); font-size: 0.75rem; color: var(--fg-faint); white-space: nowrap; }
 .hero__ground {
@@ -258,8 +260,8 @@ main, .foot, .nav { position: relative; z-index: 1; }
   background: radial-gradient(60% 60% at 50% 60%, color-mix(in srgb, var(--mauve) 20%, transparent), transparent 70%);
 }
 @media (max-width: 880px) {
-  .hero__grid { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-block: 1rem 3rem; gap: 1.5rem; }
-  .hero__scene { height: 56vw; min-height: 300px; order: -1; }
+  .hero__grid { grid-template-columns: minmax(0, 1fr); padding-block: 1rem 2rem; gap: 1.5rem; }
+  .hero__scene { aspect-ratio: auto; max-height: none; height: 56vw; min-height: 300px; order: -1; }
   .hero__title { max-width: none; }
 }
 
