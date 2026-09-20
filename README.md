@@ -20,8 +20,10 @@
 
 Thirty seconds of nekoshell: the greeting, a flavour switch from mocha to latte, the plugins, and the one-line install.
 
-<!-- markdownlint-disable-next-line MD034 -- GitHub renders a bare .mp4 URL as a video player; a link would not -->
-https://github.com/0PrashantYadav0/nekoshell/raw/main/docs/demo.mp4
+<!-- A GIF, not a <video>: GitHub strips video tags and only plays files uploaded through its own UI, so this is the one form that plays inline on the repository page. -->
+[![nekoshell demo: the greeting, a flavour switch, the plugins, the install](docs/demo.gif)](docs/demo.mp4)
+
+The GIF is silent; the [full-quality video](docs/demo.mp4) is behind it.
 
 Stills of the greeting with the [minecraft](docs/plugins/minecraft.md) and [colorscripts](docs/plugins/colorscripts.md) providers are on those plugin pages, and [docs/TERMINALS.md](docs/TERMINALS.md) shows nekoshell in each of the five terminals.
 
