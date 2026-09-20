@@ -24,7 +24,7 @@
 
   --wrap: 1080px;
   --gutter: clamp(16px, 4vw, 40px);
-  --block: clamp(5rem, 4rem + 5vw, 8rem);
+  --block: clamp(3.25rem, 2.25rem + 2.5vw, 4.5rem);
   --r: 12px;
   --r-sm: 8px;
   --line: var(--surface0);
@@ -58,7 +58,9 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+/* The gutter stays when the lightbox hides the page's scrollbar, so the page
+   does not shift under it where scrollbars take up room. */
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
@@ -128,7 +130,7 @@ main, .foot, .nav { position: relative; z-index: 1; }
 @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats li:nth-child(3) { border-left: 0; } .stats li:nth-child(n + 3) { border-top: 1px solid var(--line); } }
 .section { padding-block: var(--block); position: relative; border-top: 1px solid var(--line); }
 .hero { border-top: 0; }
-.sec-head { max-width: 62ch; margin-bottom: 3rem; }
+.sec-head { max-width: 62ch; margin-bottom: 2rem; }
 .sec-head h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.022em; line-height: 1.1; }
 .sec-head p { margin-top: 0.75rem; font-size: var(--fs-2); color: var(--fg-muted); line-height: 1.5; letter-spacing: -0.005em; }
 .sec-head p b { color: var(--text); font-weight: 500; }
@@ -235,22 +237,24 @@ main, .foot, .nav { position: relative; z-index: 1; }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; overflow: clip; }
-.hero__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; min-height: calc(100svh - 56px); padding-block: 4rem; }
-.hero__meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--fs-0); color: var(--fg-faint); margin-bottom: 1.5rem; letter-spacing: 0.01em; }
+.hero__grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; padding-block: 2rem 1.5rem; }
+.hero__meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--fs-0); color: var(--fg-faint); margin-bottom: 1rem; letter-spacing: 0.01em; }
 .hero__meta a { color: var(--fg-faint); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
 .hero__meta a:hover { color: var(--text); }
 .hero__meta span + span::before { content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--surface2); margin-right: 14px; vertical-align: middle; }
 .hero__title { font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: 1.02; color: var(--text); max-width: 12ch; }
-.hero__lead { margin-top: 1.5rem; font-size: var(--fs-3); color: var(--fg-muted); max-width: 44ch; line-height: 1.45; letter-spacing: -0.008em; }
-.hero__cta { margin-top: 2rem; display: flex; gap: 10px; flex-wrap: wrap; }
+.hero__lead { margin-top: 1.25rem; font-size: var(--fs-3); color: var(--fg-muted); max-width: 44ch; line-height: 1.45; letter-spacing: -0.008em; }
+.hero__cta { margin-top: 1.5rem; display: flex; gap: 10px; flex-wrap: wrap; }
 .hero__line {
-  margin-top: 1.75rem; display: flex; align-items: center; gap: 12px;
+  margin-top: 1.25rem; display: flex; align-items: center; gap: 12px;
   font-family: var(--mono); font-size: 0.85rem; background: var(--crust);
   border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 10px 10px 14px; max-width: 540px; min-width: 0;
 }
 .hero__line code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; color: var(--fg-chrome); }
 .hero__line code::before { content: '$ '; color: var(--fg-faint); }
-.hero__scene { position: relative; height: min(70vh, 620px); min-height: 380px; }
+/* The scene is a square box sized by its column, capped so the section under
+   the hero starts inside the first screen; the canvas and the still fill it. */
+.hero__scene { position: relative; aspect-ratio: 1 / 1; max-height: min(480px, 54vh); min-height: 320px; }
 .hero__scene canvas { touch-action: pan-y; }
 .hero__hint { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); font-size: 0.75rem; color: var(--fg-faint); white-space: nowrap; }
 .hero__ground {
@@ -258,24 +262,63 @@ main, .foot, .nav { position: relative; z-index: 1; }
   background: radial-gradient(60% 60% at 50% 60%, color-mix(in srgb, var(--mauve) 20%, transparent), transparent 70%);
 }
 @media (max-width: 880px) {
-  .hero__grid { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-block: 1rem 3rem; gap: 1.5rem; }
-  .hero__scene { height: 56vw; min-height: 300px; order: -1; }
+  .hero__grid { grid-template-columns: minmax(0, 1fr); padding-block: 1rem 2rem; gap: 1.5rem; }
+  .hero__scene { aspect-ratio: auto; max-height: none; height: 56vw; min-height: 300px; order: -1; }
   .hero__title { max-width: none; }
 }
 
-/* ---------- Screenshot strip (pinned) ---------- */
-.shots { position: relative; height: 400vh; }
-.shots__pin { position: sticky; top: 56px; height: calc(100svh - 56px); display: grid; align-content: center; gap: 1rem; }
-.shots__pin .sec-head { margin-bottom: 0.5rem; }
-.shots__frame {
-  position: relative; border-radius: var(--r); overflow: hidden; background: var(--crust);
-  border: 1px solid var(--surface1); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.5);
-  aspect-ratio: 1600 / 540;
+/* ---------- Demo video ---------- */
+/* The recording sits in the same window frame as the screenshots. The frame
+   keeps 16:9 so the page does not move when the video arrives. */
+.demo { margin: 0; }
+.demo__frame {
+  aspect-ratio: 16 / 9; max-width: 100%; border-radius: var(--r); overflow: hidden;
+  background: var(--crust); border: 1px solid var(--surface1); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.5);
 }
-.shots__frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
-.shots__row { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
-.shots__cap { color: var(--fg-muted); font-size: var(--fs-0); max-width: 60ch; }
-@media (max-width: 880px) { .shots { height: auto; } .shots__pin { position: static; height: auto; } }
+.demo__frame video { display: block; width: 100%; height: 100%; max-width: 100%; background: var(--crust); }
+.demo__cap { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1.5rem; margin-top: 0.75rem; font-size: var(--fs-0); }
+.demo__cap p { color: var(--fg-faint); max-width: 70ch; }
+.demo__cap a { color: var(--fg-link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; white-space: nowrap; }
+.demo__cap a:hover { color: var(--fg-link-hover); }
+
+/* ---------- Screenshot gallery ---------- */
+/* Every greeting at once: a window frame per provider, the command that drew
+   it in the title bar, the caption under it. Two by two where there is room. */
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.75rem 1.25rem; list-style: none; margin: 0; padding: 0; }
+.shot { min-width: 0; }
+.shot__open {
+  display: block; width: 100%; padding: 0; border: 1px solid var(--surface1); border-radius: var(--r); overflow: hidden;
+  background: var(--crust); color: inherit; cursor: zoom-in; text-align: left;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s, var(--press);
+}
+.shot__open:hover { border-color: var(--overlay0); }
+.shot__open:active { transform: scale(0.99); }
+.shot__bar { display: flex; gap: 7px; padding: 10px 12px; background: var(--mantle); border-bottom: 1px solid var(--line); align-items: center; }
+.shot__bar i { width: 10px; height: 10px; border-radius: 50%; display: block; background: var(--surface1); }
+.shot__bar code { margin-inline: auto; color: var(--fg-faint); font-size: 0.75rem; }
+.shot__open img { display: block; width: 100%; aspect-ratio: 1600 / 540; object-fit: cover; object-position: left top; }
+.shot__cap { margin-top: 0.75rem; color: var(--fg-faint); font-size: var(--fs-0); max-width: 60ch; }
+@media (max-width: 880px) { .gallery { grid-template-columns: minmax(0, 1fr); } }
+
+/* The lightbox is the dialog itself, stretched over the page as the scrim,
+   with the picture centred in it. The panel is what moves. */
+.lightbox {
+  position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+  display: none; place-items: center; overflow: hidden;
+  background: color-mix(in srgb, var(--crust) 82%, transparent); color: var(--text);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.lightbox[open] { display: grid; }
+.lightbox::backdrop { background: transparent; }
+body:has(.lightbox[open]) { overflow: hidden; }
+.lightbox__panel { display: grid; gap: 0.75rem; justify-items: start; margin: 0; max-width: 92vw; touch-action: none; user-select: none; -webkit-user-select: none; will-change: transform; }
+.lightbox__panel img { display: block; max-width: 92vw; max-height: 88vh; width: auto; height: auto; border-radius: var(--r); border: 1px solid var(--surface1); background: var(--crust); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.5); }
+.lightbox__cap { display: grid; gap: 0.25rem; font-size: var(--fs-0); max-width: 70ch; }
+.lightbox__cap code { color: var(--mauve); }
+.lightbox__cap p { color: var(--fg-muted); }
+.lightbox__close { position: absolute; top: 12px; right: 12px; }
+@media (max-width: 880px) { .lightbox__close { top: 8px; right: 8px; min-height: 40px; height: 40px; width: 40px; } }
 
 /* ---------- What you get ---------- */
 .gets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -485,16 +528,17 @@ main, .foot, .nav { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
   .tty__cursor { animation: none; }
   .bg__field { animation: none; }
-  .btn:active, .seg button:active, .copy:active, .flavour:active { transform: none; }
+  .btn:active, .seg button:active, .copy:active, .flavour:active, .shot__open:active { transform: none; }
   .chip__tip { transform: none; transition: opacity 0.2s; }
   .chip, .term, .flavour, .btn, .copy { transition: opacity 0.2s, background-color 0.2s, color 0.2s; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .nav { background: var(--base); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .lightbox { background: var(--crust); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .bg__field, .bg__spot { display: none; }
   :root { --card: var(--mantle); }
 }
 @media (prefers-contrast: more) {
   :root { --line: var(--surface2); --card: var(--mantle); }
-  .btn, .card, .seg, .chip, .flavour, .way, .tty { border-color: var(--overlay0); }
+  .btn, .card, .seg, .chip, .flavour, .way, .tty, .shot__open { border-color: var(--overlay0); }
 }

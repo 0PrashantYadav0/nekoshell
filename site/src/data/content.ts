@@ -77,11 +77,12 @@ export const terminals: Terminal[] = [
   { id: 'terminal-app', name: 'Terminal.app', images: 'no', background: 'no', panel: 'nekoshell music --panel opens a new window', hue: 'yellow' },
 ]
 
-export const shots: { file: string; art: string; caption: string }[] = [
-  { file: '/shots/greet-pokemon.png', art: 'pokemon', caption: 'A Pok\u00e9mon sprite, captioned with its number, type and generation. The default provider, in every profile.' },
-  { file: '/shots/greet-anime.png', art: 'anime', caption: 'An anime still drawn inline beside the machine stats, the palette swatch under them, the prompt above and below.' },
-  { file: '/shots/greet-minecraft.png', art: 'minecraft', caption: 'A Minecraft block from minecraft-colorscripts, as unicode half-blocks, so it works in every terminal.' },
-  { file: '/shots/greet-colorscripts.png', art: 'colorscripts', caption: 'An ANSI pattern in the terminal’s own sixteen colours, so it changes with the flavour.' },
+// The greeting screenshots, 1600px wide each; the height is the file's.
+export const shots: { file: string; art: string; caption: string; height: number }[] = [
+  { file: '/shots/greet-pokemon.png', art: 'pokemon', height: 576, caption: 'A Pok\u00e9mon sprite, captioned with its number, type and generation. The default provider, in every profile.' },
+  { file: '/shots/greet-anime.png', art: 'anime', height: 540, caption: 'An anime still drawn inline beside the machine stats, the palette swatch under them, the prompt above and below.' },
+  { file: '/shots/greet-minecraft.png', art: 'minecraft', height: 514, caption: 'A Minecraft block from minecraft-colorscripts, as unicode half-blocks, so it works in every terminal.' },
+  { file: '/shots/greet-colorscripts.png', art: 'colorscripts', height: 536, caption: 'An ANSI pattern in the terminal’s own sixteen colours, so it changes with the flavour.' },
 ]
 
 export const installWays: { id: string; label: string; lines: string[]; note: string }[] = [

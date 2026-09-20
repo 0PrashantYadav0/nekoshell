@@ -1,71 +1,39 @@
-import { useEffect, useRef, useState } from 'react'
-import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
+import { useState } from 'react'
 import { SectionHead } from './SectionHead'
-import { useNearViewport } from '../lib/motion'
+import { Lightbox } from './Lightbox'
 import { shots } from '../data/content'
 
-// The greeting, four ways. The frame is pinned while the section scrolls
-// past, and the picture changes with the scroll position; the segments jump
-// to the matching spot. Under 880px the pin is off and the segments do it.
+// The greeting, four ways, all on one screen: a grid of window frames, the
+// command that drew each one in its title bar and its caption under it. A
+// click opens the picture larger in the lightbox.
 export function Shots() {
-  const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
-  const [active, setActive] = useState(0)
-  const [pinned, setPinned] = useState(true)
-  // Three of the four screenshots are a third of a megabyte together and the
-  // section starts just below the fold, near enough for the browser to fetch
-  // them by itself; they wait here until the frame is on its way in.
-  const [frame, near] = useNearViewport<HTMLDivElement>('300px')
-
-  useEffect(() => {
-    const m = window.matchMedia('(max-width: 880px)')
-    const on = () => setPinned(!m.matches)
-    on()
-    m.addEventListener('change', on)
-    return () => m.removeEventListener('change', on)
-  }, [])
-
-  useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    if (!pinned) return
-    setActive(Math.min(shots.length - 1, Math.max(0, Math.floor(v * shots.length * 0.999))))
-  })
-
-  const jump = (i: number) => {
-    if (!pinned || !ref.current) return setActive(i)
-    const top = ref.current.offsetTop
-    const span = ref.current.offsetHeight - window.innerHeight
-    window.scrollTo({ top: top + (span * (i + 0.5)) / shots.length, behavior: 'smooth' })
-  }
+  const [open, setOpen] = useState<{ index: number; origin: HTMLElement } | null>(null)
 
   return (
     <section className="section" id="greet">
-      <div className="shots" ref={ref}>
-        <div className="wrap shots__pin">
-          <SectionHead cmd={`nekoshell greet --art ${shots[active].art}`} title="A picture on every new shell" sub="The greeting draws beside the machine stats and the palette, from whichever art providers you enable." />
-          <div className="shots__frame" ref={frame}>
-            {shots.map((s, i) =>
-              i === active || near ? (
-                <motion.img
-                  key={s.art}
-                  src={s.file}
-                  alt={`An iTerm2 window after nekoshell greet --art ${s.art}`}
-                  loading={i === active ? 'eager' : 'lazy'}
-                  initial={false}
-                  animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.02 }}
-                  transition={{ type: 'spring', bounce: 0, duration: 0.55 }}
-                />
-              ) : null,
-            )}
-          </div>
-          <div className="shots__row">
-            <div className="seg" role="tablist" aria-label="Art providers">
-              {shots.map((s, i) => (
-                <button key={s.art} role="tab" aria-selected={i === active} onClick={() => jump(i)}>{s.art}</button>
-              ))}
-            </div>
-            <p className="shots__cap">{shots[active].caption}</p>
-          </div>
-        </div>
+      <div className="wrap">
+        <SectionHead cmd="nekoshell greet" title="A picture on every new shell" sub="The greeting draws beside the machine stats and the palette, from whichever art providers you enable." />
+        <ul className="gallery">
+          {shots.map((s, i) => (
+            <li key={s.art} className="shot">
+              <button type="button" className="shot__open" onClick={(e) => setOpen({ index: i, origin: e.currentTarget })} aria-label={`Open the ${s.art} greeting larger`}>
+                <span className="shot__bar" aria-hidden="true">
+                  <i /><i /><i />
+                  <code>nekoshell greet --art {s.art}</code>
+                </span>
+                <img src={s.file} alt={`An iTerm2 window after nekoshell greet --art ${s.art}`} loading="lazy" width={1600} height={s.height} />
+              </button>
+              <p className="shot__cap">{s.caption}</p>
+            </li>
+          ))}
+        </ul>
+        <Lightbox
+          items={shots}
+          index={open?.index ?? null}
+          origin={open?.origin ?? null}
+          onIndex={(index) => open && setOpen({ ...open, index })}
+          onClose={() => setOpen(null)}
+        />
       </div>
     </section>
   )

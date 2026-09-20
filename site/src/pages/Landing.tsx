@@ -3,6 +3,7 @@ import { Background } from '../components/Background'
 import { Nav } from '../components/Nav'
 import { Stats } from '../components/Stats'
 import { Hero } from '../components/Hero'
+import { Demo } from '../components/Demo'
 import { Shots } from '../components/Shots'
 import { WhatYouGet } from '../components/WhatYouGet'
 import { Terminals } from '../components/Terminals'
@@ -24,12 +25,13 @@ export function Landing() {
   }, [])
   return (
     <>
-      <a className="skip" href="#greet">Skip to content</a>
+      <a className="skip" href="#demo">Skip to content</a>
       <Background />
       <div className="frame" aria-hidden="true" />
       <Nav />
       <main>
         <Hero />
+        <Demo />
         <Stats />
         <Shots />
         <WhatYouGet />
