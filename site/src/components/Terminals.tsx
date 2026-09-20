@@ -20,7 +20,16 @@ export function Terminals() {
         <SectionHead cmd="nekoshell terminal use all" title="Five terminals, the same look" sub="An adapter for each terminal applies the font, the 26 colours and a music panel where the terminal has one. Configure one, a few, or all of them at once." />
         <div className="terms">
           <div className="terms__scene" role="img" aria-label="Five terminal windows, one per adapter, fanned out in 3D">
-            <LazyCanvas camera={{ position: [0, 0.3, 7.6], fov: 34 }}>
+            <LazyCanvas
+              camera={{ position: [0, 0.3, 7.6], fov: 34 }}
+              fallback={
+                <ul className="scene-still scene-names">
+                  {terminals.map((t) => (
+                    <li key={t.id} style={{ '--hue': `var(--${t.hue})` } as React.CSSProperties}>{t.name}</li>
+                  ))}
+                </ul>
+              }
+            >
               <TerminalsScene progress={progress} hovered={hovered} />
             </LazyCanvas>
           </div>

@@ -1,13 +1,23 @@
 import { lazy, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useScroll, useTransform, motion } from 'framer-motion'
 import { LazyCanvas } from './LazyCanvas'
 import { GitHubIcon } from './Nav'
-import { useCopy, useReducedMotion } from '../lib/motion'
+import { CopyButton } from './CopyButton'
+import { useReducedMotion } from '../lib/motion'
+import { hasWebGL } from '../lib/webgl'
+import { useRelease } from '../lib/release'
 import { repo } from '../data/content'
 
 const NekoScene = lazy(() => import('./NekoScene'))
 
 const line = 'brew tap 0PrashantYadav0/nekoshell && brew install nekoshell && nekoshell install'
+
+// What the installer checks before it does anything, from AGENTS.md's
+// preconditions. git comes with Homebrew's own toolchain on a Mac.
+const needs = ['macOS', 'Homebrew', 'zsh']
+
+const sceneLabel = 'The neko mascot, a black chibi cat sitting on a mauve prompt block, as a 3D model you can turn'
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null)
@@ -16,7 +26,8 @@ export function Hero() {
   const spin = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : Math.PI * 2])
   const fade = useTransform(scrollYProgress, [0, 0.7], [1, reduced ? 1 : 0])
   const rise = useTransform(scrollYProgress, [0, 0.7], [0, reduced ? 0 : -40])
-  const [done, copy] = useCopy()
+  const release = useRelease()
+  const turnable = hasWebGL()
 
   const reveal = (i: number) =>
     reduced ? {} : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { type: 'spring' as const, bounce: 0, duration: 0.6, delay: 0.1 + i * 0.08 } }
@@ -26,9 +37,12 @@ export function Hero() {
       <div className="wrap hero__grid">
         <motion.div style={{ opacity: fade, y: rise }}>
           <motion.div className="hero__meta" {...reveal(0)}>
-            <span>Release 0.2.0</span>
-            <span>MIT licence</span>
-            <span>macOS</span>
+            {needs.map((n) => (
+              <span key={n}>{n}</span>
+            ))}
+            <span>
+              <a href={release.url} target="_blank" rel="noreferrer">Release {release.version}</a>
+            </span>
           </motion.div>
           <motion.h1 className="hero__title" {...reveal(1)}>
             A themed terminal for your Mac, in one command.
@@ -38,19 +52,24 @@ export function Hero() {
           </motion.p>
           <motion.div className="hero__cta" {...reveal(3)}>
             <a className="btn btn--fill btn--lg" href="#install">Install with Homebrew</a>
+            <Link className="btn btn--lg" to="/docs">Read the docs</Link>
             <a className="btn btn--lg" href={repo} target="_blank" rel="noreferrer"><GitHubIcon /> View on GitHub</a>
           </motion.div>
           <motion.div className="hero__line" {...reveal(4)}>
-            <code>{line}</code>
-            <button className="copy" data-done={done} onClick={() => copy(line)} aria-live="polite">{done ? 'Copied' : 'Copy'}</button>
+            <code tabIndex={0} role="group" aria-label="The Homebrew install command; it scrolls sideways">{line}</code>
+            <CopyButton text={line} />
           </motion.div>
         </motion.div>
-        <div className="hero__scene" aria-label="The neko mascot, a black chibi cat sitting on a mauve prompt block, as a 3D model you can turn" role="img">
+        <div className="hero__scene" aria-label={sceneLabel} role="img">
           <div className="hero__ground" />
-          <LazyCanvas camera={{ position: [0.8, 0.9, 11.2], fov: 28 }} shadows>
+          <LazyCanvas
+            camera={{ position: [0.8, 0.9, 11.2], fov: 28 }}
+            shadows
+            fallback={<img className="scene-still" src="/neko.png" alt="" width={512} height={512} />}
+          >
             <NekoScene spin={spin} />
           </LazyCanvas>
-          <span className="hero__hint" aria-hidden="true">Drag to turn</span>
+          {turnable && <span className="hero__hint" aria-hidden="true">Drag to turn</span>}
         </div>
       </div>
     </section>
