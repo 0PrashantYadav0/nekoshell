@@ -6,7 +6,7 @@ Every new interactive shell prints a picture next to the machine stats fastfetch
 
 The greeting stays silent inside tmux, inside the music panel, over SSH, under Claude Code, when stdout is not a terminal, and when `NEKOSHELL_NO_GREET` is set. It is the last thing the shell sources, so nothing is drawn over it. The doctor times it and warns above 150 ms.
 
-See the README's [Screenshots](../../README.md#screenshots) section for the greeting next to three of the art providers.
+See the README's [Demo](../../README.md#demo) video for the greeting, and the [minecraft](minecraft.md) and [colorscripts](colorscripts.md) pages for stills with those providers.
 
 ## Art providers
 
