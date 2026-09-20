@@ -277,19 +277,44 @@ main, .foot, .nav { position: relative; z-index: 1; }
 .demo__cap a { color: var(--fg-link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; white-space: nowrap; }
 .demo__cap a:hover { color: var(--fg-link-hover); }
 
-/* ---------- Screenshot strip (pinned) ---------- */
-.shots { position: relative; height: 400vh; }
-.shots__pin { position: sticky; top: 56px; height: calc(100svh - 56px); display: grid; align-content: center; gap: 1rem; }
-.shots__pin .sec-head { margin-bottom: 0.5rem; }
-.shots__frame {
-  position: relative; border-radius: var(--r); overflow: hidden; background: var(--crust);
-  border: 1px solid var(--surface1); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.5);
-  aspect-ratio: 1600 / 540;
+/* ---------- Screenshot gallery ---------- */
+/* Every greeting at once: a window frame per provider, the command that drew
+   it in the title bar, the caption under it. Two by two where there is room. */
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.75rem 1.25rem; list-style: none; margin: 0; padding: 0; }
+.shot { min-width: 0; }
+.shot__open {
+  display: block; width: 100%; padding: 0; border: 1px solid var(--surface1); border-radius: var(--r); overflow: hidden;
+  background: var(--crust); color: inherit; cursor: zoom-in; text-align: left;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s, var(--press);
 }
-.shots__frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
-.shots__row { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
-.shots__cap { color: var(--fg-muted); font-size: var(--fs-0); max-width: 60ch; }
-@media (max-width: 880px) { .shots { height: auto; } .shots__pin { position: static; height: auto; } }
+.shot__open:hover { border-color: var(--overlay0); }
+.shot__open:active { transform: scale(0.99); }
+.shot__bar { display: flex; gap: 7px; padding: 10px 12px; background: var(--mantle); border-bottom: 1px solid var(--line); align-items: center; }
+.shot__bar i { width: 10px; height: 10px; border-radius: 50%; display: block; background: var(--surface1); }
+.shot__bar code { margin-inline: auto; color: var(--fg-faint); font-size: 0.75rem; }
+.shot__open img { display: block; width: 100%; aspect-ratio: 1600 / 540; object-fit: cover; object-position: left top; }
+.shot__cap { margin-top: 0.75rem; color: var(--fg-faint); font-size: var(--fs-0); max-width: 60ch; }
+@media (max-width: 880px) { .gallery { grid-template-columns: minmax(0, 1fr); } }
+
+/* The lightbox is the dialog itself, stretched over the page as the scrim,
+   with the picture centred in it. The panel is what moves. */
+.lightbox {
+  position: fixed; inset: 0; width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+  display: none; place-items: center; overflow: hidden;
+  background: color-mix(in srgb, var(--crust) 82%, transparent); color: var(--text);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.lightbox[open] { display: grid; }
+.lightbox::backdrop { background: transparent; }
+body:has(.lightbox[open]) { overflow: hidden; }
+.lightbox__panel { display: grid; gap: 0.75rem; justify-items: start; margin: 0; max-width: 92vw; touch-action: none; user-select: none; -webkit-user-select: none; will-change: transform; }
+.lightbox__panel img { display: block; max-width: 92vw; max-height: 88vh; width: auto; height: auto; border-radius: var(--r); border: 1px solid var(--surface1); background: var(--crust); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.5); }
+.lightbox__cap { display: grid; gap: 0.25rem; font-size: var(--fs-0); max-width: 70ch; }
+.lightbox__cap code { color: var(--mauve); }
+.lightbox__cap p { color: var(--fg-muted); }
+.lightbox__close { position: absolute; top: 12px; right: 12px; }
+@media (max-width: 880px) { .lightbox__close { top: 8px; right: 8px; min-height: 40px; height: 40px; width: 40px; } }
 
 /* ---------- What you get ---------- */
 .gets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -499,16 +524,17 @@ main, .foot, .nav { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
   .tty__cursor { animation: none; }
   .bg__field { animation: none; }
-  .btn:active, .seg button:active, .copy:active, .flavour:active { transform: none; }
+  .btn:active, .seg button:active, .copy:active, .flavour:active, .shot__open:active { transform: none; }
   .chip__tip { transform: none; transition: opacity 0.2s; }
   .chip, .term, .flavour, .btn, .copy { transition: opacity 0.2s, background-color 0.2s, color 0.2s; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .nav { background: var(--base); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .lightbox { background: var(--crust); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .bg__field, .bg__spot { display: none; }
   :root { --card: var(--mantle); }
 }
 @media (prefers-contrast: more) {
   :root { --line: var(--surface2); --card: var(--mantle); }
-  .btn, .card, .seg, .chip, .flavour, .way, .tty { border-color: var(--overlay0); }
+  .btn, .card, .seg, .chip, .flavour, .way, .tty, .shot__open { border-color: var(--overlay0); }
 }
