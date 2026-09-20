@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '../lib/motion'
 
-// A section's title and its one-line subtitle. The optional command is the
-// nekoshell subcommand behind the section, set small beside the title.
-export function SectionHead({ title, sub, cmd }: { title: string; sub: React.ReactNode; cmd?: string }) {
+// A section's title and its one-line subtitle, when it has one. The optional
+// command is the nekoshell subcommand behind the section, set small beside
+// the title.
+export function SectionHead({ title, sub, cmd }: { title: string; sub?: React.ReactNode; cmd?: string }) {
   const reduced = useReducedMotion()
   return (
     <motion.header
@@ -15,7 +16,7 @@ export function SectionHead({ title, sub, cmd }: { title: string; sub: React.Rea
     >
       {cmd && <code className="sec-head__cmd">{cmd}</code>}
       <h2>{title}</h2>
-      <p>{sub}</p>
+      {sub && <p>{sub}</p>}
     </motion.header>
   )
 }
