@@ -354,7 +354,7 @@ body:has(.lightbox[open]) { overflow: hidden; }
 .terms__list { overflow: hidden; }
 .term { display: grid; grid-template-columns: 150px 1fr; gap: 6px 16px; padding: 18px 20px; border-top: 1px solid var(--line); transition: background-color 0.2s; }
 .term:first-child { border-top: 0; }
-.term:hover, .term:focus-within { background: var(--surface0); }
+.term:hover, .term:focus-within, .term[data-on] { background: var(--surface0); }
 .term h3 { font-size: var(--fs-1); font-weight: 600; display: flex; align-items: center; gap: 10px; }
 .term h3::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--hue); }
 .term dl { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; font-size: var(--fs-0); }
