@@ -263,6 +263,20 @@ main, .foot, .nav { position: relative; z-index: 1; }
   .hero__title { max-width: none; }
 }
 
+/* ---------- Demo video ---------- */
+/* The recording sits in the same window frame as the screenshots. The frame
+   keeps 16:9 so the page does not move when the video arrives. */
+.demo { margin: 0; }
+.demo__frame {
+  aspect-ratio: 16 / 9; max-width: 100%; border-radius: var(--r); overflow: hidden;
+  background: var(--crust); border: 1px solid var(--surface1); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.5);
+}
+.demo__frame video { display: block; width: 100%; height: 100%; max-width: 100%; background: var(--crust); }
+.demo__cap { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1.5rem; margin-top: 0.75rem; font-size: var(--fs-0); }
+.demo__cap p { color: var(--fg-faint); max-width: 70ch; }
+.demo__cap a { color: var(--fg-link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; white-space: nowrap; }
+.demo__cap a:hover { color: var(--fg-link-hover); }
+
 /* ---------- Screenshot strip (pinned) ---------- */
 .shots { position: relative; height: 400vh; }
 .shots__pin { position: sticky; top: 56px; height: calc(100svh - 56px); display: grid; align-content: center; gap: 1rem; }
