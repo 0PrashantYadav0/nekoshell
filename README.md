@@ -16,15 +16,14 @@
 
 <p align="center">A Catppuccin terminal rig for macOS: one zsh config, one prompt, a greeting with a Pokémon (or an anime picture, a Minecraft block, an ANSI pattern) or your own pixel art, a music panel, and the same font and colours in iTerm2, kitty, Ghostty, Warp and Terminal.app. One command, <code>nekoshell</code>, installs it, themes it and checks it.</p>
 
-## Screenshots
+## Demo
 
-The whole iTerm2 window after `nekoshell greet --art anime`: the picture drawn inline beside the machine stats, the palette swatch under them, the prompt above and below.
+Thirty seconds of nekoshell: the greeting, a flavour switch from mocha to latte, the plugins, and the one-line install.
 
-<p align="center">
-  <img src="docs/screenshots/greet-anime.png" width="100%" alt="an iTerm2 window after nekoshell greet --art anime: an anime character drawn inline beside the machine stats, the palette swatch under them and the prompt">
-</p>
+<!-- markdownlint-disable-next-line MD034 -- GitHub renders a bare .mp4 URL as a video player; a link would not -->
+https://github.com/0PrashantYadav0/nekoshell/raw/main/docs/demo.mp4
 
-The same greeting with the [minecraft](docs/plugins/minecraft.md) and [colorscripts](docs/plugins/colorscripts.md) providers is on those plugin pages, and [docs/TERMINALS.md](docs/TERMINALS.md) shows nekoshell in each of the five terminals.
+Stills of the greeting with the [minecraft](docs/plugins/minecraft.md) and [colorscripts](docs/plugins/colorscripts.md) providers are on those plugin pages, and [docs/TERMINALS.md](docs/TERMINALS.md) shows nekoshell in each of the five terminals.
 
 ## Install
 
