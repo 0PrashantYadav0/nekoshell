@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, useSpring, useTransform } from 'framer-motion'
 import { useReducedMotion } from '../lib/motion'
 import { swipeStep, wrapIndex } from '../lib/gallery'
@@ -21,9 +21,17 @@ type Props = {
 // springs of their own (useSpring) rather than calls to framer's standalone
 // animate(), which would add its whole element-animation layer to the bundle
 // for four numbers; a spring value animates whenever it is set and jumps
-// when it is told to.
-const spring = { bounce: 0, duration: 0.4 }
-const fade = { bounce: 0, duration: 0.25 }
+// when it is told to. The springs are given as stiffness and damping, from
+// a damping ratio of 1 and a response of 0.4s (0.25s for the fade): a spring
+// value's options go straight to the generator, which reads a duration in
+// milliseconds and drops the velocity of a duration-defined spring, and the
+// swipe needs its velocity kept.
+const respond = (seconds: number) => {
+  const stiffness = (2 * Math.PI / seconds) ** 2
+  return { stiffness, damping: 2 * Math.sqrt(stiffness) }
+}
+const spring = respond(0.4)
+const fade = respond(0.25)
 
 // Where a panel laid out at `panel` has to be moved and scaled to sit over
 // `tile`. The panel's rect is its layout rect, before any transform.
@@ -48,12 +56,21 @@ export function Lightbox({ items, index, origin, onIndex, onClose }: Props) {
   const open = index !== null
   const item = index === null ? null : items[index]
 
-  const x = useSpring(0, spring)
-  const y = useSpring(0, spring)
-  const scale = useSpring(1, spring)
-  const opacity = useSpring(1, fade)
-  // The swipe rides on top of the opening move, so the two never fight.
-  const swipe = useSpring(0, spring)
+  // The rest thresholds are in each value's own units, so the close waits
+  // for the picture to settle and not for a thousandth of a pixel.
+  const x = useSpring(0, { ...spring, restDelta: 0.5, restSpeed: 5 })
+  const y = useSpring(0, { ...spring, restDelta: 0.5, restSpeed: 5 })
+  const scale = useSpring(1, { ...spring, restDelta: 0.005, restSpeed: 0.05 })
+  const opacity = useSpring(1, { ...fade, restDelta: 0.01, restSpeed: 0.1 })
+  // The swipe rides on top of the opening move, so the two never fight. Its
+  // spring is re-made at every release with that release's velocity: a spring
+  // value reads the velocity of a spring it interrupted, not the finger's, so
+  // a fresh one is the way to hand the finger's speed over.
+  const [release, setRelease] = useState({ velocity: 0, n: 0 })
+  const swipe = useSpring(0, { ...spring, restDelta: 0.5, restSpeed: 5, velocity: release.velocity })
+  useEffect(() => {
+    if (release.n) swipe.set(0)
+  }, [release, swipe])
   const shift = useTransform(() => x.get() + swipe.get())
   const closing = useRef(false)
 
@@ -116,13 +133,13 @@ export function Lightbox({ items, index, origin, onIndex, onClose }: Props) {
 
   // 1:1 tracking while the finger is down, then the release velocity is
   // handed to the spring that takes the picture home.
-  const drag = useRef<{ x0: number; last: number; t: number; dt: number; vx: number } | null>(null)
+  const drag = useRef<{ x0: number; last: number; t: number; vx: number } | null>(null)
   const onPointerDown = (e: React.PointerEvent<HTMLElement>) => {
     if (e.button !== 0) return
     e.currentTarget.setPointerCapture(e.pointerId)
     // A grab takes the picture over from a spring still settling it.
     swipe.jump(swipe.get())
-    drag.current = { x0: e.clientX - swipe.get(), last: swipe.get(), t: e.timeStamp, dt: 16, vx: 0 }
+    drag.current = { x0: e.clientX - swipe.get(), last: swipe.get(), t: e.timeStamp, vx: 0 }
   }
   const onPointerMove = (e: React.PointerEvent<HTMLElement>) => {
     const g = drag.current
@@ -131,8 +148,7 @@ export function Lightbox({ items, index, origin, onIndex, onClose }: Props) {
     const dt = e.timeStamp - g.t
     if (dt > 0) {
       g.vx = ((dx - g.last) / dt) * 1000
-      g.dt = dt
-      g.last = swipe.get()
+      g.last = dx
       g.t = e.timeStamp
     }
     swipe.jump(dx, false)
@@ -145,11 +161,10 @@ export function Lightbox({ items, index, origin, onIndex, onClose }: Props) {
     const by = swipeStep(dx, g.vx)
     if (by) step(by)
     if (reduced) return swipe.jump(0)
-    // The spring home starts at the finger's speed: the value is told where
-    // it was a frame ago, so the velocity it reads is the release velocity.
-    swipe.jump(dx, false)
-    swipe.setWithVelocity(g.last, dx, g.dt)
-    swipe.set(0)
+    swipe.jump(dx)
+    // A still finger twice in a row would leave the options unchanged and
+    // the old spring in place, so a zero velocity carries the release count.
+    setRelease((r) => ({ velocity: g.vx || Number.EPSILON * (r.n + 1), n: r.n + 1 }))
   }
 
   return (
