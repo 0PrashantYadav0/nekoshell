@@ -58,7 +58,9 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+/* The gutter stays when the lightbox hides the page's scrollbar, so the page
+   does not shift under it where scrollbars take up room. */
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
@@ -302,7 +304,7 @@ main, .foot, .nav { position: relative; z-index: 1; }
 /* The lightbox is the dialog itself, stretched over the page as the scrim,
    with the picture centred in it. The panel is what moves. */
 .lightbox {
-  position: fixed; inset: 0; width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+  position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
   display: none; place-items: center; overflow: hidden;
   background: color-mix(in srgb, var(--crust) 82%, transparent); color: var(--text);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);

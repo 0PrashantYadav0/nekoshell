@@ -65,14 +65,18 @@ export function Lightbox({ items, index, origin, onIndex, onClose }: Props) {
   // The swipe rides on top of the opening move, so the two never fight. Its
   // spring is re-made at every release with that release's velocity: a spring
   // value reads the velocity of a spring it interrupted, not the finger's, so
-  // a fresh one is the way to hand the finger's speed over.
+  // a fresh one is the way to hand the finger's speed over. This leans on
+  // framer's use-follow-value.mjs keying its insertion effect on
+  // JSON.stringify(options): the spring is re-attached exactly when the
+  // velocity option's text changes.
   const [release, setRelease] = useState({ velocity: 0, n: 0 })
   const swipe = useSpring(0, { ...spring, restDelta: 0.5, restSpeed: 5, velocity: release.velocity })
   useEffect(() => {
     if (release.n) swipe.set(0)
   }, [release, swipe])
   const shift = useTransform(() => x.get() + swipe.get())
-  const closing = useRef(false)
+  // Counts the closes; a close that was overtaken stops short of the dialog.
+  const closeSeq = useRef(0)
 
   const layout = () => {
     const p = panel.current
@@ -105,25 +109,36 @@ export function Lightbox({ items, index, origin, onIndex, onClose }: Props) {
     // per opening; the index moving on inside the box does not touch it.
   }, [open, origin, reduced, x, y, scale, opacity, swipe])
 
-  const finish = () => {
-    closing.current = false
-    dialog.current?.close()
-  }
+  const finish = () => dialog.current?.close()
 
-  // The dialog shuts once the picture has settled over its tile.
-  useEffect(() => scale.on('animationComplete', () => closing.current && finish()), [scale])
-
+  // The dialog shuts once every value that had somewhere to go has settled
+  // over the tile. A spring value starts no animation when it is already at
+  // its target (a tile as wide as the panel has a scale of exactly 1), so the
+  // close waits on the animations that did start and not on any one value;
+  // with none started it shuts at once. A timer stands behind the promises
+  // so the dialog can never be left open by a spring that fails to report.
   const close = () => {
     const d = dialog.current
     if (!d?.open) return
     const to = origin && !reduced && layout()
     if (!to) return finish()
     const at = offset(origin.getBoundingClientRect(), to)
-    closing.current = true
-    x.set(at.x)
-    y.set(at.y)
-    scale.set(at.scale)
-    opacity.set(0)
+    const seq = ++closeSeq.current
+    const moves: Promise<unknown>[] = []
+    for (const [value, target] of [[x, at.x], [y, at.y], [scale, at.scale], [opacity, 0]] as const) {
+      value.set(target)
+      if (value.animation) moves.push(value.animation.finished)
+    }
+    if (!moves.length) return finish()
+    // Whichever of the two arrives first shuts the dialog; the other finds
+    // the count moved on and leaves a box the reader may have reopened alone.
+    const done = () => {
+      if (seq !== closeSeq.current) return
+      closeSeq.current++
+      finish()
+    }
+    Promise.all(moves).then(done)
+    setTimeout(done, 1500)
   }
 
   const step = (by: number) => {

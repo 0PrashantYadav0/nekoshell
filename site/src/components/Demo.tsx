@@ -37,6 +37,8 @@ export function Demo() {
         <SectionHead cmd="nekoshell greet && nekoshell theme latte" title="Thirty seconds of nekoshell" />
         <figure className="demo">
           <div className="demo__frame" ref={frame}>
+            {/* No <track>: the recording's audio is music only, no speech, so
+                there is nothing to caption; what it shows is in the caption. */}
             <video
               ref={video}
               src="/demo.mp4"
@@ -49,7 +51,9 @@ export function Demo() {
               muted
               loop={auto}
               onPause={() => {
-                // A pause while the frame is on screen came from the reader.
+                // A pause while the frame is on screen is taken as the reader's,
+                // including one the browser made (a data saver, a tab put to
+                // sleep): it is not undone by scrolling.
                 if (shown.current) held.current = true
               }}
               onPlay={() => {
