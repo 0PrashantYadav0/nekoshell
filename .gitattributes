@@ -30,6 +30,7 @@ docs/contributing export-ignore
 docs/ai export-ignore
 docs/screenshots export-ignore
 docs/assets export-ignore
+docs/demo.mp4 export-ignore
 Makefile export-ignore
 AGENTS.md export-ignore
 CLAUDE.md export-ignore

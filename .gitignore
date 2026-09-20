@@ -20,6 +20,9 @@ skills-*.json
 .idea/
 *.swp
 
+# The launch video's working directory
+brag-output*/
+
 # Node (site/) and Vercel CLI output
 node_modules/
 .vercel/
