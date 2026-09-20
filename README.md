@@ -18,10 +18,11 @@
 
 ## Demo
 
-Thirty seconds of nekoshell: the greeting, a flavour switch from mocha to latte, the plugins, and the one-line install.
+Thirty seconds of nekoshell: the greeting, a flavour switch from mocha to latte, the plugins, and the one-line install. Click the picture to play it.
 
-<!-- markdownlint-disable-next-line MD034 -- GitHub renders a bare .mp4 URL as a video player; a link would not -->
-https://github.com/0PrashantYadav0/nekoshell/raw/main/docs/demo.mp4
+<p align="center">
+  <a href="https://github.com/0PrashantYadav0/nekoshell/raw/main/docs/demo.mp4"><img src="docs/screenshots/demo.png" width="100%" alt="a frame of the demo video: the pokemon greeting in an iTerm2 window under the line Four flavours, one switch, with the mocha palette below it; click to play the video"></a>
+</p>
 
 Stills of the greeting with the [minecraft](docs/plugins/minecraft.md) and [colorscripts](docs/plugins/colorscripts.md) providers are on those plugin pages, and [docs/TERMINALS.md](docs/TERMINALS.md) shows nekoshell in each of the five terminals.
 
