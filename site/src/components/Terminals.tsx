@@ -19,7 +19,7 @@ export function Terminals() {
       <div className="wrap">
         <SectionHead cmd="nekoshell terminal use all" title="Five terminals, the same look" sub="An adapter for each terminal applies the font, the 26 colours and a music panel where the terminal has one. Configure one, a few, or all of them at once." />
         <div className="terms">
-          <div className="terms__scene" role="img" aria-label="Five terminal windows, one per adapter, fanned out in 3D">
+          <div className="terms__scene" role="img" aria-label="Five terminal windows, one per adapter, fanned out in 3D; the pointer picks one out">
             <LazyCanvas
               camera={{ position: [0, 0.3, 7.6], fov: 34 }}
               fallback={
@@ -30,7 +30,7 @@ export function Terminals() {
                 </ul>
               }
             >
-              <TerminalsScene progress={progress} hovered={hovered} />
+              <TerminalsScene progress={progress} hovered={hovered} onHover={setHovered} reduced={reduced} />
             </LazyCanvas>
           </div>
           <ul className="card terms__list">
@@ -38,6 +38,7 @@ export function Terminals() {
               <li
                 key={t.id}
                 className="term"
+                data-on={hovered === t.id || undefined}
                 style={{ '--hue': `var(--${t.hue})` } as React.CSSProperties}
                 onPointerEnter={() => setHovered(t.id)}
                 onPointerLeave={() => setHovered(null)}
