@@ -25,7 +25,7 @@ The libraries under `core/lib` only define functions. Nothing there touches the 
 | `scripts/` | `lint.sh`, `check-commit-msg.sh`, and the release scripts `package.sh`, `release.sh`, `changelog-section.sh`, `render-formula.sh` |
 | `tests/` | the bats suite, its helpers, fakes and fixtures |
 | `install.sh`, `uninstall.sh` | check macOS and Homebrew, then `exec bin/nekoshell install`/`uninstall` with the flags |
-| `bootstrap.sh`, `VERSION` | the one-line installer's clone-and-run, and the version the release is cut from |
+| `bootstrap.sh`, `VERSION` | the one-line installer's download-verify-unpack-and-run (a git checkout for a branch ref), and the version the release is cut from |
 
 A release tarball is `git archive` of the tag, so the tree above is not all of it: everything only a contributor or the repository page opens is `export-ignore` in `.gitattributes` and stripped from the tarball. That is `tests/`, `scripts/`, `skills/`, `packaging/`, `Makefile`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `llms.txt`, the dot-files, and the six contributor-only directories under `docs/`. A new development-only path needs its own `export-ignore` line, and a page that ships must not link into a path that does not: the link becomes a `https://github.com/0PrashantYadav0/nekoshell/blob/main/<path>` URL instead. [DISTRIBUTION.md](DISTRIBUTION.md) has the tarball itself.
 

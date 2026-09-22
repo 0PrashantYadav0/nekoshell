@@ -1,17 +1,33 @@
 #!/usr/bin/env bash
 # Fake curl for the installer tests: writes a stub wherever -o points instead
 # of reaching the network. FAKE_CURL_SOURCE names a file to deliver instead
-# of the stub (a tarball a test built); FAKE_CURL_FAIL=1 fails the way an
-# offline curl does, writing nothing.
+# of the stub (a tarball a test built); FAKE_CURL_SOURCE_DIR names a directory
+# to deliver from, the file with the URL's basename, for a script that fetches
+# more than one (bootstrap.sh: the tarball and SHA256SUMS); FAKE_CURL_FAIL=1
+# fails the way an offline curl does, writing nothing.
+#
+# With -w (bootstrap.sh reads the latest release's tag off the redirect for
+# releases/latest) it prints FAKE_CURL_LATEST, the page GitHub would land on,
+# v0.2.0's when unset.
 dest=""
+url=""
 prev=""
+want_final=0
 for arg in "$@"; do
   [[ "$prev" == "-o" ]] && dest="$arg"
+  [[ "$arg" == "-w" ]] && want_final=1
+  case "$arg" in http://* | https://* | file://*) url="$arg" ;; esac
   prev="$arg"
 done
 [[ "${FAKE_CURL_FAIL:-}" == 1 ]] && exit 22
+if [[ "$want_final" == 1 ]]; then
+  printf '%s' "${FAKE_CURL_LATEST:-https://github.com/0PrashantYadav0/nekoshell/releases/tag/v0.2.0}"
+  exit 0
+fi
 if [[ -n "$dest" ]]; then
-  if [[ -n "${FAKE_CURL_SOURCE:-}" ]]; then
+  if [[ -n "${FAKE_CURL_SOURCE_DIR:-}" ]]; then
+    cp "$FAKE_CURL_SOURCE_DIR/$(basename "$url")" "$dest" || exit 22
+  elif [[ -n "${FAKE_CURL_SOURCE:-}" ]]; then
     cp "$FAKE_CURL_SOURCE" "$dest"
   else
     printf '# fake iTerm2 shell integration\n' >"$dest"

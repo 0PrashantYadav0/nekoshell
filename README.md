@@ -39,7 +39,7 @@ brew install nekoshell
 nekoshell install
 ```
 
-From one line, which clones `~/.nekoshell` and runs the installer:
+From one line, which puts the latest release in `~/.nekoshell` and runs the installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash
