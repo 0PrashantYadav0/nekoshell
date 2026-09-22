@@ -18,13 +18,13 @@ Install the terminal you want before running the installer, so it can be detecte
 curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash
 ```
 
-It clones `~/.nekoshell` (or updates it), then runs `install.sh` with any flags you pass after `bash -s --`, so the non-interactive form is:
+It downloads the latest release's tarball, checks it against the `SHA256SUMS` the Release attaches, unpacks it as `~/.nekoshell` (replacing an older release there), then runs `install.sh` with any flags you pass after `bash -s --`, so the non-interactive form is:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash -s -- --yes --profile full --terminal installed
 ```
 
-`NEKOSHELL_REF=v0.2.0` in front of the line pins a release instead of `main`; `NEKOSHELL_DIR` moves the checkout. The clone is shallow (`--depth 1`): it gets the tree at that ref, not the project's history, which is what an install needs and keeps the download small. A contributor who wants the log, `git blame` or an older commit should clone by hand instead, the way the section below does.
+`NEKOSHELL_REF=v0.2.0` in front of the line pins a release other than the latest; `NEKOSHELL_REF=main` (any ref that is not a version tag) makes a shallow git checkout of that branch instead and pulls it on the next run, and a `~/.nekoshell` that is already a git checkout is always updated with git, never replaced by a tarball. `NEKOSHELL_DIR` moves the install. A contributor who wants the log, `git blame` or an older commit should clone by hand instead, the way the section below does.
 
 ```bash
 git clone https://github.com/0PrashantYadav0/nekoshell.git ~/.nekoshell

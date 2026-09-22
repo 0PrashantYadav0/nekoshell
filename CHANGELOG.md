@@ -15,7 +15,7 @@
 ### Install
 
 - The release tarball carries only what runs: `tests/`, `scripts/`, `skills/`, `packaging/` and the contributor-only docs are now `export-ignore` in `.gitattributes`, and `scripts/package.sh` prints the tarball's size and entry count and refuses to write `SHA256SUMS` if development files made it in anyway.
-- `bootstrap.sh` clones with `--depth 1`: a fresh install gets the tree, not the project's history. A contributor who wants the log still clones by hand.
+- `bootstrap.sh` installs the latest release rather than cloning `main`: it reads the latest tag off `releases/latest`, downloads that Release's tarball and `SHA256SUMS`, refuses a tarball that does not match, unpacks it as `~/.nekoshell` and replaces an older release there on the next run. So the one-line install gets the same verified artefact Homebrew does, and a download the Release's counter records. `NEKOSHELL_REF=v0.2.0` pins another release; `NEKOSHELL_REF=main`, or any ref that is not a version tag, still makes a shallow (`--depth 1`) git checkout of it, and a `~/.nekoshell` that is already a git checkout is always updated with git.
 
 ### Docs
 
