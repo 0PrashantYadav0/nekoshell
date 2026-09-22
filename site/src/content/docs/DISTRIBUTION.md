@@ -28,13 +28,13 @@ For people without Homebrew habits, or for a machine being set up from nothing:
 curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash
 ```
 
-`bootstrap.sh` clones (or pulls) the repository into `~/.nekoshell` and hands over to `install.sh`. It follows `main` by default; set `NEKOSHELL_REF` to pin a tag or a branch:
+`bootstrap.sh` downloads the latest Release's tarball, verifies it against the `SHA256SUMS` next to it, unpacks it as `~/.nekoshell` (an older release there is replaced, a git checkout there is pulled instead) and hands over to `install.sh`. Set `NEKOSHELL_REF` to pin another release, or a branch to get a git checkout that follows it:
 
 ```bash
 NEKOSHELL_REF=v0.2.0 curl -fsSL https://raw.githubusercontent.com/0PrashantYadav0/nekoshell/main/bootstrap.sh | bash
 ```
 
-It needs nothing but `git` and `curl`, and it updates with every push, which is also its trade-off: without `NEKOSHELL_REF` you get whatever `main` is that day.
+It needs nothing but `curl` (and `git` for a branch ref), and it installs the same verified artefact Homebrew does, so the Release's download count records it. A branch ref updates with every push, which is its trade-off: `NEKOSHELL_REF=main` gets whatever `main` is that day.
 
 ## A git checkout
 
